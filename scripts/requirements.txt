@@ -1,0 +1,7 @@
+# (C) Copyright 2024, SECO Mind Srl
+#
+# SPDX-License-Identifier: Apache-2.0
+
+codechecker
+colored
+clang-tidy==16.0.4

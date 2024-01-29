@@ -1,0 +1,13 @@
+# (C) Copyright 2024, SECO Mind Srl
+#
+# SPDX-License-Identifier: Apache-2.0
+
+name: edgehog-zephyr-device
+build:
+  # Path to the Kconfig file that will be sourced into Zephyr Kconfig tree under
+  # Zephyr > Modules > edgehog-zephyr-device. Path is relative from root of this
+  # repository.
+  kconfig: Kconfig
+  # Path to the folder that contains the CMakeLists.txt file to be included by
+  # Zephyr build system. The `.` is the root of this repository.
+  cmake: .

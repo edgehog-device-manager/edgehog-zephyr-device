@@ -1,0 +1,18 @@
+# (C) Copyright 2024, SECO Mind Srl
+#
+# SPDX-License-Identifier: Apache-2.0
+
+manifest:
+  self:
+    west-commands: scripts/west-commands.yml
+
+  remotes:
+    - name: zephyrproject-rtos
+      url-base: https://github.com/zephyrproject-rtos
+
+  projects:
+    - name: zephyr
+      remote: zephyrproject-rtos
+      revision: v3.5.0
+      import: true
+
