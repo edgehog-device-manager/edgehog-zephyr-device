@@ -1,0 +1,25 @@
+# (C) Copyright 2024, SECO Mind Srl
+#
+# SPDX-License-Identifier: Apache-2.0
+
+west-commands:
+  - file: scripts/docs.py
+    commands:
+      - name: docs
+        class: WestCommandDocs
+        help: generate documentation (doxygen)
+  - file: scripts/clean.py
+    commands:
+      - name: clean
+        class: WestCommandClean
+        help: clean build artifacts
+  - file: scripts/format.py
+    commands:
+      - name: format
+        class: WestCommandFormat
+        help: format the source files (clang-format)
+  - file: scripts/static.py
+    commands:
+      - name: static
+        class: WestCommandStatic
+        help: run static analysis on the sources (clang-tidy)

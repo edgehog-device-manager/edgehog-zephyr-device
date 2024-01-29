@@ -1,0 +1,8 @@
+# (C) Copyright 2024, SECO Mind Srl
+#
+# SPDX-License-Identifier: Apache-2.0
+
+tests:
+  lib.edgehog_device.unit:
+    tags: edgehog_device
+    type: unit
