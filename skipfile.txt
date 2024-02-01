@@ -1,0 +1,4 @@
++*/include/edgehog_device/*.h
++*/lib/edgehog_device/*.c
++*/samples/simple/src/*.c
+-*

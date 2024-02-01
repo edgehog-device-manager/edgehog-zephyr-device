@@ -1,0 +1,8 @@
+# (C) Copyright 2024, SECO Mind Srl
+#
+# SPDX-License-Identifier: Apache-2.0
+
+config EDGEHOG_DEVICE
+	bool "Edgehog device library"
+	help
+	  This option enables the Edgehog device library
