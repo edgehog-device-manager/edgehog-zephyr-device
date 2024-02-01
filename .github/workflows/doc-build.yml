@@ -37,7 +37,7 @@ on:
 env:
   # The latest CMake available directly with apt is 3.18, but we need >=3.20,
   # so we fetch that through pip.
-  CMAKE_VERSION: 3.20.5
+  CMAKE_VERSION: 3.22.1
   DOXYGEN_VERSION: 1.9.6
 
 jobs:
@@ -72,7 +72,6 @@ jobs:
     - name: Install python packages
       run: |
         pip3 install cmake==${CMAKE_VERSION}
-        pip3 install coverxygen
 
     - name: West setup
       working-directory: edgehog-zephyr-device

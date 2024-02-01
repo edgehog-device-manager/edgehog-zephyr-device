@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Nordic Semiconductor ASA
+ * Copyright 2024 SECO Mind Srl
  * SPDX-License-Identifier: Apache-2.0
  */
 

@@ -12,5 +12,4 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - name: REUSE Compliance Check
-      continue-on-error: true
       uses: fsfe/reuse-action@v2
