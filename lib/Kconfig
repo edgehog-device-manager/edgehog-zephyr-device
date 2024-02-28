@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-menu "Libraries"
+menu "Edgehog device"
 
 rsource "edgehog_device/Kconfig"
 

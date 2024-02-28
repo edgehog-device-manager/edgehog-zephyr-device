@@ -12,15 +12,19 @@
  * @brief Private Edgehog Device APIs and fields
  */
 
+#include "ota.h"
+
 #include <astarte_device_sdk/device.h>
-
-
-#define ASTARTE_UUID_LEN 39
+#include <astarte_device_sdk/uuid.h>
 
 struct edgehog_device_t
 {
+    /** @brief Handle of an Astarte device. */
     astarte_device_handle_t astarte_device;
-    char boot_id[ASTARTE_UUID_LEN];
+    /** @brief UUID representing the Boot Id. */
+    char boot_id[ASTARTE_UUID_STR_LEN];
+    /** @brief OTA thread data used during the OTA Update operation. */
+    ota_thread_t ota_thread;
 };
 
 #endif // EDGEHOG_PRIVATE_H

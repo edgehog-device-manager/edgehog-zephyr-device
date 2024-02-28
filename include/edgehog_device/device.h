@@ -87,6 +87,17 @@ void edgehog_device_destroy(edgehog_device_handle_t edgehog_device);
  */
 edgehog_result_t edgehog_device_start(edgehog_device_handle_t edgehog_device);
 
+/**
+ * @brief Handler for astarte datastream object event.
+ *
+ * @details This function must be called when an Astarte datastream object event is reveived.
+ *
+ * @param edgehog_device A valid Edgehog device handle.
+ * @param event Astarte device datastream object event pointer.
+ */
+void edgehog_device_datastream_object_events_handler(
+    edgehog_device_handle_t edgehog_device, astarte_device_datastream_object_event_t event);
+
 #ifdef __cplusplus
 }
 #endif

@@ -14,9 +14,18 @@ Before getting started, make sure you have a proper Zephyr development environme
 Follow the official
 [Zephyr Getting Started Guide](https://docs.zephyrproject.org/latest/getting_started/index.html).
 
+## Implemented Features
+
+The following information is sent to the remote Edgehog instance:
+
+- OS info
+- Hardware info
+- System info
+- [OTA update using Mcuboot](doc/ota.md)
+
 ### Adding the module as a dependency to an application
 
-To add this module as a dependency to an application the application's `west.yml` manifest file
+To add this module as a dependency to an application, the application `west.yml` manifest file
 should be modified in the following way.
 First, a new remote should be added:
 ```yml

@@ -35,11 +35,13 @@ Checks: >
   -clang-diagnostic-deprecated-declarations,
   -cppcoreguidelines-avoid-non-const-global-variables,
   -modernize-macro-to-enum,
+  -performance-no-int-to-ptr,
   -readability-function-size
 
 # NOTES:
-# The checker readability-function-size has been disable due to the logging macros that zephyr
+# The checker readability-function-size has been disabled due to the logging macros that Zephyr
 # uses for logging. Such macros greatly increase the size of each function.
+# The checker performance-no-int-to-ptr has been disabled due to strange warnings being triggered.
 
 CheckOptions:
   - { key: bugprone-misplaced-widening-cast.CheckImplicitCasts, value: true }
