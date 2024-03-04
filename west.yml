@@ -9,10 +9,16 @@ manifest:
   remotes:
     - name: zephyrproject-rtos
       url-base: https://github.com/zephyrproject-rtos
+    - name: secomind
+      url-base: https://github.com/secomind
 
   projects:
     - name: zephyr
       remote: zephyrproject-rtos
-      revision: v3.5.0
+      revision: v3.6.0
       import: true
-
+    - name: astarte-device-sdk-zephyr
+      remote: secomind
+      repo-path: astarte-device-sdk-zephyr.git
+      path: astarte-device-sdk-zephyr
+      revision: master

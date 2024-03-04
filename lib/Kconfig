@@ -6,4 +6,6 @@ menu "Libraries"
 
 rsource "edgehog_device/Kconfig"
 
+rsource "../../astarte-device-sdk-zephyr/Kconfig"
+
 endmenu
