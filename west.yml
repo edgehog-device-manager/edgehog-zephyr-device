@@ -10,7 +10,7 @@ manifest:
     - name: zephyrproject-rtos
       url-base: https://github.com/zephyrproject-rtos
     - name: secomind
-      url-base: https://github.com/secomind
+      url-base: git@github.com:secomind
 
   projects:
     - name: zephyr
