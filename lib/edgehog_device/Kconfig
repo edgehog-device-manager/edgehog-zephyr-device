@@ -4,5 +4,6 @@
 
 config EDGEHOG_DEVICE
 	bool "Edgehog device library"
+	depends on ASTARTE_DEVICE_SDK
 	help
 	  This option enables the Edgehog device library
