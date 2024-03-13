@@ -42,16 +42,12 @@ jobs:
         with:
           path: edgehog-zephyr-device
 
-      - name: Checkout SDK individually
+      - name: Checkout Astarte SDK individually
         uses: actions/checkout@v4
         with:
           repository: secomind/astarte-device-sdk-zephyr
           path: astarte-device-sdk-zephyr
-
-      - name: Replace zephyr revision
-        working-directory: edgehog-zephyr-device
-        run: |
-          sed -i 's/revision: v3.5.0/revision: main/g' west.yml
+          ssh-key: ${{ secrets.SSH_EDGEHOG_DEVICE_ZEPHYR_PRIV_KEY }}
 
       - name: Initialize
         working-directory: edgehog-zephyr-device
