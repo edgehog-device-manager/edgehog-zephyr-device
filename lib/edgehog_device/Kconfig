@@ -6,3 +6,18 @@ config EDGEHOG_DEVICE
 	bool "Edgehog device library"
 	help
 	  This option enables the Edgehog device library
+
+
+menu "Logging options"
+
+module = EDGEHOG_DEVICE_DEVICE
+module-str = Log level for Edgehog device
+module-help = Sets log level for Edgehog device.
+source "subsys/logging/Kconfig.template.log_config"
+
+module = EDGEHOG_DEVICE_HARDWARE_INFO
+module-str = Log level for Edgehog device hardware informantions
+module-help = Sets log level for Edgehog device hardware informantions.
+source "subsys/logging/Kconfig.template.log_config"
+
+endmenu

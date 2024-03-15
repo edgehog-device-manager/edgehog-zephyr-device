@@ -12,3 +12,4 @@ tests:
     build_only: true
     integration_platforms:
       - esp_wrover_kit
+      - native_sim

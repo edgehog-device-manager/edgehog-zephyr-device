@@ -1,0 +1,11 @@
+# (C) Copyright 2024, SECO Mind Srl
+#
+# SPDX-License-Identifier: Apache-2.0
+
+tests:
+  lib.edgehog_device.integration:
+    tags: edgehog_device
+    platform_allow:
+      - native_sim
+    integration_platforms:
+      - native_sim

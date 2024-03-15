@@ -15,8 +15,7 @@
 
 #include <zephyr/ztest.h>
 
-#include <edgehog_device/edgehog_device.h>
-#include <lib/edgehog_device/edgehog_device.c>
+#include <edgehog_device/device.h>
 
 // Define a minimal_log function to resolve the `undefined reference to z_log_minimal_printk` error,
 // because the log environment is missing in the unit_testing platform.
@@ -24,9 +23,19 @@ void z_log_minimal_printk(const char *fmt, ...) {}
 
 ZTEST(edgehog_device, test_edgehog_device_new)
 {
-    edgehog_device_handle_t edgehog_device = edgehog_device_new();
-    zassert_true(edgehog_device != NULL,
+    edgehog_device_config_t edgehog_conf = {
+        .astarte_device = NULL,
+    };
+
+    edgehog_device_handle_t edgehog_device = NULL;
+    edgehog_result_t edgehog_result = edgehog_device_new(&edgehog_conf, &edgehog_device);
+
+    zassert_true(edgehog_result != EDGEHOG_RESULT_OK,
+        "edgehog_result returned by edgehog_device_new function is == EDGEHOG_RESULT_OK");
+
+    zassert_true(edgehog_device == NULL,
         "edgehog_device_handle_t returned by edgehog_device_new function is not valid");
+
     edgehog_device_destroy(edgehog_device);
 }
 
