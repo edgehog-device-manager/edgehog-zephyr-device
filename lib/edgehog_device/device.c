@@ -8,6 +8,7 @@
 #include "edgehog_device/result.h"
 #include "edgehog_private.h"
 #include "hardware_info.h"
+#include "os_info.h"
 
 #include <stdlib.h>
 
@@ -100,6 +101,7 @@ static edgehog_result_t add_interfaces(astarte_device_handle_t device)
 {
     const astarte_interface_t *const interfaces[] = {
         &hardware_info_interface,
+        &os_info_interface,
     };
 
     int len = sizeof(interfaces) / sizeof(const astarte_interface_t *);
@@ -119,4 +121,5 @@ static edgehog_result_t add_interfaces(astarte_device_handle_t device)
 static void edgehog_initial_publish(edgehog_device_handle_t edgehog_device)
 {
     publish_hardware_info(edgehog_device);
+    publish_os_info(edgehog_device);
 }

@@ -40,13 +40,13 @@ LOG_MODULE_REGISTER(simple_main); // NOLINT
  *
  * @param event Astarte device connection event pointer.
  */
-static void astarte_connection_events_handler(astarte_device_connection_event_t *event);
+static void astarte_connection_events_handler(astarte_device_connection_event_t event);
 /**
  * @brief Handler for astarte disconnection events.
  *
  * @param event Astarte device disconnection event pointer.
  */
-static void astarte_disconnection_events_handler(astarte_device_disconnection_event_t *event);
+static void astarte_disconnection_events_handler(astarte_device_disconnection_event_t event);
 
 // NOLINTNEXTLINE(hicpp-function-size)
 int main(void)
@@ -143,16 +143,16 @@ int main(void)
  * Static functions definitions
  ***********************************************/
 
-static void astarte_connection_events_handler(astarte_device_connection_event_t *event)
+static void astarte_connection_events_handler(astarte_device_connection_event_t event)
 {
-    LOG_INF("Astarte device connected, session_present: %d", event->session_present); // NOLINT
-    struct k_sem *astarte_connection_sem = (struct k_sem *) event->user_data;
+    LOG_INF("Astarte device connected, session_present: %d", event.session_present); // NOLINT
+    struct k_sem *astarte_connection_sem = (struct k_sem *) event.user_data;
     if (astarte_connection_sem) {
         k_sem_give(astarte_connection_sem);
     }
 }
 
-static void astarte_disconnection_events_handler(astarte_device_disconnection_event_t *event)
+static void astarte_disconnection_events_handler(astarte_device_disconnection_event_t event)
 {
     (void) event;
     LOG_INF("Astarte device disconnected"); // NOLINT
