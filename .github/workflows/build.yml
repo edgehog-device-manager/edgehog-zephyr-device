@@ -57,6 +57,9 @@ jobs:
         with:
           app-path: edgehog-zephyr-device
           toolchains: xtensa-espressif_esp32_zephyr-elf:arm-zephyr-eabi:x86_64-zephyr-elf
+      - name: Fetch binaries for Espressif
+        working-directory: astarte-device-sdk-zephyr
+        run: west blobs fetch hal_espressif
 
       - name: Build simple sample
         working-directory: edgehog-zephyr-device

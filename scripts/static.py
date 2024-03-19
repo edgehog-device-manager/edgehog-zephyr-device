@@ -104,14 +104,14 @@ class WestCommandStatic(WestCommand):
         cmd = [
             "west build",
             f"-p {args.pristine}",
-            "-b qemu_x86",
+            "-b native_sim",
             f"$PWD/samples/{args.sample} --",
             "-DZEPHYR_SCA_VARIANT=codechecker",
             "-DCONFIG_MINIMAL_LIBC=y",
             f'-DCODECHECKER_EXPORT={",".join(codechecker_exports)}',
             f'-DCODECHECKER_ANALYZE_OPTS="{";".join(codechecker_analyze_opts)}"',
         ]
-        subprocess.run(" ".join(cmd), shell=True, cwd=module_path, timeout=60, check=True)
+        subprocess.run(" ".join(cmd), shell=True, cwd=module_path, timeout=120, check=True)
 
         has_reports = False
         result_file = (

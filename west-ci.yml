@@ -24,6 +24,7 @@ manifest:
           - hal_espressif
           - hal_stm32
           - mbedtls
+          - picolibc
     - name: astarte-device-sdk-zephyr
       remote: secomind
       repo-path: astarte-device-sdk-zephyr.git

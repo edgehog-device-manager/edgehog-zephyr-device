@@ -21,4 +21,4 @@ manifest:
       remote: secomind
       repo-path: astarte-device-sdk-zephyr.git
       path: astarte-device-sdk-zephyr
-      revision: master
+      revision: release-0.5
