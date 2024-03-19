@@ -20,4 +20,9 @@ module-str = Log level for Edgehog device hardware informantions
 module-help = Sets log level for Edgehog device hardware informantions.
 source "subsys/logging/Kconfig.template.log_config"
 
+module = EDGEHOG_DEVICE_OS_INFO
+module-str = Log level for Edgehog device operating system informantions
+module-help = Sets log level for Edgehog device operating system informantions.
+source "subsys/logging/Kconfig.template.log_config"
+
 endmenu
