@@ -74,6 +74,7 @@ jobs:
           mkdir ../edgehog-zephyr-device/interfaces
           cp io.edgehog.devicemanager.HardwareInfo.json \
             io.edgehog.devicemanager.OSInfo.json \
+            io.edgehog.devicemanager.SystemInfo.json \
             ../edgehog-zephyr-device/interfaces
       - name: Generate interfaces reference code
         working-directory: edgehog-zephyr-device

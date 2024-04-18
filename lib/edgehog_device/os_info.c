@@ -7,6 +7,8 @@
 #include "os_info.h"
 
 #include "edgehog_private.h"
+#include "generated_interfaces.h"
+#include "log.h"
 
 #include <stdio.h>
 
@@ -14,9 +16,6 @@
 
 #include <astarte_device_sdk/device.h>
 #include <astarte_device_sdk/result.h>
-
-#include "generated_interfaces.h"
-#include "log.h"
 
 EDGEHOG_LOG_MODULE_REGISTER(os_info, CONFIG_EDGEHOG_DEVICE_OS_INFO_LOG_LEVEL);
 
@@ -50,7 +49,7 @@ void publish_os_info(edgehog_device_handle_t edgehog_device)
         SYS_KERNEL_VER_MINOR(kernel_version), // NOLINT(hicpp-signed-bitwise)
         SYS_KERNEL_VER_PATCHLEVEL(kernel_version)); // NOLINT(hicpp-signed-bitwise)
 
-    if (snprintf_rc != OS_VERSION_SIZE) {
+    if (snprintf_rc > OS_VERSION_SIZE) {
         EDGEHOG_LOG_ERR("Incorrect length/format for os version");
         return;
     }

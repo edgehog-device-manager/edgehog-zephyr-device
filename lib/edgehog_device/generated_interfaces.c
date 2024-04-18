@@ -96,4 +96,35 @@ const astarte_interface_t io_edgehog_devicemanager_OSInfo = {
     .mappings_length = 2U,
 };
 
+static const astarte_mapping_t io_edgehog_devicemanager_SystemInfo_mappings[2] = {
+
+    {
+        .endpoint = "/serialNumber",
+        .regex_endpoint = "/serialNumber",
+        .type = ASTARTE_MAPPING_TYPE_STRING,
+        .reliability = ASTARTE_MAPPING_RELIABILITY_UNIQUE,
+        .explicit_timestamp = false,
+        .allow_unset = false,
+    },
+    {
+        .endpoint = "/partNumber",
+        .regex_endpoint = "/partNumber",
+        .type = ASTARTE_MAPPING_TYPE_STRING,
+        .reliability = ASTARTE_MAPPING_RELIABILITY_UNIQUE,
+        .explicit_timestamp = false,
+        .allow_unset = false,
+    },
+};
+
+const astarte_interface_t io_edgehog_devicemanager_SystemInfo = {
+    .name = "io.edgehog.devicemanager.SystemInfo",
+    .major_version = 0,
+    .minor_version = 1,
+    .type = ASTARTE_INTERFACE_TYPE_PROPERTIES,
+    .ownership = ASTARTE_INTERFACE_OWNERSHIP_DEVICE,
+    .aggregation = ASTARTE_INTERFACE_AGGREGATION_INDIVIDUAL,
+    .mappings = io_edgehog_devicemanager_SystemInfo_mappings,
+    .mappings_length = 2U,
+};
+
 // NOLINTEND(readability-identifier-naming)

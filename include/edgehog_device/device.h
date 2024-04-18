@@ -28,6 +28,12 @@ typedef struct edgehog_device_t *edgehog_device_handle_t;
  */
 typedef struct
 {
+    /**
+     * @brief Instance of the astarte device.
+     *
+     * @details This handle **won't** be freed by the Edgehog device,
+     * his ownership belongs to the caller.
+     */
     astarte_device_handle_t astarte_device;
 } edgehog_device_config_t;
 

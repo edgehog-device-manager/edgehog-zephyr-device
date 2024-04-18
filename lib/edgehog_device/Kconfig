@@ -7,6 +7,17 @@ config EDGEHOG_DEVICE
 	help
 	  This option enables the Edgehog device library
 
+config EDGEHOG_DEVICE_SERIAL_NUMBER
+	string "Serial number that will identify this device"
+	depends on EDGEHOG_DEVICE
+	help
+	  The value passed as part of SystemInfo interface.
+
+config EDGEHOG_DEVICE_PART_NUMBER
+	string "Part number that will identify this device in ota campaigns"
+	depends on EDGEHOG_DEVICE
+	help
+	  This changes the value passed as part of SystemInfo interface.
 
 menu "Logging options"
 
@@ -21,6 +32,11 @@ module-help = Sets log level for Edgehog device hardware informantions.
 source "subsys/logging/Kconfig.template.log_config"
 
 module = EDGEHOG_DEVICE_OS_INFO
+module-str = Log level for Edgehog device operating system informantions
+module-help = Sets log level for Edgehog device operating system informantions.
+source "subsys/logging/Kconfig.template.log_config"
+
+module = EDGEHOG_DEVICE_SYSTEM_INFO
 module-str = Log level for Edgehog device operating system informantions
 module-help = Sets log level for Edgehog device operating system informantions.
 source "subsys/logging/Kconfig.template.log_config"
