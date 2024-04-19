@@ -15,7 +15,9 @@
 #include <astarte_device_sdk/device.h>
 #include <astarte_device_sdk/result.h>
 
+#include "generated_interfaces.h"
 #include "log.h"
+
 EDGEHOG_LOG_MODULE_REGISTER(os_info, CONFIG_EDGEHOG_DEVICE_OS_INFO_LOG_LEVEL);
 
 /************************************************
@@ -25,12 +27,6 @@ EDGEHOG_LOG_MODULE_REGISTER(os_info, CONFIG_EDGEHOG_DEVICE_OS_INFO_LOG_LEVEL);
 // Version will be like: "255.255.255" resulting 11 chars.
 #define OS_VERSION_SIZE 11
 
-const astarte_interface_t os_info_interface = { .name = "io.edgehog.devicemanager.OSInfo",
-    .major_version = 0,
-    .minor_version = 1,
-    .ownership = ASTARTE_INTERFACE_OWNERSHIP_DEVICE,
-    .type = ASTARTE_INTERFACE_TYPE_PROPERTIES };
-
 /************************************************
  * Global functions definition
  ***********************************************/
@@ -38,7 +34,7 @@ const astarte_interface_t os_info_interface = { .name = "io.edgehog.devicemanage
 void publish_os_info(edgehog_device_handle_t edgehog_device)
 {
     astarte_result_t res = astarte_device_set_property(edgehog_device->astarte_device,
-        os_info_interface.name, "/osName", astarte_value_from_string("Zephyr"));
+        io_edgehog_devicemanager_OSInfo.name, "/osName", astarte_value_from_string("Zephyr"));
 
     if (res != ASTARTE_RESULT_OK) {
         EDGEHOG_LOG_ERR("Unable to publish osName");
@@ -59,8 +55,8 @@ void publish_os_info(edgehog_device_handle_t edgehog_device)
         return;
     }
 
-    res = astarte_device_set_property(edgehog_device->astarte_device, os_info_interface.name,
-        "/osVersion", astarte_value_from_string(os_version));
+    res = astarte_device_set_property(edgehog_device->astarte_device,
+        io_edgehog_devicemanager_OSInfo.name, "/osVersion", astarte_value_from_string(os_version));
 
     if (res != ASTARTE_RESULT_OK) {
         EDGEHOG_LOG_ERR("Unable to publish osVersion");

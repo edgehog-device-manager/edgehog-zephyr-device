@@ -14,8 +14,6 @@
 
 #include "edgehog_device/device.h"
 
-extern const astarte_interface_t os_info_interface;
-
 #ifdef __cplusplus
 extern "C" {
 #endif

@@ -13,19 +13,13 @@
 #include <astarte_device_sdk/device.h>
 #include <astarte_device_sdk/result.h>
 
+#include "generated_interfaces.h"
 #include "log.h"
 EDGEHOG_LOG_MODULE_REGISTER(hardware_info, CONFIG_EDGEHOG_DEVICE_HARDWARE_INFO_LOG_LEVEL);
 
 /************************************************
  * Constants and defines
  ***********************************************/
-
-const astarte_interface_t hardware_info_interface
-    = { .name = "io.edgehog.devicemanager.HardwareInfo",
-          .major_version = 0,
-          .minor_version = 1,
-          .ownership = ASTARTE_INTERFACE_OWNERSHIP_DEVICE,
-          .type = ASTARTE_INTERFACE_TYPE_PROPERTIES };
 
 /************************************************
  * Global functions definition
@@ -34,28 +28,32 @@ const astarte_interface_t hardware_info_interface
 void publish_hardware_info(edgehog_device_handle_t edgehog_device)
 {
     astarte_result_t res = astarte_device_set_property(edgehog_device->astarte_device,
-        hardware_info_interface.name, "/cpu/architecture", astarte_value_from_string(CONFIG_ARCH));
+        io_edgehog_devicemanager_HardwareInfo.name, "/cpu/architecture",
+        astarte_value_from_string(CONFIG_ARCH));
     if (res != ASTARTE_RESULT_OK) {
         EDGEHOG_LOG_ERR("Unable to publish cpu/architecture");
         return;
     }
 #ifdef CONFIG_SOC_SERIES
-    res = astarte_device_set_property(edgehog_device->astarte_device, hardware_info_interface.name,
-        "/cpu/model", astarte_value_from_string(CONFIG_SOC_SERIES));
+    res = astarte_device_set_property(edgehog_device->astarte_device,
+        io_edgehog_devicemanager_HardwareInfo.name, "/cpu/model",
+        astarte_value_from_string(CONFIG_SOC_SERIES));
     if (res != ASTARTE_RESULT_OK) {
         EDGEHOG_LOG_ERR("Unable to publish cpu/model");
         return;
     }
 #endif
-    res = astarte_device_set_property(edgehog_device->astarte_device, hardware_info_interface.name,
-        "/cpu/modelName", astarte_value_from_string(CONFIG_BOARD));
+    res = astarte_device_set_property(edgehog_device->astarte_device,
+        io_edgehog_devicemanager_HardwareInfo.name, "/cpu/modelName",
+        astarte_value_from_string(CONFIG_BOARD));
     if (res != ASTARTE_RESULT_OK) {
         EDGEHOG_LOG_ERR("Unable to publish cpu/modelName");
         return;
     }
 #ifdef CONFIG_SOC_FAMILY
-    res = astarte_device_set_property(edgehog_device->astarte_device, hardware_info_interface.name,
-        "/cpu/vendor", astarte_value_from_string(CONFIG_SOC_FAMILY));
+    res = astarte_device_set_property(edgehog_device->astarte_device,
+        io_edgehog_devicemanager_HardwareInfo.name, "/cpu/vendor",
+        astarte_value_from_string(CONFIG_SOC_FAMILY));
     if (res != ASTARTE_RESULT_OK) {
         EDGEHOG_LOG_ERR("Unable to publish cpu/vendor");
         return;

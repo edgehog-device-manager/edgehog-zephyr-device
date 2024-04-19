@@ -17,6 +17,7 @@
 #include <astarte_device_sdk/interface.h>
 #include <astarte_device_sdk/uuid.h>
 
+#include "generated_interfaces.h"
 #include "log.h"
 EDGEHOG_LOG_MODULE_REGISTER(edgehog_device, CONFIG_EDGEHOG_DEVICE_DEVICE_LOG_LEVEL);
 
@@ -100,8 +101,8 @@ edgehog_result_t edgehog_device_start(edgehog_device_handle_t edgehog_device)
 static edgehog_result_t add_interfaces(astarte_device_handle_t device)
 {
     const astarte_interface_t *const interfaces[] = {
-        &hardware_info_interface,
-        &os_info_interface,
+        &io_edgehog_devicemanager_HardwareInfo,
+        &io_edgehog_devicemanager_OSInfo,
     };
 
     int len = sizeof(interfaces) / sizeof(const astarte_interface_t *);
