@@ -11,8 +11,8 @@ python -m pylint --rcfile=./scripts/.pylintrc ./scripts/*.py
 Formatted using black with the following command (pip install black):
 python -m black --line-length 100 ./scripts/*.py
 """
-from pathlib import Path
 import shutil
+from pathlib import Path
 
 from west.commands import WestCommand  # your extension must subclass this
 
@@ -64,14 +64,14 @@ class WestCommandClean(WestCommand):
             Extra unknown arguments.
         """
         workspace_path = Path(self.topdir)
-        module_path = workspace_path.joinpath("astarte-device-sdk-zephyr")
+        module_path = workspace_path.joinpath("edgehog-zephyr-device")
         build_dirs = (
-                [
-                    workspace_path.joinpath("build"),
-                    module_path.joinpath("build"),
-                ]
-                + list(Path(workspace_path).glob("twister-out*"))
-                + list(Path(module_path).glob("twister-out*"))
+            [
+                workspace_path.joinpath("build"),
+                module_path.joinpath("build"),
+            ]
+            + list(Path(workspace_path).glob("twister-out*"))
+            + list(Path(module_path).glob("twister-out*"))
         )
         for build_dir in build_dirs:
             if build_dir.is_dir():

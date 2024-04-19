@@ -95,3 +95,15 @@ jobs:
       with:
         name: docs_html
         path: edgehog-zephyr/doc/_build/doxygen/html-device
+
+    - name: Build extended documentation
+      working-directory: edgehog-zephyr-device
+      shell: bash
+      run: |
+        if [[ "$GITHUB_REF" =~ "refs/tags/v" ]]; then
+          DOC_TAG="release"
+        else
+          DOC_TAG="development"
+        fi
+
+        DOC_TAG=${DOC_TAG} EDGEHOG_DEVICE_BASE="$PWD" EDGEHOG_DEVICE_EXTENDED_DOCS="yes" make -C doc doxygen

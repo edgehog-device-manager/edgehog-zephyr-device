@@ -12,15 +12,15 @@ Formatted using black with the following command (pip install black):
 python -m black --line-length 100 ./scripts/*.py
 """
 
-import sys
-import subprocess
-from pathlib import Path
 import json
+import subprocess
+import sys
 from linecache import getline
-from colored import stylize, fore
+from pathlib import Path
 
-from west.commands import WestCommand  # your extension must subclass this
+from colored import fore, stylize
 from west import log  # use this for user output
+from west.commands import WestCommand  # your extension must subclass this
 
 static_name = "static"
 static_help = "run static analysis on the sources (clang-tidy)"
@@ -107,11 +107,10 @@ class WestCommandStatic(WestCommand):
             "-b native_sim",
             f"$PWD/samples/{args.sample} --",
             "-DZEPHYR_SCA_VARIANT=codechecker",
-            "-DCONFIG_MINIMAL_LIBC=y",
             f'-DCODECHECKER_EXPORT={",".join(codechecker_exports)}',
             f'-DCODECHECKER_ANALYZE_OPTS="{";".join(codechecker_analyze_opts)}"',
         ]
-        subprocess.run(" ".join(cmd), shell=True, cwd=module_path, timeout=120, check=True)
+        subprocess.run(" ".join(cmd), shell=True, cwd=module_path, check=True)
 
         has_reports = False
         result_file = (
