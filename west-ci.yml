@@ -10,7 +10,7 @@ manifest:
     - name: zephyrproject-rtos
       url-base: https://github.com/zephyrproject-rtos
     - name: secomind
-      url-base: git@github.com:secomind  
+      url-base: git@github.com:secomind
 
   projects:
     - name: zephyr
@@ -23,10 +23,12 @@ manifest:
           - cmsis
           - hal_espressif
           - hal_stm32
+          - hal_nxp
           - mbedtls
           - picolibc
     - name: astarte-device-sdk-zephyr
       remote: secomind
       repo-path: astarte-device-sdk-zephyr.git
       path: astarte-device-sdk-zephyr
-      revision: release-0.5      
+      revision: release-0.5
+      west-commands: scripts/west-commands.yml

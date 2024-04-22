@@ -1,0 +1,90 @@
+#
+# This file is part of Edgehog.
+#
+# Copyright 2024 SECO Mind Srl
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# SPDX-License-Identifier: Apache-2.0
+#
+
+name: Interfaces
+
+on:
+  push:
+  pull_request:
+
+env:
+  EDGEHOG_INTERFACES_REF: v0.7.0 
+
+jobs:
+  interface-check:
+    runs-on: ubuntu-latest
+    concurrency:
+      group: interface-check-${{ github.ref }}
+      cancel-in-progress: true
+    steps:
+      - name: Checkout Astarte SDK
+        uses: actions/checkout@v4
+        with:
+          repository: secomind/astarte-device-sdk-zephyr
+          path: astarte-device-sdk-zephyr
+          ssh-key: ${{ secrets.SSH_EDGEHOG_DEVICE_ZEPHYR_PRIV_KEY }}
+      - name: Checkout Edgehog device
+        uses: actions/checkout@v4
+        with:
+          path: edgehog-zephyr-device
+      - name: Set CI manifest as defaults (edgehog)
+        working-directory: edgehog-zephyr-device
+        run: mv west-ci.yml west.yml
+      - name: Checkout Edgehog interfaces
+        uses: actions/checkout@v4
+        with:
+          repository: edgehog-device-manager/edgehog-astarte-interfaces
+          ref: ${{ env.EDGEHOG_INTERFACES_REF }}
+          path: edgehog-astarte-interfaces
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.11
+      - name: Setup Zephyr project
+        uses: zephyrproject-rtos/action-zephyr-setup@v1
+        with:
+          app-path: edgehog-zephyr-device
+          toolchains: x86_64-zephyr-elf
+      - name: Install Python dependencies edgehog
+        working-directory: edgehog-zephyr-device
+        run: pip install -r $PWD/scripts/requirements.txt
+      - name: Install Python dependencies astarte sdk
+        working-directory: astarte-device-sdk-zephyr
+        run: pip install -r $PWD/scripts/requirements.txt
+      - name: Copy supported interfaces to edgehog folder
+        working-directory: edgehog-astarte-interfaces
+        run: |
+          mkdir ../edgehog-zephyr-device/interfaces
+          cp io.edgehog.devicemanager.HardwareInfo.json \
+            io.edgehog.devicemanager.OSInfo.json \
+            ../edgehog-zephyr-device/interfaces
+      - name: Generate interfaces reference code
+        working-directory: edgehog-zephyr-device
+        run: west generate-interfaces -d interfaces interfaces
+      - name: Check interfaces difference
+        working-directory: edgehog-zephyr-device
+        run: |
+          if diff -w lib/edgehog_device/include/generated_interfaces.h interfaces/generated_interfaces.h &&
+             diff -w lib/edgehog_device/generated_interfaces.c interfaces/generated_interfaces.c; then
+            echo "Generated interfaces files are up to date"
+          else
+            echo "The generated interfaces files are different from the files generated from version $EDGEHOG_INTERFACES_REF of edgehog-astarte-interfaces"
+            exit 1
+          fi

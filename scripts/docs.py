@@ -53,6 +53,13 @@ class WestCommandDocs(WestCommand):
         parser.add_argument(
             "-c", "--clean", help="clean previous documentation", action="store_true"
         )
+        parser.add_argument(
+            "-e",
+            "--extended",
+            help="Generate an extended version of the documentation. "
+            "If active, the documentation will be generated also for private include files.",
+            action="store_true",
+        )
 
         return parser  # gets stored as self.parser
 
@@ -78,7 +85,11 @@ class WestCommandDocs(WestCommand):
                 cwd=module_path,
                 timeout=60,
                 check=True,
-                env=dict(os.environ, EDGEHOG_DEVICE_BASE=f"{module_path}"),
+                env=dict(
+                    os.environ,
+                    EDGEHOG_DEVICE_BASE=f"{module_path}",
+                    EDGEHOG_DEVICE_EXTENDED_DOCS="yes" if args.extended else "no",
+                ),
             )
         subprocess.run(
             "make -C doc doxygen",
@@ -86,5 +97,9 @@ class WestCommandDocs(WestCommand):
             cwd=module_path,
             timeout=60,
             check=True,
-            env=dict(os.environ, EDGEHOG_DEVICE_BASE=f"{module_path}"),
+            env=dict(
+                os.environ,
+                EDGEHOG_DEVICE_BASE=f"{module_path}",
+                EDGEHOG_DEVICE_EXTENDED_DOCS="yes" if args.extended else "no",
+            ),
         )
