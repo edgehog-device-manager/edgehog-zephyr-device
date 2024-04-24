@@ -6,6 +6,7 @@
 
 #include "edgehog_device/device.h"
 
+#include "base_image.h"
 #include "edgehog_device/result.h"
 #include "edgehog_private.h"
 #include "generated_interfaces.h"
@@ -128,6 +129,7 @@ static edgehog_result_t add_interfaces(astarte_device_handle_t device)
         &io_edgehog_devicemanager_SystemInfo,
         &io_edgehog_devicemanager_OTAEvent,
         &io_edgehog_devicemanager_OTARequest,
+        &io_edgehog_devicemanager_BaseImage,
     };
 
     int len = sizeof(interfaces) / sizeof(const astarte_interface_t *);
@@ -150,4 +152,5 @@ static void edgehog_initial_publish(edgehog_device_handle_t edgehog_device)
     publish_hardware_info(edgehog_device);
     publish_os_info(edgehog_device);
     publish_system_info(edgehog_device);
+    publish_base_image(edgehog_device);
 }
