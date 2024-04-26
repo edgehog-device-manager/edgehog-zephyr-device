@@ -16,6 +16,13 @@
 
 #include <astarte_device_sdk/device.h>
 
+/** @brief Major version number */
+#define EDGEHOG_DEVICE_MAJOR 0
+/** @brief Minor version number */
+#define EDGEHOG_DEVICE_MINOR 4
+/** @brief Patch version number */
+#define EDGEHOG_DEVICE_PATCH 99
+
 typedef struct edgehog_device_t *edgehog_device_handle_t;
 
 /**
