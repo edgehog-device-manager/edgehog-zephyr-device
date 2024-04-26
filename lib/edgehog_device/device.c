@@ -62,7 +62,7 @@ edgehog_result_t edgehog_device_new(
     astarte_uuid_t boot_id;
     astarte_uuid_generate_v4(boot_id);
     astarte_result_t astarte_result
-        = astarte_uuid_to_string(boot_id, edgehog_device->boot_id, ASTARTE_UUID_LEN);
+        = astarte_uuid_to_string(boot_id, edgehog_device->boot_id, ASTARTE_UUID_STR_LEN);
 
     if (astarte_result != ASTARTE_RESULT_OK) {
         EDGEHOG_LOG_ERR("Unable to generate edgehog boot id");
@@ -97,14 +97,38 @@ edgehog_result_t edgehog_device_start(edgehog_device_handle_t edgehog_device)
     return EDGEHOG_RESULT_OK;
 }
 
+void edgehog_device_datastream_object_events_handler(
+    edgehog_device_handle_t edgehog_device, astarte_device_datastream_object_event_t event)
+{
+    if (!edgehog_device) {
+        EDGEHOG_LOG_ERR("Unable to handle event, Edgehog device undefined");
+        return;
+    }
+
+    astarte_device_data_event_t rx_event = event.data_event;
+
+    if ((strcmp(rx_event.interface_name, io_edgehog_devicemanager_OTARequest.name) == 0)
+        && (strcmp(rx_event.path, "/request") == 0)) {
+        edgehog_result_t ota_result = edgehog_ota_event(edgehog_device, &event);
+        if (ota_result != EDGEHOG_RESULT_OK) {
+            EDGEHOG_LOG_ERR("Unable to handle OTA update request");
+        }
+    }
+}
+
 /************************************************
  * Static functions definition
  ***********************************************/
 
 static edgehog_result_t add_interfaces(astarte_device_handle_t device)
 {
-    const astarte_interface_t *const interfaces[] = { &io_edgehog_devicemanager_HardwareInfo,
-        &io_edgehog_devicemanager_OSInfo, &io_edgehog_devicemanager_SystemInfo };
+    const astarte_interface_t *const interfaces[] = {
+        &io_edgehog_devicemanager_HardwareInfo,
+        &io_edgehog_devicemanager_OSInfo,
+        &io_edgehog_devicemanager_SystemInfo,
+        &io_edgehog_devicemanager_OTAEvent,
+        &io_edgehog_devicemanager_OTARequest,
+    };
 
     int len = sizeof(interfaces) / sizeof(const astarte_interface_t *);
 
@@ -122,6 +146,7 @@ static edgehog_result_t add_interfaces(astarte_device_handle_t device)
 
 static void edgehog_initial_publish(edgehog_device_handle_t edgehog_device)
 {
+    edgehog_ota_init(edgehog_device);
     publish_hardware_info(edgehog_device);
     publish_os_info(edgehog_device);
     publish_system_info(edgehog_device);

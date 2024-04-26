@@ -75,8 +75,10 @@ jobs:
           cp io.edgehog.devicemanager.HardwareInfo.json \
             io.edgehog.devicemanager.OSInfo.json \
             io.edgehog.devicemanager.SystemInfo.json \
+            io.edgehog.devicemanager.OTAEvent.json \
+            io.edgehog.devicemanager.OTARequest.json \
             ../edgehog-zephyr-device/interfaces
-      - name: Generate interfaces reference code
+      - name: Generate interface reference code
         working-directory: edgehog-zephyr-device
         run: west generate-interfaces -d interfaces interfaces
       - name: Check interfaces difference

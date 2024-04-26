@@ -26,6 +26,7 @@ manifest:
           - hal_nxp
           - mbedtls
           - picolibc
+          - mcuboot
     - name: astarte-device-sdk-zephyr
       remote: secomind
       repo-path: astarte-device-sdk-zephyr.git

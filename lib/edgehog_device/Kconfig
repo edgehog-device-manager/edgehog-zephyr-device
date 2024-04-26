@@ -4,6 +4,14 @@
 
 config EDGEHOG_DEVICE
 	bool "Edgehog device library"
+	select ASTARTE_DEVICE_SDK
+	select NVS
+	select IMG_MANAGER
+	select FLASH
+	select FLASH_MAP
+	select FLASH_PAGE_LAYOUT
+	select STREAM_FLASH
+	select REBOOT
 	help
 	  This option enables the Edgehog device library
 
@@ -18,6 +26,49 @@ config EDGEHOG_DEVICE_PART_NUMBER
 	depends on EDGEHOG_DEVICE
 	help
 	  This changes the value passed as part of SystemInfo interface.
+config EDGEHOG_DEVICE_CA_CERT_OTA_TAG
+	int "CA root certificate TLS security tag for the OTA download URL"
+	depends on EDGEHOG_DEVICE
+	depends on !EDGEHOG_DEVICE_DEVELOP_DISABLE_OR_IGNORE_TLS
+	help
+	  The CA certificate should be added by the user with the tls_credential_add function.
+	  This configuration option should be set to the tag used when adding the CA certificate.
+
+config EDGEHOG_DEVICE_USE_EDGEHOG_PARTITION
+	bool "Enable edgehog_partition NVS partition label for edgehog storage"
+	depends on EDGEHOG_DEVICE
+	default false
+	help
+		Use this option to use edgehog_partition NVS partition for storing the edgehog data.
+		In order to use it, the board.dts must cointain the `edgehog_partion` node, 
+		or it must be provided by dts overlay.
+
+config EDGEHOG_DEVICE_ZBUS_OTA_EVENT
+	bool "Enable ZBus OTA channel for receiving OTA event"
+	depends on EDGEHOG_DEVICE
+	select ZBUS
+	default false
+	help
+		Enable this option to receive OTA events in a ZBus observers.
+		Receiving it in Subscriber(asynchronous), or Message subscribers(asynchronous),
+		is preferred over Listener (synchronous), because it is received
+		in a separate context of the publisher, without blocking the OTA thread.
+
+menu "Development options"
+
+config EDGEHOG_DEVICE_DEVELOP_DISABLE_OR_IGNORE_TLS
+	bool "Disable TLS for all sockets"
+	depends on EDGEHOG_DEVICE
+	default false
+	help
+	  Enable this option to connect to a local Edgehog instance.
+	  With this option enabled:
+	  - All HTTP(s) operations will be performed over an unsecure channel. Without TLS.
+	  	However, any error related the server certificate will be ignored.
+
+	  Should be used only for development purposes as it's highly unsafe.
+
+endmenu
 
 menu "Logging options"
 
@@ -39,6 +90,21 @@ source "subsys/logging/Kconfig.template.log_config"
 module = EDGEHOG_DEVICE_SYSTEM_INFO
 module-str = Log level for Edgehog device operating system informantions
 module-help = Sets log level for Edgehog device operating system informantions.
+source "subsys/logging/Kconfig.template.log_config"
+
+module = EDGEHOG_DEVICE_HTTP
+module-str = Log level for Edgehog device connectivity utilities
+module-help = Sets log level for Edgehog device connectivity utilities.
+source "subsys/logging/Kconfig.template.log_config"
+
+module = EDGEHOG_DEVICE_OTA
+module-str = Log level for Edgehog device OTA utilities
+module-help = Sets log level for Edgehog device OTA utilities.
+source "subsys/logging/Kconfig.template.log_config"
+
+module = EDGEHOG_DEVICE_NVS
+module-str = Log level for Edgehog device NVS utilities
+module-help = Sets log level for Edgehog device NVS utilities.
 source "subsys/logging/Kconfig.template.log_config"
 
 endmenu

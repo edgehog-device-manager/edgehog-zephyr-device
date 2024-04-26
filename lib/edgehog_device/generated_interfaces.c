@@ -96,6 +96,100 @@ const astarte_interface_t io_edgehog_devicemanager_OSInfo = {
     .mappings_length = 2U,
 };
 
+static const astarte_mapping_t io_edgehog_devicemanager_OTAEvent_mappings[5] = {
+
+    {
+        .endpoint = "/event/requestUUID",
+        .regex_endpoint = "/event/requestUUID",
+        .type = ASTARTE_MAPPING_TYPE_STRING,
+        .reliability = ASTARTE_MAPPING_RELIABILITY_UNIQUE,
+        .explicit_timestamp = true,
+        .allow_unset = false,
+    },
+    {
+        .endpoint = "/event/status",
+        .regex_endpoint = "/event/status",
+        .type = ASTARTE_MAPPING_TYPE_STRING,
+        .reliability = ASTARTE_MAPPING_RELIABILITY_UNIQUE,
+        .explicit_timestamp = true,
+        .allow_unset = false,
+    },
+    {
+        .endpoint = "/event/statusProgress",
+        .regex_endpoint = "/event/statusProgress",
+        .type = ASTARTE_MAPPING_TYPE_INTEGER,
+        .reliability = ASTARTE_MAPPING_RELIABILITY_UNIQUE,
+        .explicit_timestamp = true,
+        .allow_unset = false,
+    },
+    {
+        .endpoint = "/event/statusCode",
+        .regex_endpoint = "/event/statusCode",
+        .type = ASTARTE_MAPPING_TYPE_STRING,
+        .reliability = ASTARTE_MAPPING_RELIABILITY_UNIQUE,
+        .explicit_timestamp = true,
+        .allow_unset = false,
+    },
+    {
+        .endpoint = "/event/message",
+        .regex_endpoint = "/event/message",
+        .type = ASTARTE_MAPPING_TYPE_STRING,
+        .reliability = ASTARTE_MAPPING_RELIABILITY_UNIQUE,
+        .explicit_timestamp = true,
+        .allow_unset = false,
+    },
+};
+
+const astarte_interface_t io_edgehog_devicemanager_OTAEvent = {
+    .name = "io.edgehog.devicemanager.OTAEvent",
+    .major_version = 0,
+    .minor_version = 1,
+    .type = ASTARTE_INTERFACE_TYPE_DATASTREAM,
+    .ownership = ASTARTE_INTERFACE_OWNERSHIP_DEVICE,
+    .aggregation = ASTARTE_INTERFACE_AGGREGATION_OBJECT,
+    .mappings = io_edgehog_devicemanager_OTAEvent_mappings,
+    .mappings_length = 5U,
+};
+
+static const astarte_mapping_t io_edgehog_devicemanager_OTARequest_mappings[3] = {
+
+    {
+        .endpoint = "/request/operation",
+        .regex_endpoint = "/request/operation",
+        .type = ASTARTE_MAPPING_TYPE_STRING,
+        .reliability = ASTARTE_MAPPING_RELIABILITY_UNRELIABLE,
+        .explicit_timestamp = false,
+        .allow_unset = false,
+    },
+    {
+        .endpoint = "/request/url",
+        .regex_endpoint = "/request/url",
+        .type = ASTARTE_MAPPING_TYPE_STRING,
+        .reliability = ASTARTE_MAPPING_RELIABILITY_UNRELIABLE,
+        .explicit_timestamp = false,
+        .allow_unset = false,
+    },
+    {
+        .endpoint = "/request/uuid",
+        .regex_endpoint = "/request/uuid",
+        .type = ASTARTE_MAPPING_TYPE_STRING,
+        .reliability = ASTARTE_MAPPING_RELIABILITY_UNRELIABLE,
+        .explicit_timestamp = false,
+        .allow_unset = false,
+    },
+};
+
+const astarte_interface_t io_edgehog_devicemanager_OTARequest = {
+    .name = "io.edgehog.devicemanager.OTARequest",
+    .major_version = 1,
+    .minor_version = 0,
+    .type = ASTARTE_INTERFACE_TYPE_DATASTREAM,
+    .ownership = ASTARTE_INTERFACE_OWNERSHIP_SERVER,
+    .aggregation = ASTARTE_INTERFACE_AGGREGATION_OBJECT,
+    .mappings = io_edgehog_devicemanager_OTARequest_mappings,
+    .mappings_length = 3U,
+};
+
 static const astarte_mapping_t io_edgehog_devicemanager_SystemInfo_mappings[2] = {
 
     {
