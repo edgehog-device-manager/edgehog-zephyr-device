@@ -5,20 +5,23 @@
  */
 
 #include "edgehog_device/device.h"
+
 #include "edgehog_device/result.h"
 #include "edgehog_private.h"
+#include "generated_interfaces.h"
 #include "hardware_info.h"
+#include "log.h"
 #include "os_info.h"
+#include "system_info.h"
 
 #include <stdlib.h>
 
 #include <zephyr/kernel.h>
 
+#include <astarte_device_sdk/device.h>
 #include <astarte_device_sdk/interface.h>
 #include <astarte_device_sdk/uuid.h>
 
-#include "generated_interfaces.h"
-#include "log.h"
 EDGEHOG_LOG_MODULE_REGISTER(edgehog_device, CONFIG_EDGEHOG_DEVICE_DEVICE_LOG_LEVEL);
 
 /************************************************
@@ -100,10 +103,8 @@ edgehog_result_t edgehog_device_start(edgehog_device_handle_t edgehog_device)
 
 static edgehog_result_t add_interfaces(astarte_device_handle_t device)
 {
-    const astarte_interface_t *const interfaces[] = {
-        &io_edgehog_devicemanager_HardwareInfo,
-        &io_edgehog_devicemanager_OSInfo,
-    };
+    const astarte_interface_t *const interfaces[] = { &io_edgehog_devicemanager_HardwareInfo,
+        &io_edgehog_devicemanager_OSInfo, &io_edgehog_devicemanager_SystemInfo };
 
     int len = sizeof(interfaces) / sizeof(const astarte_interface_t *);
 
@@ -123,4 +124,5 @@ static void edgehog_initial_publish(edgehog_device_handle_t edgehog_device)
 {
     publish_hardware_info(edgehog_device);
     publish_os_info(edgehog_device);
+    publish_system_info(edgehog_device);
 }
