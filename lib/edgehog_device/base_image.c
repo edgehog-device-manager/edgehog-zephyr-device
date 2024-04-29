@@ -10,7 +10,6 @@
 #include "edgehog_private.h"
 #include "generated_interfaces.h"
 #include "log.h"
-#include "util.h"
 
 #include <app_version.h>
 
@@ -62,7 +61,9 @@ static void publish_fingerprint(edgehog_device_handle_t edgehog_device)
 #if defined(APP_BUILD_VERSION)
     const char *hash = STRINGIFY(APP_BUILD_VERSION);
 
-    if (check_empty_string_property(&io_edgehog_devicemanager_BaseImage, FINGERPRINT_PROP, hash)) {
+    if (strcmp(hash, "") == 0) {
+        EDGEHOG_LOG_WRN("The property '%s' of interface '%s' is empty", FINGERPRINT_PROP,
+            io_edgehog_devicemanager_BaseImage.name);
         return;
     }
 
@@ -79,8 +80,9 @@ static void publish_fingerprint(edgehog_device_handle_t edgehog_device)
 static void publish_name(edgehog_device_handle_t edgehog_device)
 {
 #if defined(CONFIG_KERNEL_BIN_NAME)
-    if (check_empty_string_property(
-            &io_edgehog_devicemanager_BaseImage, NAME_PROP, CONFIG_KERNEL_BIN_NAME)) {
+    if (strcmp(CONFIG_KERNEL_BIN_NAME, "") == 0) {
+        EDGEHOG_LOG_WRN("The property '%s' of interface '%s' is empty", NAME_PROP,
+            io_edgehog_devicemanager_BaseImage.name);
         return;
     }
 
@@ -98,8 +100,9 @@ static void publish_name(edgehog_device_handle_t edgehog_device)
 static void publish_version(edgehog_device_handle_t edgehog_device)
 {
 #if defined(APP_VERSION_STRING)
-    if (check_empty_string_property(
-            &io_edgehog_devicemanager_BaseImage, VERSION_PROP, APP_VERSION_STRING)) {
+    if (strcmp(APP_VERSION_STRING, "") == 0) {
+        EDGEHOG_LOG_WRN("The property '%s' of interface '%s' is empty", VERSION_PROP,
+            io_edgehog_devicemanager_BaseImage.name);
         return;
     }
 
@@ -117,8 +120,9 @@ static void publish_version(edgehog_device_handle_t edgehog_device)
 static void publish_build_id(edgehog_device_handle_t edgehog_device)
 {
 #if defined(CMAKE_BUILD_DATE_TIME)
-    if (check_empty_string_property(
-            &io_edgehog_devicemanager_BaseImage, BUILD_ID_PROP, CMAKE_BUILD_DATE_TIME)) {
+    if (strcmp(CMAKE_BUILD_DATE_TIME, "") == 0) {
+        EDGEHOG_LOG_WRN("The property '%s' of interface '%s' is empty", BUILD_ID_PROP,
+            io_edgehog_devicemanager_BaseImage.name);
         return;
     }
 

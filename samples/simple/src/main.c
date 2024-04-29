@@ -29,6 +29,8 @@ LOG_MODULE_REGISTER(simple_main); // NOLINT
  * Constants and defines
  ***********************************************/
 
+#define POLL_PERIOD_MS 100
+
 #define HTTP_TIMEOUT_MS (3 * MSEC_PER_SEC)
 #define MQTT_FIRST_POLL_TIMEOUT_MS (3 * MSEC_PER_SEC)
 #define MQTT_POLL_TIMEOUT_MS 200
@@ -156,7 +158,11 @@ int main(void)
         K_HIGHEST_APPLICATION_THREAD_PRIO, K_NO_WAIT);
 
     while (astarte_result == ASTARTE_RESULT_OK || astarte_result == ASTARTE_RESULT_TIMEOUT) {
+        k_timepoint_t timepoint = sys_timepoint_calc(K_MSEC(POLL_PERIOD_MS));
+
         astarte_result = astarte_device_poll(astarte_device);
+
+        k_sleep(sys_timepoint_timeout(timepoint));
     }
 
     LOG_ERR("Astarte device poll failure. %d -> %s", astarte_result, // NOLINT

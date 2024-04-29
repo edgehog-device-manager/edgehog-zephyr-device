@@ -18,6 +18,7 @@
 #include <stdlib.h>
 
 #include <zephyr/kernel.h>
+#include <zephyr/sys/util.h>
 
 #include <astarte_device_sdk/device.h>
 #include <astarte_device_sdk/interface.h>
@@ -63,7 +64,7 @@ edgehog_result_t edgehog_device_new(
     astarte_uuid_t boot_id;
     astarte_uuid_generate_v4(boot_id);
     astarte_result_t astarte_result
-        = astarte_uuid_to_string(boot_id, edgehog_device->boot_id, ASTARTE_UUID_STR_LEN);
+        = astarte_uuid_to_string(boot_id, edgehog_device->boot_id, ASTARTE_UUID_STR_LEN + 1);
 
     if (astarte_result != ASTARTE_RESULT_OK) {
         EDGEHOG_LOG_ERR("Unable to generate edgehog boot id");
@@ -132,9 +133,7 @@ static edgehog_result_t add_interfaces(astarte_device_handle_t device)
         &io_edgehog_devicemanager_BaseImage,
     };
 
-    int len = sizeof(interfaces) / sizeof(const astarte_interface_t *);
-
-    for (int i = 0; i < len; i++) {
+    for (int i = 0; i < ARRAY_SIZE(interfaces); i++) {
         astarte_result_t ret = astarte_device_add_interface(device, interfaces[i]);
         if (ret != ASTARTE_RESULT_OK) {
             EDGEHOG_LOG_ERR(
