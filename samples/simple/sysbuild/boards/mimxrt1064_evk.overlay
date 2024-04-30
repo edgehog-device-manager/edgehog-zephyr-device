@@ -1,0 +1,13 @@
+/*
+ * (C) Copyright 2024, SECO Mind Srl
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+ 
+#include "../../boards/mimxrt1064_evk.overlay"
+
+/ {
+	chosen {
+		zephyr,code-partition = &boot_partition;
+	};
+};

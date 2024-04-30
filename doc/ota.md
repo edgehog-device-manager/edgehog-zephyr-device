@@ -23,7 +23,9 @@ These partitions are:
 - `slot0_partition`: the primary slot of Image 0
 - `slot1_partition`: the secondary slot of Image 0
 
-A portion of the flash memory can be partitioned into multiple image areas, each contains two image slots, a primary slot and a secondary slot. Normally, the bootloader will only run an image from the primary slot, so images must be built such that they can run from that fixed location in flash. If the bootloader needs to run the image resident in the secondary slot, it must copy its contents into the primary slot before doing so, either by swapping the two images or by overwriting the contents of the primary slot.
+A portion of the flash memory can be partitioned into multiple image areas, each contains two image slots, a primary slot and a secondary slot. Normally, the bootloader will only run an image from the primary slot, so images must be built such that they can run from that fixed location in flash. If the bootloader needs to run the image resident in the secondary slot, it must copy its contents into the primary slot by overwriting the contents of the primary slot.
+
+Currently we use Mcuboot with `BOOT_UPGRADE_ONLY` enabled, this option overwrite the primary slot with the upgrade image instead of swapping them. This prevents the fallback recovery, but uses a much simpler code path. 
 
 ## Signing the application
 In order to upgrade to an image, images must be signed. To make development easier, MCUboot is distributed with some example keys.
