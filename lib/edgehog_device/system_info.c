@@ -54,6 +54,12 @@ void publish_system_info(edgehog_device_handle_t edgehog_device)
 static void publish_serial_number(edgehog_device_handle_t edgehog_device)
 {
 #if defined(CONFIG_EDGEHOG_DEVICE_SERIAL_NUMBER)
+    if (strcmp(CONFIG_EDGEHOG_DEVICE_SERIAL_NUMBER, "") == 0) {
+        EDGEHOG_LOG_WRN("The property '%s' of interface '%s' is empty", SERIAL_NUMBER_PROP,
+            io_edgehog_devicemanager_SystemInfo.name);
+        return;
+    }
+
     astarte_result_t res = astarte_device_set_property(edgehog_device->astarte_device,
         io_edgehog_devicemanager_SystemInfo.name, SERIAL_NUMBER_PROP,
         astarte_value_from_string(CONFIG_EDGEHOG_DEVICE_SERIAL_NUMBER));
@@ -68,6 +74,12 @@ static void publish_serial_number(edgehog_device_handle_t edgehog_device)
 static void publish_part_number(edgehog_device_handle_t edgehog_device)
 {
 #if defined(CONFIG_EDGEHOG_DEVICE_PART_NUMBER)
+    if (strcmp(CONFIG_EDGEHOG_DEVICE_PART_NUMBER, "") == 0) {
+        EDGEHOG_LOG_WRN("The property '%s' of interface '%s' is empty", PART_NUMBER_PROP,
+            io_edgehog_devicemanager_SystemInfo.name);
+        return;
+    }
+
     astarte_result_t res = astarte_device_set_property(edgehog_device->astarte_device,
         io_edgehog_devicemanager_SystemInfo.name, PART_NUMBER_PROP,
         astarte_value_from_string(CONFIG_EDGEHOG_DEVICE_PART_NUMBER));

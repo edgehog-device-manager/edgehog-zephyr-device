@@ -22,6 +22,7 @@ The following information is sent to the remote Edgehog instance:
 - Hardware info
 - System info
 - [OTA update using Mcuboot](doc/ota.md)
+- Base image
 
 ### Adding the module as a dependency to an application
 

@@ -17,6 +17,7 @@
 
 // Interface names should resemble as closely as possible their respective .json file names.
 // NOLINTBEGIN(readability-identifier-naming)
+extern const astarte_interface_t io_edgehog_devicemanager_BaseImage;
 extern const astarte_interface_t io_edgehog_devicemanager_HardwareInfo;
 extern const astarte_interface_t io_edgehog_devicemanager_OSInfo;
 extern const astarte_interface_t io_edgehog_devicemanager_OTAEvent;

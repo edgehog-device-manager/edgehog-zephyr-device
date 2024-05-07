@@ -10,6 +10,53 @@
 // Interface names should resemble as closely as possible their respective .json file names.
 // NOLINTBEGIN(readability-identifier-naming)
 
+static const astarte_mapping_t io_edgehog_devicemanager_BaseImage_mappings[4] = {
+
+    {
+        .endpoint = "/fingerprint",
+        .regex_endpoint = "/fingerprint",
+        .type = ASTARTE_MAPPING_TYPE_STRING,
+        .reliability = ASTARTE_MAPPING_RELIABILITY_UNIQUE,
+        .explicit_timestamp = false,
+        .allow_unset = false,
+    },
+    {
+        .endpoint = "/name",
+        .regex_endpoint = "/name",
+        .type = ASTARTE_MAPPING_TYPE_STRING,
+        .reliability = ASTARTE_MAPPING_RELIABILITY_UNIQUE,
+        .explicit_timestamp = false,
+        .allow_unset = false,
+    },
+    {
+        .endpoint = "/version",
+        .regex_endpoint = "/version",
+        .type = ASTARTE_MAPPING_TYPE_STRING,
+        .reliability = ASTARTE_MAPPING_RELIABILITY_UNIQUE,
+        .explicit_timestamp = false,
+        .allow_unset = false,
+    },
+    {
+        .endpoint = "/buildId",
+        .regex_endpoint = "/buildId",
+        .type = ASTARTE_MAPPING_TYPE_STRING,
+        .reliability = ASTARTE_MAPPING_RELIABILITY_UNIQUE,
+        .explicit_timestamp = false,
+        .allow_unset = false,
+    },
+};
+
+const astarte_interface_t io_edgehog_devicemanager_BaseImage = {
+    .name = "io.edgehog.devicemanager.BaseImage",
+    .major_version = 0,
+    .minor_version = 1,
+    .type = ASTARTE_INTERFACE_TYPE_PROPERTIES,
+    .ownership = ASTARTE_INTERFACE_OWNERSHIP_DEVICE,
+    .aggregation = ASTARTE_INTERFACE_AGGREGATION_INDIVIDUAL,
+    .mappings = io_edgehog_devicemanager_BaseImage_mappings,
+    .mappings_length = 4U,
+};
+
 static const astarte_mapping_t io_edgehog_devicemanager_HardwareInfo_mappings[5] = {
 
     {
