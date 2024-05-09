@@ -75,3 +75,17 @@ The `sysbuild/mcuboot.conf` file will be used as an extra fragment that is merge
 
 `sysbuild/mcuboot.conf` adjusts the log level in MCUboot, as well as configures MCUboot to prevent downgrades and operate in upgrade-only mode.
 
+Use ``--sysbuild`` to select the `sysbuild` build infrastructure with `west build` to build multiple domains.
+
+**_Note:_**
+By default, sysbuild use the `app.overlay` from MCUboot folder, so if you want MCUboot to use your board's overlay file, you can pass `mcuboot_DTC_OVERLAY_FILE` parameter to `west build`.
+
+```
+west build -b mimxrt1064_evk --sysbuild samples/simple -Dmcuboot_DTC_OVERLAY_FILE=${PWD}/samples/simple/boards/mimxrt1064_evk.overlay
+```
+
+Or you can put your board overlay file in the `sysbuild/boards` directory, and this parameter was automatically added by `sysbuild.cmake` contained in this sample.
+
+```
+west build -b mimxrt1064_evk --sysbuild samples/simple
+```

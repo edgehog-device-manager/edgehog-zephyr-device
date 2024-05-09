@@ -23,6 +23,8 @@ LOG_MODULE_REGISTER(simple_main); // NOLINT
 
 #if defined(CONFIG_WIFI)
 #include "wifi.h"
+#else
+#include "eth.h"
 #endif
 
 /************************************************
@@ -38,7 +40,6 @@ LOG_MODULE_REGISTER(simple_main); // NOLINT
 #define DEVICE_OPERATIONAL_TIME_MS (15 * SEC_PER_MIN * MSEC_PER_SEC)
 
 #define EDGEHOG_STACK_SIZE 8196
-#define EDEGEHOG_STATE_RUN_BIT (1)
 
 K_THREAD_STACK_DEFINE(edgehog_thread_stack, EDGEHOG_STACK_SIZE);
 static struct k_thread edgehog_thread_data;
@@ -90,6 +91,12 @@ int main(void)
     LOG_INF("Initializing WiFi driver."); // NOLINT
     wifi_init();
     k_sleep(K_SECONDS(5)); // sleep for 5 seconds
+#else
+    LOG_INF("Initializing Ethernet driver."); // NOLINT
+    if (eth_connect() != 0) {
+        LOG_ERR("Connectivity intialization failed!"); // NOLINT
+        return -1;
+    }
 #endif
 
 #if !defined(CONFIG_ASTARTE_DEVICE_SDK_DEVELOP_DISABLE_OR_IGNORE_TLS)
@@ -161,6 +168,9 @@ int main(void)
         k_timepoint_t timepoint = sys_timepoint_calc(K_MSEC(POLL_PERIOD_MS));
 
         astarte_result = astarte_device_poll(astarte_device);
+#ifndef CONFIG_WIFI
+        eth_poll();
+#endif
 
         k_sleep(sys_timepoint_timeout(timepoint));
     }
