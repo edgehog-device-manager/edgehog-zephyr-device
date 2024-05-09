@@ -122,4 +122,9 @@ module-str = Log level for Edgehog device Command utilities
 module-help = Sets log level for Edgehog device Command utilities.
 source "subsys/logging/Kconfig.template.log_config"
 
+module = EDGEHOG_DEVICE_RUNTIME_INFO
+module-str = Log level for Edgehog device Runtime informantions
+module-help = Sets log level for Edgehog device Runtime informantions.
+source "subsys/logging/Kconfig.template.log_config"
+
 endmenu

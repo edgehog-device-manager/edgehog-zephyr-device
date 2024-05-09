@@ -260,6 +260,53 @@ const astarte_interface_t io_edgehog_devicemanager_OTARequest = {
     .mappings_length = 3U,
 };
 
+static const astarte_mapping_t io_edgehog_devicemanager_RuntimeInfo_mappings[4] = {
+
+    {
+        .endpoint = "/name",
+        .regex_endpoint = "/name",
+        .type = ASTARTE_MAPPING_TYPE_STRING,
+        .reliability = ASTARTE_MAPPING_RELIABILITY_UNIQUE,
+        .explicit_timestamp = false,
+        .allow_unset = false,
+    },
+    {
+        .endpoint = "/url",
+        .regex_endpoint = "/url",
+        .type = ASTARTE_MAPPING_TYPE_STRING,
+        .reliability = ASTARTE_MAPPING_RELIABILITY_UNIQUE,
+        .explicit_timestamp = false,
+        .allow_unset = false,
+    },
+    {
+        .endpoint = "/version",
+        .regex_endpoint = "/version",
+        .type = ASTARTE_MAPPING_TYPE_STRING,
+        .reliability = ASTARTE_MAPPING_RELIABILITY_UNIQUE,
+        .explicit_timestamp = false,
+        .allow_unset = false,
+    },
+    {
+        .endpoint = "/environment",
+        .regex_endpoint = "/environment",
+        .type = ASTARTE_MAPPING_TYPE_STRING,
+        .reliability = ASTARTE_MAPPING_RELIABILITY_UNIQUE,
+        .explicit_timestamp = false,
+        .allow_unset = false,
+    },
+};
+
+const astarte_interface_t io_edgehog_devicemanager_RuntimeInfo = {
+    .name = "io.edgehog.devicemanager.RuntimeInfo",
+    .major_version = 0,
+    .minor_version = 1,
+    .type = ASTARTE_INTERFACE_TYPE_PROPERTIES,
+    .ownership = ASTARTE_INTERFACE_OWNERSHIP_DEVICE,
+    .aggregation = ASTARTE_INTERFACE_AGGREGATION_INDIVIDUAL,
+    .mappings = io_edgehog_devicemanager_RuntimeInfo_mappings,
+    .mappings_length = 4U,
+};
+
 static const astarte_mapping_t io_edgehog_devicemanager_SystemInfo_mappings[2] = {
 
     {
