@@ -78,6 +78,14 @@ static void edgehog_thread_entry_point(void *device_handle, void *unused1, void 
  */
 static void datastream_object_events_handler(astarte_device_datastream_object_event_t event);
 
+/**
+ * @brief Handler for astarte datastream individual event.
+ *
+ * @param event Astarte device datastream individual event pointer.
+ */
+static void datastream_individual_events_handler(
+    astarte_device_datastream_individual_event_t event);
+
 // NOLINTNEXTLINE(hicpp-function-size)
 int main(void)
 {
@@ -123,6 +131,7 @@ int main(void)
     astarte_device_config.connection_cbk = astarte_connection_events_handler;
     astarte_device_config.disconnection_cbk = astarte_disconnection_events_handler;
     astarte_device_config.datastream_object_cbk = datastream_object_events_handler;
+    astarte_device_config.datastream_individual_cbk = datastream_individual_events_handler;
     astarte_device_config.cbk_user_data = &edgehog_device;
 
     memcpy(astarte_device_config.cred_secr, cred_secr, sizeof(cred_secr));
@@ -256,6 +265,14 @@ static void datastream_object_events_handler(astarte_device_datastream_object_ev
         = (edgehog_device_handle_t *) event.data_event.user_data;
 
     edgehog_device_datastream_object_events_handler(*edgehog_device, event);
+}
+
+static void datastream_individual_events_handler(astarte_device_datastream_individual_event_t event)
+{
+    edgehog_device_handle_t *edgehog_device
+        = (edgehog_device_handle_t *) event.data_event.user_data;
+
+    edgehog_device_datastream_individual_events_handler(*edgehog_device, event);
 }
 
 static void astarte_disconnection_events_handler(astarte_device_disconnection_event_t event)

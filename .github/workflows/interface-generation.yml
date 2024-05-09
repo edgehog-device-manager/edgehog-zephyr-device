@@ -78,6 +78,7 @@ jobs:
             io.edgehog.devicemanager.OTAEvent.json \
             io.edgehog.devicemanager.OTARequest.json \
             io.edgehog.devicemanager.BaseImage.json \
+            io.edgehog.devicemanager.Commands.json \
             ../edgehog-zephyr-device/interfaces
       - name: Generate interface reference code
         working-directory: edgehog-zephyr-device

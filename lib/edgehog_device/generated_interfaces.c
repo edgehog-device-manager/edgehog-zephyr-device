@@ -57,6 +57,29 @@ const astarte_interface_t io_edgehog_devicemanager_BaseImage = {
     .mappings_length = 4U,
 };
 
+static const astarte_mapping_t io_edgehog_devicemanager_Commands_mappings[1] = {
+
+    {
+        .endpoint = "/request",
+        .regex_endpoint = "/request",
+        .type = ASTARTE_MAPPING_TYPE_STRING,
+        .reliability = ASTARTE_MAPPING_RELIABILITY_UNIQUE,
+        .explicit_timestamp = true,
+        .allow_unset = false,
+    },
+};
+
+const astarte_interface_t io_edgehog_devicemanager_Commands = {
+    .name = "io.edgehog.devicemanager.Commands",
+    .major_version = 0,
+    .minor_version = 1,
+    .type = ASTARTE_INTERFACE_TYPE_DATASTREAM,
+    .ownership = ASTARTE_INTERFACE_OWNERSHIP_SERVER,
+    .aggregation = ASTARTE_INTERFACE_AGGREGATION_INDIVIDUAL,
+    .mappings = io_edgehog_devicemanager_Commands_mappings,
+    .mappings_length = 1U,
+};
+
 static const astarte_mapping_t io_edgehog_devicemanager_HardwareInfo_mappings[5] = {
 
     {
