@@ -23,6 +23,8 @@ The following information is sent to the remote Edgehog instance:
 - System info
 - [OTA update using Mcuboot](doc/ota.md)
 - Base image
+- Runtime info and Zephyr version
+- Reboot command
 
 ### Adding the module as a dependency to an application
 
