@@ -79,7 +79,7 @@ void edgehog_ota_init(edgehog_device_handle_t edgehog_dev);
  * new task to perform the OTA update.
  *
  * @param edgehog_dev A valid Edgehog device handle.
- * @param event_request A valid Astarte datastream object event.
+ * @param object_event A valid Astarte datastream object event.
  *
  * @return EDGEHOG_RESULT_OK if the OTA event is handled successfully, an edgehog_result_t
  * otherwise.

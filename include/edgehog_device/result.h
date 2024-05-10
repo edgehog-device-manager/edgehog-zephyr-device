@@ -61,6 +61,8 @@ typedef enum
     EDGEHOG_RESULT_DEVICE_NOT_READY = 18,
     /** @brief k_thread_create was unable to spawn a new task. */
     EDGEHOG_RESULT_THREAD_CREATE_ERROR = 19,
+    /** @brief Invalid Command request received. */
+    EDGEHOG_RESULT_COMMAND_INVALID_REQUEST = 20,
 } edgehog_result_t;
 
 #endif // EDGEHOG_DEVICE_RESULT_H

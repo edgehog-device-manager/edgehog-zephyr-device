@@ -7,6 +7,7 @@
 #include "edgehog_device/device.h"
 
 #include "base_image.h"
+#include "command.h"
 #include "edgehog_device/result.h"
 #include "edgehog_private.h"
 #include "generated_interfaces.h"
@@ -118,6 +119,25 @@ void edgehog_device_datastream_object_events_handler(
     }
 }
 
+void edgehog_device_datastream_individual_events_handler(
+    edgehog_device_handle_t edgehog_device, astarte_device_datastream_individual_event_t event)
+{
+    if (!edgehog_device) {
+        EDGEHOG_LOG_ERR("Unable to handle event, Edgehog device undefined");
+        return;
+    }
+
+    astarte_device_data_event_t rx_event = event.data_event;
+
+    if ((strcmp(rx_event.interface_name, io_edgehog_devicemanager_Commands.name) == 0)
+        && (strcmp(rx_event.path, "/request") == 0)) {
+        edgehog_result_t ota_result = edgehog_command_event(&event);
+        if (ota_result != EDGEHOG_RESULT_OK) {
+            EDGEHOG_LOG_ERR("Unable to handle Command request");
+        }
+    }
+}
+
 /************************************************
  * Static functions definition
  ***********************************************/
@@ -131,6 +151,7 @@ static edgehog_result_t add_interfaces(astarte_device_handle_t device)
         &io_edgehog_devicemanager_OTAEvent,
         &io_edgehog_devicemanager_OTARequest,
         &io_edgehog_devicemanager_BaseImage,
+        &io_edgehog_devicemanager_Commands,
     };
 
     for (int i = 0; i < ARRAY_SIZE(interfaces); i++) {
