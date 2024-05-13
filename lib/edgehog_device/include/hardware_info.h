@@ -20,6 +20,15 @@ extern "C" {
 
 void publish_hardware_info(edgehog_device_handle_t edgehog_device);
 
+/**
+ * @brief get memory size.
+ *
+ * @param memory_size A valid size_t handle.
+ *
+ * @return true if the memory is found successfully in the device-tree, false otherwise.
+ */
+bool hardware_info_get_memory_size(size_t *const memory_size);
+
 #ifdef __cplusplus
 }
 #endif

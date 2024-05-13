@@ -59,5 +59,38 @@ void publish_hardware_info(edgehog_device_handle_t edgehog_device)
         return;
     }
 #endif
-    // TODO Add /mem/totalBytes for harware_info intarface
+
+    size_t memory_size = 0;
+
+    if (hardware_info_get_memory_size(&memory_size)) {
+        res = astarte_device_set_property(edgehog_device->astarte_device,
+            io_edgehog_devicemanager_HardwareInfo.name, "/mem/totalBytes",
+            astarte_value_from_longinteger(memory_size));
+        if (res != ASTARTE_RESULT_OK) {
+            EDGEHOG_LOG_ERR("Unable to publish /mem/totalBytes");
+            return;
+        }
+    }
+}
+
+bool hardware_info_get_memory_size(size_t *const memory_size)
+{
+    if (!memory_size) {
+        EDGEHOG_LOG_ERR("reg_size provided is not valid");
+        return false;
+    }
+
+    *memory_size = 0;
+    bool found = false;
+
+#if DT_HAS_CHOSEN(zephyr_sram)
+    *memory_size = DT_REG_SIZE(DT_CHOSEN(zephyr_sram));
+    found = true;
+#endif
+#if DT_NODE_HAS_PROP(DT_NODELABEL(psram0), reg)
+    *memory_size = *memory_size + DT_REG_SIZE(DT_NODELABEL(psram0));
+    found = true;
+#endif
+
+    return found;
 }

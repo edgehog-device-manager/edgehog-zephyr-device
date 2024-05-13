@@ -80,6 +80,7 @@ jobs:
             io.edgehog.devicemanager.BaseImage.json \
             io.edgehog.devicemanager.Commands.json \
             io.edgehog.devicemanager.RuntimeInfo.json \
+            io.edgehog.devicemanager.SystemStatus.json \
             ../edgehog-zephyr-device/interfaces
       - name: Generate interface reference code
         working-directory: edgehog-zephyr-device

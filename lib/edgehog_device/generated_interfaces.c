@@ -338,4 +338,51 @@ const astarte_interface_t io_edgehog_devicemanager_SystemInfo = {
     .mappings_length = 2U,
 };
 
+static const astarte_mapping_t io_edgehog_devicemanager_SystemStatus_mappings[4] = {
+
+    {
+        .endpoint = "/systemStatus/availMemoryBytes",
+        .regex_endpoint = "/systemStatus/availMemoryBytes",
+        .type = ASTARTE_MAPPING_TYPE_LONGINTEGER,
+        .reliability = ASTARTE_MAPPING_RELIABILITY_UNRELIABLE,
+        .explicit_timestamp = true,
+        .allow_unset = false,
+    },
+    {
+        .endpoint = "/systemStatus/bootId",
+        .regex_endpoint = "/systemStatus/bootId",
+        .type = ASTARTE_MAPPING_TYPE_STRING,
+        .reliability = ASTARTE_MAPPING_RELIABILITY_UNRELIABLE,
+        .explicit_timestamp = true,
+        .allow_unset = false,
+    },
+    {
+        .endpoint = "/systemStatus/taskCount",
+        .regex_endpoint = "/systemStatus/taskCount",
+        .type = ASTARTE_MAPPING_TYPE_INTEGER,
+        .reliability = ASTARTE_MAPPING_RELIABILITY_UNRELIABLE,
+        .explicit_timestamp = true,
+        .allow_unset = false,
+    },
+    {
+        .endpoint = "/systemStatus/uptimeMillis",
+        .regex_endpoint = "/systemStatus/uptimeMillis",
+        .type = ASTARTE_MAPPING_TYPE_LONGINTEGER,
+        .reliability = ASTARTE_MAPPING_RELIABILITY_UNRELIABLE,
+        .explicit_timestamp = true,
+        .allow_unset = false,
+    },
+};
+
+const astarte_interface_t io_edgehog_devicemanager_SystemStatus = {
+    .name = "io.edgehog.devicemanager.SystemStatus",
+    .major_version = 0,
+    .minor_version = 1,
+    .type = ASTARTE_INTERFACE_TYPE_DATASTREAM,
+    .ownership = ASTARTE_INTERFACE_OWNERSHIP_DEVICE,
+    .aggregation = ASTARTE_INTERFACE_AGGREGATION_OBJECT,
+    .mappings = io_edgehog_devicemanager_SystemStatus_mappings,
+    .mappings_length = 4U,
+};
+
 // NOLINTEND(readability-identifier-naming)
