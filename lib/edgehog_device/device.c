@@ -15,6 +15,7 @@
 #include "log.h"
 #include "os_info.h"
 #include "runtime_info.h"
+#include "storage_usage.h"
 #include "system_info.h"
 #include "system_status.h"
 
@@ -156,6 +157,7 @@ static edgehog_result_t add_interfaces(astarte_device_handle_t device)
         &io_edgehog_devicemanager_Commands,
         &io_edgehog_devicemanager_RuntimeInfo,
         &io_edgehog_devicemanager_SystemStatus,
+        &io_edgehog_devicemanager_StorageUsage,
     };
 
     for (int i = 0; i < ARRAY_SIZE(interfaces); i++) {
@@ -179,4 +181,5 @@ static void edgehog_initial_publish(edgehog_device_handle_t edgehog_device)
     publish_base_image(edgehog_device);
     publish_runtime_info(edgehog_device);
     publish_system_status(edgehog_device);
+    publish_storage_usage(edgehog_device);
 }

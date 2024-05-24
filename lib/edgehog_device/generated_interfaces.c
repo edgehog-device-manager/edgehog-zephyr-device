@@ -307,6 +307,37 @@ const astarte_interface_t io_edgehog_devicemanager_RuntimeInfo = {
     .mappings_length = 4U,
 };
 
+static const astarte_mapping_t io_edgehog_devicemanager_StorageUsage_mappings[2] = {
+
+    {
+        .endpoint = "/%{label}/totalBytes",
+        .regex_endpoint = "/[a-zA-Z_][a-zA-Z0-9_]*/totalBytes",
+        .type = ASTARTE_MAPPING_TYPE_LONGINTEGER,
+        .reliability = ASTARTE_MAPPING_RELIABILITY_UNRELIABLE,
+        .explicit_timestamp = true,
+        .allow_unset = false,
+    },
+    {
+        .endpoint = "/%{label}/freeBytes",
+        .regex_endpoint = "/[a-zA-Z_][a-zA-Z0-9_]*/freeBytes",
+        .type = ASTARTE_MAPPING_TYPE_LONGINTEGER,
+        .reliability = ASTARTE_MAPPING_RELIABILITY_UNRELIABLE,
+        .explicit_timestamp = true,
+        .allow_unset = false,
+    },
+};
+
+const astarte_interface_t io_edgehog_devicemanager_StorageUsage = {
+    .name = "io.edgehog.devicemanager.StorageUsage",
+    .major_version = 0,
+    .minor_version = 1,
+    .type = ASTARTE_INTERFACE_TYPE_DATASTREAM,
+    .ownership = ASTARTE_INTERFACE_OWNERSHIP_DEVICE,
+    .aggregation = ASTARTE_INTERFACE_AGGREGATION_OBJECT,
+    .mappings = io_edgehog_devicemanager_StorageUsage_mappings,
+    .mappings_length = 2U,
+};
+
 static const astarte_mapping_t io_edgehog_devicemanager_SystemInfo_mappings[2] = {
 
     {
