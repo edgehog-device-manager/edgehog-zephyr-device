@@ -127,4 +127,9 @@ module-str = Log level for Edgehog device Runtime informantions
 module-help = Sets log level for Edgehog device Runtime informantions.
 source "subsys/logging/Kconfig.template.log_config"
 
+module = EDGEHOG_DEVICE_SYSTEM_STATUS
+module-str = Log level for Edgehog device System status informantions
+module-help = Sets log level for Edgehog device System status informantions.
+source "subsys/logging/Kconfig.template.log_config"
+
 endmenu

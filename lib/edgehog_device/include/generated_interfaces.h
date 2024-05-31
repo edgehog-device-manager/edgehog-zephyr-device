@@ -25,6 +25,7 @@ extern const astarte_interface_t io_edgehog_devicemanager_OTAEvent;
 extern const astarte_interface_t io_edgehog_devicemanager_OTARequest;
 extern const astarte_interface_t io_edgehog_devicemanager_RuntimeInfo;
 extern const astarte_interface_t io_edgehog_devicemanager_SystemInfo;
+extern const astarte_interface_t io_edgehog_devicemanager_SystemStatus;
 // NOLINTEND(readability-identifier-naming)
 
 #endif /* GENERATED_INTERFACES_H */
