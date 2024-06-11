@@ -26,6 +26,7 @@ The following information is sent to the remote Edgehog instance:
 - Runtime info and Zephyr version
 - Reboot command
 - System status
+- Storage usage
 
 ### Adding the module as a dependency to an application
 

@@ -4,12 +4,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#ifndef SYSTEM_INFO_H
-#define SYSTEM_INFO_H
+#ifndef STORAGE_USAGE_H
+#define STORAGE_USAGE_H
 
 /**
- * @file system_info.h
- * @brief Operating System info API
+ * @file storage_usage.h
+ * @brief Storage usageS API
  */
 
 #include "edgehog_device/device.h"
@@ -18,10 +18,10 @@
 extern "C" {
 #endif
 
-void publish_system_info(edgehog_device_handle_t edgehog_device);
+void publish_storage_usage(edgehog_device_handle_t edgehog_device);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif // SYSTEM_INFO_H
+#endif // STORAGE_USAGE_H

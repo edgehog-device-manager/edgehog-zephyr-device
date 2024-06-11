@@ -132,4 +132,9 @@ module-str = Log level for Edgehog device System status informantions
 module-help = Sets log level for Edgehog device System status informantions.
 source "subsys/logging/Kconfig.template.log_config"
 
+module = EDGEHOG_DEVICE_STORAGE_USAGE
+module-str = Log level for Edgehog device Storage usage informantions
+module-help = Sets log level for Edgehog device Storage usage informantions.
+source "subsys/logging/Kconfig.template.log_config"
+
 endmenu

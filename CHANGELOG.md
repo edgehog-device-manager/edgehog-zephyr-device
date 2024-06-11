@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [Unreleased]
 ### Added
 - Add support for `io.edgehog.devicemanager.SystemStatus` interface.
+- Add support for `io.edgehog.devicemanager.StorageUsage` interface.
 
 ## [0.5.0] - 2024-05-13
 ### Added
