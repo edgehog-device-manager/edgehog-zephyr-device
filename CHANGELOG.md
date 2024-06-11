@@ -14,11 +14,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Add support for `io.edgehog.devicemanager.SystemStatus` interface.
 - Add support for `io.edgehog.devicemanager.StorageUsage` interface.
 
+### Changed
+- Updated the Astarte device SDK to `v0.6.0`.
+
 ## [0.5.0] - 2024-05-13
 ### Added
 - Add support for `io.edgehog.devicemanager.BaseImage` interface.
 - Add support for `io.edgehog.devicemanager.Commands`. interface.
-- Add support for `io.edgehog.devicemanager.RuntimeInfo` interface. 
+- Add support for `io.edgehog.devicemanager.RuntimeInfo` interface.
 
 ## [0.5.0-alpha] - 2024-04-26
 ### Added

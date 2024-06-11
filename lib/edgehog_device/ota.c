@@ -234,24 +234,24 @@ edgehog_result_t edgehog_ota_event(
         return EDGEHOG_RESULT_OTA_INVALID_REQUEST;
     }
 
-    astarte_value_pair_t *rx_values = object_event->values;
-    size_t rx_values_length = object_event->values_length;
+    astarte_object_entry_t *rx_values = object_event->entries;
+    size_t rx_values_length = object_event->entries_len;
 
     char *req_uuid = NULL;
     char *ota_url = NULL;
     char *ota_operation = NULL;
 
     for (size_t i = 0; i < rx_values_length; i++) {
-        const char *endpoint = rx_values[i].endpoint;
-        astarte_value_t rx_value = rx_values[i].value;
+        const char *path = rx_values[i].path;
+        astarte_individual_t rx_value = rx_values[i].individual;
 
-        if (strcmp(endpoint, "uuid") == 0) {
+        if (strcmp(path, "uuid") == 0) {
             req_uuid = (char *) rx_value.data.string;
             EDGEHOG_LOG_INF("uuid: %s", rx_value.data.string);
-        } else if (strcmp(endpoint, "url") == 0) {
+        } else if (strcmp(path, "url") == 0) {
             ota_url = (char *) rx_value.data.string;
             EDGEHOG_LOG_INF("url: %s", rx_value.data.string);
-        } else if (strcmp(endpoint, "operation") == 0) {
+        } else if (strcmp(path, "operation") == 0) {
             ota_operation = (char *) rx_value.data.string;
             EDGEHOG_LOG_INF("operation: %s", rx_value.data.string);
         }
@@ -722,17 +722,18 @@ static void pub_ota_event(astarte_device_handle_t astarte_device, const char *re
     }
 #endif
 
-    astarte_value_pair_t value_pairs[] = {
-        { .endpoint = "requestUUID", .value = astarte_value_from_string(request_uuid) },
-        { .endpoint = "status", .value = astarte_value_from_string(status) },
-        { .endpoint = "statusProgress", .value = astarte_value_from_integer(status_progress) },
-        { .endpoint = "statusCode", .value = astarte_value_from_string(status_code) },
-        { .endpoint = "message", .value = astarte_value_from_string(message) },
+    astarte_object_entry_t object_entries[] = {
+        { .path = "requestUUID", .individual = astarte_individual_from_string(request_uuid) },
+        { .path = "status", .individual = astarte_individual_from_string(status) },
+        { .path = "statusProgress",
+            .individual = astarte_individual_from_integer(status_progress) },
+        { .path = "statusCode", .individual = astarte_individual_from_string(status_code) },
+        { .path = "message", .individual = astarte_individual_from_string(message) },
     };
 
     astarte_result_t res
         = astarte_device_stream_aggregated(astarte_device, io_edgehog_devicemanager_OTAEvent.name,
-            "/event", value_pairs, ARRAY_SIZE(value_pairs), NULL, 0);
+            "/event", object_entries, ARRAY_SIZE(object_entries), NULL);
     if (res != ASTARTE_RESULT_OK) {
         EDGEHOG_LOG_ERR("Unable to send ota_event"); // NOLINT
     }

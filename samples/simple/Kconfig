@@ -14,12 +14,19 @@ endmenu
 rsource "../../Kconfig"
 
 menu "Sample application"
-    config CREDENTIAL_SECRET
-        string "Astarte credential secret"
-        default ""
-        help
-            The credential secret to be used to connect to Astarte.
-            
+
+config DEVICE_ID
+	string "Astarte device ID"
+    default ""
+	help
+	  Device ID to be used to connect to Astarte.
+
+config CREDENTIAL_SECRET
+    string "Astarte credential secret"
+    default ""
+    help
+        The credential secret to be used to connect to Astarte.
+
 config WIFI_SSID
     string "WiFi SSID"
     default "myssid"
@@ -31,6 +38,7 @@ config WIFI_PASSWORD
     default "mypassword"
     help
         WiFi password (WPA or WPA2) for the example to use.
+
 endmenu
 
 module = APP

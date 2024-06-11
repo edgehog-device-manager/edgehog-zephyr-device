@@ -62,7 +62,7 @@ static void publish_serial_number(edgehog_device_handle_t edgehog_device)
 
     astarte_result_t res = astarte_device_set_property(edgehog_device->astarte_device,
         io_edgehog_devicemanager_SystemInfo.name, SERIAL_NUMBER_PROP,
-        astarte_value_from_string(CONFIG_EDGEHOG_DEVICE_SERIAL_NUMBER));
+        astarte_individual_from_string(CONFIG_EDGEHOG_DEVICE_SERIAL_NUMBER));
 
     if (res != ASTARTE_RESULT_OK) {
         EDGEHOG_LOG_ERR("Unable to publish " SERIAL_NUMBER_PROP);
@@ -82,7 +82,7 @@ static void publish_part_number(edgehog_device_handle_t edgehog_device)
 
     astarte_result_t res = astarte_device_set_property(edgehog_device->astarte_device,
         io_edgehog_devicemanager_SystemInfo.name, PART_NUMBER_PROP,
-        astarte_value_from_string(CONFIG_EDGEHOG_DEVICE_PART_NUMBER));
+        astarte_individual_from_string(CONFIG_EDGEHOG_DEVICE_PART_NUMBER));
 
     if (res != ASTARTE_RESULT_OK) {
         EDGEHOG_LOG_ERR("Unable to publish " PART_NUMBER_PROP);
