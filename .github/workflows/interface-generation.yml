@@ -25,7 +25,7 @@ on:
   pull_request:
 
 env:
-  EDGEHOG_INTERFACES_REF: v0.7.0 
+  EDGEHOG_INTERFACES_REF: v0.7.0
 
 jobs:
   interface-check:
@@ -72,16 +72,16 @@ jobs:
         working-directory: edgehog-astarte-interfaces
         run: |
           mkdir ../edgehog-zephyr-device/interfaces
-          cp io.edgehog.devicemanager.HardwareInfo.json \
+          cp io.edgehog.devicemanager.BaseImage.json \
+            io.edgehog.devicemanager.Commands.json \
+            io.edgehog.devicemanager.HardwareInfo.json \
             io.edgehog.devicemanager.OSInfo.json \
-            io.edgehog.devicemanager.SystemInfo.json \
             io.edgehog.devicemanager.OTAEvent.json \
             io.edgehog.devicemanager.OTARequest.json \
-            io.edgehog.devicemanager.BaseImage.json \
-            io.edgehog.devicemanager.Commands.json \
             io.edgehog.devicemanager.RuntimeInfo.json \
-            io.edgehog.devicemanager.SystemStatus.json \
             io.edgehog.devicemanager.StorageUsage.json \
+            io.edgehog.devicemanager.SystemInfo.json \
+            io.edgehog.devicemanager.SystemStatus.json \
             ../edgehog-zephyr-device/interfaces
       - name: Generate interface reference code
         working-directory: edgehog-zephyr-device

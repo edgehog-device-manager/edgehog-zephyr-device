@@ -118,6 +118,7 @@ int main(void)
 #endif
 
     char cred_secr[ASTARTE_PAIRING_CRED_SECR_LEN + 1] = CONFIG_CREDENTIAL_SECRET;
+    char device_id[ASTARTE_PAIRING_DEVICE_ID_LEN + 1] = CONFIG_DEVICE_ID;
 
     k_sem_init(&astarte_connection_sem, 0, 1);
 
@@ -127,7 +128,7 @@ int main(void)
     memset(&astarte_device_config, 0, sizeof(astarte_device_config));
     astarte_device_config.http_timeout_ms = HTTP_TIMEOUT_MS;
     astarte_device_config.mqtt_connection_timeout_ms = MQTT_FIRST_POLL_TIMEOUT_MS;
-    astarte_device_config.mqtt_connected_timeout_ms = MQTT_POLL_TIMEOUT_MS;
+    astarte_device_config.mqtt_poll_timeout_ms = MQTT_POLL_TIMEOUT_MS;
     astarte_device_config.connection_cbk = astarte_connection_events_handler;
     astarte_device_config.disconnection_cbk = astarte_disconnection_events_handler;
     astarte_device_config.datastream_object_cbk = datastream_object_events_handler;
@@ -135,6 +136,7 @@ int main(void)
     astarte_device_config.cbk_user_data = &edgehog_device;
 
     memcpy(astarte_device_config.cred_secr, cred_secr, sizeof(cred_secr));
+    memcpy(astarte_device_config.device_id, device_id, sizeof(device_id));
 
     astarte_device_handle_t astarte_device = NULL;
     astarte_result = astarte_device_new(&astarte_device_config, &astarte_device);
@@ -255,7 +257,8 @@ ZBUS_CHAN_ADD_OBS(edgehog_ota_chan, ota_evt_subscriber, 3);
 
 static void astarte_connection_events_handler(astarte_device_connection_event_t event)
 {
-    LOG_INF("Astarte device connected, session_present: %d", event.session_present); // NOLINT
+    (void) event;
+    LOG_INF("Astarte device connected, session_present."); // NOLINT
     k_sem_give(&astarte_connection_sem);
 }
 

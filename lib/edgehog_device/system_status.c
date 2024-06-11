@@ -62,16 +62,18 @@ void publish_system_status(edgehog_device_handle_t edgehog_device)
         avail_memory = thread_info.stack_size_free;
     }
 
-    astarte_value_pair_t value_pairs[] = {
-        { .endpoint = "availMemoryBytes", .value = astarte_value_from_longinteger(avail_memory) },
-        { .endpoint = "bootId", .value = astarte_value_from_string(edgehog_device->boot_id) },
-        { .endpoint = "taskCount", .value = astarte_value_from_integer(thread_info.count) },
-        { .endpoint = "uptimeMillis", .value = astarte_value_from_longinteger(k_uptime_get()) },
+    astarte_object_entry_t object_entries[] = {
+        { .path = "availMemoryBytes",
+            .individual = astarte_individual_from_longinteger(avail_memory) },
+        { .path = "bootId", .individual = astarte_individual_from_string(edgehog_device->boot_id) },
+        { .path = "taskCount", .individual = astarte_individual_from_integer(thread_info.count) },
+        { .path = "uptimeMillis",
+            .individual = astarte_individual_from_longinteger(k_uptime_get()) },
     };
 
     astarte_result_t res = astarte_device_stream_aggregated(edgehog_device->astarte_device,
-        io_edgehog_devicemanager_SystemStatus.name, "/systemStatus", value_pairs,
-        ARRAY_SIZE(value_pairs), NULL, 0);
+        io_edgehog_devicemanager_SystemStatus.name, "/systemStatus", object_entries,
+        ARRAY_SIZE(object_entries), NULL);
     if (res != ASTARTE_RESULT_OK) {
         EDGEHOG_LOG_ERR("Unable to send syste_status"); // NOLINT
     }
