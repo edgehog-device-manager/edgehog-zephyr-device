@@ -27,6 +27,7 @@ The following information is sent to the remote Edgehog instance:
 - Reboot command
 - System status
 - Storage usage
+- [Led Behavior](doc/led.md)
 
 ### Adding the module as a dependency to an application
 

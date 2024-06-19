@@ -45,7 +45,7 @@ typedef enum
     EDGEHOG_RESULT_OTA_INVALID_IMAGE = 10,
     /** @brief An error occurred during erase second slot procedure. */
     EDGEHOG_RESULT_OTA_ERASE_SECOND_SLOT_ERROR = 11,
-    /** @brief An error occurred during flash area write procedure. */
+    /** @brief An error occurred during flash area init procedure. */
     EDGEHOG_RESULT_OTA_INIT_FLASH_ERROR = 12,
     /** @brief An error occurred during flash area write procedure. */
     EDGEHOG_RESULT_OTA_WRITE_FLASH_ERROR = 13,
@@ -63,6 +63,14 @@ typedef enum
     EDGEHOG_RESULT_THREAD_CREATE_ERROR = 19,
     /** @brief Invalid Command request received. */
     EDGEHOG_RESULT_COMMAND_INVALID_REQUEST = 20,
+    /** @brief Unable to find the edgehog LED Node in the device-tree. */
+    EDGEHOG_RESULT_LED_NODE_NOT_FOUND = 21,
+    /** @brief The edgehog LED device is not ready for use. */
+    EDGEHOG_RESULT_LED_DEVICE_IS_NOT_READY = 22,
+    /** @brief Attempted to perform LED blink while another is still active. */
+    EDGEHOG_RESULT_LED_ALREADY_IN_PROGRESS = 23,
+    /** @brief An error occurred during configuration of LED device. */
+    EDGEHOG_RESULT_LED_CONFIGURE_ERROR = 24,
 } edgehog_result_t;
 
 #endif // EDGEHOG_DEVICE_RESULT_H

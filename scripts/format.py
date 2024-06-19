@@ -74,6 +74,9 @@ class WestCommandFormat(WestCommand):
         """
         module_path = Path(self.topdir).joinpath("edgehog-zephyr-device")
         library_headers = [str(f) for f in Path(module_path).glob("include/edgehog_device/*.h")]
+        library_private_headers = [
+            str(f) for f in Path(module_path).glob("lib/edgehog_device/include/*.h")
+        ]
         library_sources = [str(f) for f in Path(module_path).glob("lib/edgehog_device/*.c")]
         samples_headers = [str(f) for f in Path(module_path).glob("samples/**/include/*.h")]
         samples_sources = [str(f) for f in Path(module_path).glob("samples/**/src/*.c")]
@@ -82,6 +85,7 @@ class WestCommandFormat(WestCommand):
         cmd = (
             ["clang-format", "--style=file", "--dry-run -Werror" if args.dry_run else "-i"]
             + library_headers
+            + library_private_headers
             + library_sources
             + samples_headers
             + samples_sources

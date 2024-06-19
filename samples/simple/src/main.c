@@ -50,6 +50,7 @@ LOG_MODULE_REGISTER(simple_main); // NOLINT
 K_THREAD_STACK_DEFINE(edgehog_thread_stack, EDGEHOG_STACK_SIZE);
 static struct k_thread edgehog_thread_data;
 static atomic_t edgehog_device_thread_flags;
+
 // NOLINTEND(cppcoreguidelines-avoid-non-const-global-variables)
 
 /************************************************
@@ -143,7 +144,7 @@ int main(void)
     astarte_device_config.disconnection_cbk = astarte_disconnection_events_handler;
     astarte_device_config.datastream_object_cbk = datastream_object_events_handler;
     astarte_device_config.datastream_individual_cbk = datastream_individual_events_handler;
-    astarte_device_config.cbk_user_data = &edgehog_device;
+    astarte_device_config.cbk_user_data = (void *) &edgehog_device;
 
     memcpy(astarte_device_config.cred_secr, cred_secr, sizeof(cred_secr));
     memcpy(astarte_device_config.device_id, device_id, sizeof(device_id));

@@ -12,6 +12,7 @@
 #include "edgehog_private.h"
 #include "generated_interfaces.h"
 #include "hardware_info.h"
+#include "led.h"
 #include "log.h"
 #include "os_info.h"
 #include "runtime_info.h"
@@ -138,6 +139,12 @@ void edgehog_device_datastream_individual_events_handler(
         if (ota_result != EDGEHOG_RESULT_OK) {
             EDGEHOG_LOG_ERR("Unable to handle Command request");
         }
+    } else if ((strcmp(rx_event.interface_name, io_edgehog_devicemanager_LedBehavior.name) == 0)
+        && (strcmp(rx_event.path, "/indicator/behavior") == 0)) {
+        edgehog_result_t led_result = edgehog_led_event(edgehog_device, &event);
+        if (led_result != EDGEHOG_RESULT_OK) {
+            EDGEHOG_LOG_ERR("Unable to handle LED event request");
+        }
     }
 }
 
@@ -158,6 +165,9 @@ static edgehog_result_t add_interfaces(astarte_device_handle_t device)
         &io_edgehog_devicemanager_RuntimeInfo,
         &io_edgehog_devicemanager_SystemStatus,
         &io_edgehog_devicemanager_StorageUsage,
+#if DT_NODE_HAS_STATUS(EDGEHOG_LED_NODE, okay)
+        &io_edgehog_devicemanager_LedBehavior,
+#endif
     };
 
     for (int i = 0; i < ARRAY_SIZE(interfaces); i++) {

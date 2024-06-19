@@ -32,16 +32,14 @@ Checks: >
   -zircon-*,
   -bugprone-easily-swappable-parameters,
   -clang-analyzer-security.insecureAPI.DeprecatedOrUnsafeBufferHandling,
-  -clang-diagnostic-deprecated-declarations,
-  -cppcoreguidelines-avoid-non-const-global-variables,
+  -cppcoreguidelines-macro-to-enum,
   -modernize-macro-to-enum,
-  -performance-no-int-to-ptr,
-  -readability-function-size
+  -misc-include-cleaner
 
 # NOTES:
-# The checker readability-function-size has been disabled due to the logging macros that Zephyr
-# uses for logging. Such macros greatly increase the size of each function.
-# The checker performance-no-int-to-ptr has been disabled due to strange warnings being triggered.
+# Most of the options for the checker readability-function-size have been disabled due to the
+# logging macros used by zephyr. Such macros greatly increase the number of lines size of each
+# function.
 
 CheckOptions:
   - { key: bugprone-misplaced-widening-cast.CheckImplicitCasts, value: true }
@@ -56,10 +54,10 @@ CheckOptions:
   - { key: readability-function-cognitive-complexity.DescribeBasicIncrements, value: false }
   - { key: readability-function-cognitive-complexity.IgnoreMacros, value: true }
 
-  - { key: readability-function-size.LineThreshold, value: 60 }
-  - { key: readability-function-size.StatementThreshold, value: 800 }
+  - { key: readability-function-size.LineThreshold, value: none }
+  - { key: readability-function-size.StatementThreshold, value: none }
   - { key: readability-function-size.BranchThreshold, value: none }
-  - { key: readability-function-size.ParameterThreshold, value: 5 }
+  - { key: readability-function-size.ParameterThreshold, value: 6 }
   - { key: readability-function-size.NestingThreshold, value: none }
   - { key: readability-function-size.VariableThreshold, value: none }
 

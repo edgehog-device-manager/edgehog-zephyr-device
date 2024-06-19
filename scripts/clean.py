@@ -14,6 +14,8 @@ python -m black --line-length 100 ./scripts/*.py
 import shutil
 from pathlib import Path
 
+from colored import fore, stylize
+from west import log  # use this for user output
 from west.commands import WestCommand  # your extension must subclass this
 
 # from west import log  # use this for user output
@@ -69,10 +71,12 @@ class WestCommandClean(WestCommand):
             [
                 workspace_path.joinpath("build"),
                 module_path.joinpath("build"),
+                module_path.joinpath("doc").joinpath("_build"),
             ]
             + list(Path(workspace_path).glob("twister-out*"))
             + list(Path(module_path).glob("twister-out*"))
         )
         for build_dir in build_dirs:
             if build_dir.is_dir():
+                log.inf(stylize(f"Removing directory: {build_dir}", fore("cyan")))
                 shutil.rmtree(build_dir)

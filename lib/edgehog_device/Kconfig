@@ -40,7 +40,7 @@ config EDGEHOG_DEVICE_USE_EDGEHOG_PARTITION
 	default false
 	help
 		Use this option to use edgehog_partition NVS partition for storing the edgehog data.
-		In order to use it, the board.dts must cointain the `edgehog_partion` node, 
+		In order to use it, the board.dts must cointain the `edgehog_partion` node,
 		or it must be provided by dts overlay.
 
 config EDGEHOG_DEVICE_ZBUS_OTA_EVENT
@@ -135,6 +135,11 @@ source "subsys/logging/Kconfig.template.log_config"
 module = EDGEHOG_DEVICE_STORAGE_USAGE
 module-str = Log level for Edgehog device Storage usage informantions
 module-help = Sets log level for Edgehog device Storage usage informantions.
+source "subsys/logging/Kconfig.template.log_config"
+
+module = EDGEHOG_DEVICE_LED
+module-str = Log level for Edgehog device led controller.
+module-help = Sets log level for Edgehog device led controller.
 source "subsys/logging/Kconfig.template.log_config"
 
 endmenu

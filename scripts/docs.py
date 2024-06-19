@@ -16,6 +16,8 @@ import os
 import subprocess
 from pathlib import Path
 
+from colored import fore, stylize
+from west import log  # use this for user output
 from west.commands import WestCommand  # your extension must subclass this
 
 # from west import log  # use this for user output
@@ -91,6 +93,7 @@ class WestCommandDocs(WestCommand):
                     EDGEHOG_DEVICE_EXTENDED_DOCS="yes" if args.extended else "no",
                 ),
             )
+        log.inf(stylize("make -C doc doxygen", fore("cyan")))
         subprocess.run(
             "make -C doc doxygen",
             shell=True,

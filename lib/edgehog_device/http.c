@@ -29,7 +29,10 @@ EDGEHOG_LOG_MODULE_REGISTER(edgehog_http, CONFIG_EDGEHOG_DEVICE_HTTP_LOG_LEVEL);
 #define HTTPS_STR "https"
 #define HTTPS_STR_LEN sizeof(HTTPS_STR)
 #define HTTP_RECV_BUF_SIZE 4096
+
+// NOLINTBEGIN(cppcoreguidelines-avoid-non-const-global-variables)
 static uint8_t http_recv_buf[HTTP_RECV_BUF_SIZE];
+// NOLINTEND(cppcoreguidelines-avoid-non-const-global-variables)
 
 /************************************************
  *         Static functions declaration         *

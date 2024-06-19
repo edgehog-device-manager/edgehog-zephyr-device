@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#ifndef EDGEHOG_DEVICE_NVS_H
-#define EDGEHOG_DEVICE_NVS_H
+#ifndef NVS_H
+#define NVS_H
 
 /**
  * @file nvs.h
@@ -57,10 +57,10 @@ edgehog_result_t edgehog_nvs_open(struct nvs_fs *out_fs);
  * @return EDGEHOG_RESULT_OK if storage handle was opened successfully, an edgehog_result_t
  * otherwise.
  */
-edgehog_result_t edgehog_nvs_get_free_space(size_t *const free_space);
+edgehog_result_t edgehog_nvs_get_free_space(size_t *free_space);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif // EDGEHOG_DEVICE_NVS_H
+#endif // NVS_H

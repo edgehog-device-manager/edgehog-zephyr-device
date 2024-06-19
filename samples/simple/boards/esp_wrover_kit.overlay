@@ -7,3 +7,9 @@
 &wifi {
 	status = "okay";
 };
+
+/ {
+     aliases {
+             edgehog-led = &blue_led;
+     };
+};

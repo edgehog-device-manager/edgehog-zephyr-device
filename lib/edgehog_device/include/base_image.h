@@ -25,4 +25,3 @@ void publish_base_image(edgehog_device_handle_t edgehog_device);
 #endif
 
 #endif // BASE_IMAGE_H
-

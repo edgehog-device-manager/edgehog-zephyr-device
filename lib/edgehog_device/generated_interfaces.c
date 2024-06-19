@@ -135,6 +135,29 @@ const astarte_interface_t io_edgehog_devicemanager_HardwareInfo = {
     .mappings_length = 5U,
 };
 
+static const astarte_mapping_t io_edgehog_devicemanager_LedBehavior_mappings[1] = {
+
+    {
+        .endpoint = "/%{led_id}/behavior",
+        .regex_endpoint = "^/[a-zA-Z_][a-zA-Z0-9_]*/behavior$",
+        .type = ASTARTE_MAPPING_TYPE_STRING,
+        .reliability = ASTARTE_MAPPING_RELIABILITY_UNIQUE,
+        .explicit_timestamp = false,
+        .allow_unset = false,
+    },
+};
+
+const astarte_interface_t io_edgehog_devicemanager_LedBehavior = {
+    .name = "io.edgehog.devicemanager.LedBehavior",
+    .major_version = 0,
+    .minor_version = 1,
+    .type = ASTARTE_INTERFACE_TYPE_DATASTREAM,
+    .ownership = ASTARTE_INTERFACE_OWNERSHIP_SERVER,
+    .aggregation = ASTARTE_INTERFACE_AGGREGATION_INDIVIDUAL,
+    .mappings = io_edgehog_devicemanager_LedBehavior_mappings,
+    .mappings_length = 1U,
+};
+
 static const astarte_mapping_t io_edgehog_devicemanager_OSInfo_mappings[2] = {
 
     {
