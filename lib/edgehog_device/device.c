@@ -9,6 +9,7 @@
 #include "base_image.h"
 #include "command.h"
 #include "edgehog_device/result.h"
+#include "edgehog_device/wifi_scan.h"
 #include "edgehog_private.h"
 #include "generated_interfaces.h"
 #include "hardware_info.h"
@@ -168,6 +169,9 @@ static edgehog_result_t add_interfaces(astarte_device_handle_t device)
 #if DT_NODE_HAS_STATUS(EDGEHOG_LED_NODE, okay)
         &io_edgehog_devicemanager_LedBehavior,
 #endif
+#ifdef CONFIG_WIFI
+        &io_edgehog_devicemanager_WiFiScanResults,
+#endif
     };
 
     for (int i = 0; i < ARRAY_SIZE(interfaces); i++) {
@@ -192,4 +196,7 @@ static void edgehog_initial_publish(edgehog_device_handle_t edgehog_device)
     publish_runtime_info(edgehog_device);
     publish_system_status(edgehog_device);
     publish_storage_usage(edgehog_device);
+#ifdef CONFIG_WIFI
+    edgehog_wifi_scan_start(edgehog_device->astarte_device);
+#endif
 }

@@ -28,6 +28,7 @@ The following information is sent to the remote Edgehog instance:
 - System status
 - Storage usage
 - [Led Behavior](doc/led.md)
+- WiFi APs seen by board antenna
 
 ### Adding the module as a dependency to an application
 

@@ -14,6 +14,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Add support for `io.edgehog.devicemanager.SystemStatus` interface.
 - Add support for `io.edgehog.devicemanager.StorageUsage` interface.
 - Add support for `io.edgehog.devicemanager.LedBehavior` interface.
+- Add support for `io.edgehog.devicemanager.WiFiScanResults` interface.
+
 
 ### Changed
 - Updated the Astarte device SDK to `v0.6.1`.
