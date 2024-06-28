@@ -3,7 +3,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
- 
+
 /delete-node/ &slot0_partition;
 /delete-node/ &slot1_partition;
 
@@ -27,7 +27,7 @@
 		* Reserve the final 16 KiB for edgehog partition
 		*/
 		edgehog_partition: partition@3FA000 {
-			label = "edgehog-storage";
+			label = "edgehog_storage";
 			reg = <0x003FA000 DT_SIZE_K(16)>;
 		};
 

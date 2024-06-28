@@ -14,6 +14,9 @@
 #include <zephyr/logging/log.h>
 LOG_MODULE_REGISTER(simple_main); // NOLINT
 
+#include <zephyr/net/sntp.h>
+#include <zephyr/posix/time.h>
+
 #include <astarte_device_sdk/device.h>
 #include <edgehog_device/device.h>
 
@@ -41,9 +44,13 @@ LOG_MODULE_REGISTER(simple_main); // NOLINT
 
 #define EDGEHOG_STACK_SIZE 8196
 
+#define EDGEHOG_DEVICE_THREAD_FLAGS_TERMINATION 1U
+
+// NOLINTBEGIN(cppcoreguidelines-avoid-non-const-global-variables)
 K_THREAD_STACK_DEFINE(edgehog_thread_stack, EDGEHOG_STACK_SIZE);
 static struct k_thread edgehog_thread_data;
-static struct k_sem astarte_connection_sem;
+static atomic_t edgehog_device_thread_flags;
+// NOLINTEND(cppcoreguidelines-avoid-non-const-global-variables)
 
 /************************************************
  * Static functions declaration
@@ -86,14 +93,17 @@ static void datastream_object_events_handler(astarte_device_datastream_object_ev
 static void datastream_individual_events_handler(
     astarte_device_datastream_individual_event_t event);
 
+/**
+ * @brief Initialize System Time
+ */
+static void system_time_init();
+
 // NOLINTNEXTLINE(hicpp-function-size)
 int main(void)
 {
     astarte_result_t astarte_result = ASTARTE_RESULT_OK;
 
     LOG_INF("Edgehog example! %s\n", CONFIG_BOARD); // NOLINT
-
-    LOG_INF("Initializing WiFi driver."); // NOLINT
 
 #if defined(CONFIG_WIFI)
     LOG_INF("Initializing WiFi driver."); // NOLINT
@@ -106,6 +116,8 @@ int main(void)
         return -1;
     }
 #endif
+
+    system_time_init();
 
 #if !defined(CONFIG_ASTARTE_DEVICE_SDK_DEVELOP_DISABLE_OR_IGNORE_TLS)
     tls_credential_add(CONFIG_ASTARTE_DEVICE_SDK_HTTPS_CA_CERT_TAG, TLS_CREDENTIAL_CA_CERTIFICATE,
@@ -120,11 +132,9 @@ int main(void)
     char cred_secr[ASTARTE_PAIRING_CRED_SECR_LEN + 1] = CONFIG_CREDENTIAL_SECRET;
     char device_id[ASTARTE_PAIRING_DEVICE_ID_LEN + 1] = CONFIG_DEVICE_ID;
 
-    k_sem_init(&astarte_connection_sem, 0, 1);
-
     edgehog_device_handle_t edgehog_device = NULL;
 
-    astarte_device_config_t astarte_device_config;
+    astarte_device_config_t astarte_device_config = { 0 };
     memset(&astarte_device_config, 0, sizeof(astarte_device_config));
     astarte_device_config.http_timeout_ms = HTTP_TIMEOUT_MS;
     astarte_device_config.mqtt_connection_timeout_ms = MQTT_FIRST_POLL_TIMEOUT_MS;
@@ -161,19 +171,6 @@ int main(void)
     if (astarte_result != ASTARTE_RESULT_OK) {
         return -1;
     }
-
-    astarte_result = astarte_device_poll(astarte_device);
-    if (astarte_result != ASTARTE_RESULT_OK) {
-        LOG_ERR("First poll should not timeout as we should receive a connection ack."); // NOLINT
-        return -1;
-    }
-
-    // /* wait astarte connection semaphore */
-    k_sem_take(&astarte_connection_sem, K_FOREVER);
-
-    k_thread_create(&edgehog_thread_data, edgehog_thread_stack, EDGEHOG_STACK_SIZE,
-        edgehog_thread_entry_point, edgehog_device, NULL, NULL, 0,
-        K_HIGHEST_APPLICATION_THREAD_PRIO, K_NO_WAIT);
 
     while (astarte_result == ASTARTE_RESULT_OK || astarte_result == ASTARTE_RESULT_TIMEOUT) {
         k_timepoint_t timepoint = sys_timepoint_calc(K_MSEC(POLL_PERIOD_MS));
@@ -218,7 +215,8 @@ static void edgehog_thread_entry_point(void *device_handle, void *unused1, void 
         LOG_ERR("Unable to start edgehog device"); // NOLINT
     }
 
-    while (1) {
+    while (
+        !atomic_test_bit(&edgehog_device_thread_flags, EDGEHOG_DEVICE_THREAD_FLAGS_TERMINATION)) {
         k_sleep(K_MSEC(500)); // sleep for 500 ms
     }
 }
@@ -259,7 +257,15 @@ static void astarte_connection_events_handler(astarte_device_connection_event_t 
 {
     (void) event;
     LOG_INF("Astarte device connected, session_present."); // NOLINT
-    k_sem_give(&astarte_connection_sem);
+
+    if (!atomic_test_and_set_bit(
+            &edgehog_device_thread_flags, EDGEHOG_DEVICE_THREAD_FLAGS_TERMINATION)) {
+        edgehog_device_handle_t *edgehog_device = (edgehog_device_handle_t *) event.user_data;
+
+        k_thread_create(&edgehog_thread_data, edgehog_thread_stack, EDGEHOG_STACK_SIZE,
+            edgehog_thread_entry_point, *edgehog_device, NULL, NULL, 0,
+            K_HIGHEST_APPLICATION_THREAD_PRIO, K_NO_WAIT);
+    }
 }
 
 static void datastream_object_events_handler(astarte_device_datastream_object_event_t event)
@@ -282,4 +288,25 @@ static void astarte_disconnection_events_handler(astarte_device_disconnection_ev
 {
     (void) event;
     LOG_INF("Astarte device disconnected"); // NOLINT
+}
+
+static void system_time_init()
+{
+#ifdef CONFIG_NET_CONFIG_SNTP_INIT
+    int ret = 0;
+    struct sntp_time now;
+    struct timespec tspec;
+
+    ret = sntp_simple(
+        CONFIG_NET_CONFIG_SNTP_INIT_SERVER, CONFIG_NET_CONFIG_SNTP_INIT_TIMEOUT, &now);
+    if (ret == 0) {
+        tspec.tv_sec = (time_t) now.seconds;
+        // NOLINTBEGIN(bugprone-narrowing-conversions, hicpp-signed-bitwise,
+        // readability-magic-numbers)
+        tspec.tv_nsec = ((uint64_t) now.fraction * (1000lu * 1000lu * 1000lu)) >> 32;
+        // NOLINTEND(bugprone-narrowing-conversions, hicpp-signed-bitwise,
+        // readability-magic-numbers)
+        clock_settime(CLOCK_REALTIME, &tspec);
+    }
+#endif
 }

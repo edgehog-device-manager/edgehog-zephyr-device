@@ -190,8 +190,8 @@ static int create_and_connect_socket(const char *hostname, const char *port)
     hints.ai_socktype = SOCK_STREAM;
     int getaddrinfo_rc = zsock_getaddrinfo(hostname, port, &hints, &host_addrinfo);
     if (getaddrinfo_rc != 0) {
-        EDGEHOG_LOG_ERR("Unable to resolve address %s", gai_strerror(getaddrinfo_rc));
-        if (getaddrinfo_rc == EAI_SYSTEM) {
+        EDGEHOG_LOG_ERR("Unable to resolve address %s", zsock_gai_strerror(getaddrinfo_rc));
+        if (getaddrinfo_rc == DNS_EAI_SYSTEM) {
             EDGEHOG_LOG_ERR("Errno: %s", strerror(errno));
         }
         return -1;
