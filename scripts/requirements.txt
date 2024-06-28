@@ -5,4 +5,5 @@
 codechecker
 colored
 clang-format
-clang-tidy==16.0.4
+clang-tidy==18.1.1
+astarte-device-sdk

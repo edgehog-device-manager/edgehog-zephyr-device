@@ -50,7 +50,9 @@ EDGEHOG_LOG_MODULE_REGISTER(ota, CONFIG_EDGEHOG_DEVICE_OTA_LOG_LEVEL);
 #define THREAD_STACK_SIZE 8192
 #define OTA_STATE_RUN_BIT (1)
 
+// NOLINTBEGIN(cppcoreguidelines-avoid-non-const-global-variables)
 K_THREAD_STACK_DEFINE(ota_thread_stack, THREAD_STACK_SIZE);
+// NOLINTEND(cppcoreguidelines-avoid-non-const-global-variables)
 
 #ifdef CONFIG_EDGEHOG_DEVICE_ZBUS_OTA_EVENT
 ZBUS_CHAN_DEFINE(edgehog_ota_chan, edgehog_ota_chan_event_t, NULL, NULL, ZBUS_OBSERVERS_EMPTY,
@@ -366,8 +368,7 @@ static void ota_thread_entry_point(void *edgehog_device, void *ptr2, void *ptr3)
     ARG_UNUSED(ptr3);
 
     edgehog_device_handle_t edgehog_dev = (edgehog_device_handle_t) edgehog_device;
-    ota_thread_data_t *ota_thread_data
-        = (ota_thread_data_t *) &edgehog_dev->ota_thread.ota_thread_data;
+    ota_thread_data_t *ota_thread_data = &edgehog_dev->ota_thread.ota_thread_data;
     const char *req_uuid = ota_thread_data->ota_request.uuid;
 
     // Step 1 acknowledge the valid update request and notify the start of the download

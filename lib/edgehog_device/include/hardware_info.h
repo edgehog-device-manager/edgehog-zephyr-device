@@ -27,7 +27,7 @@ void publish_hardware_info(edgehog_device_handle_t edgehog_device);
  *
  * @return true if the memory is found successfully in the device-tree, false otherwise.
  */
-bool hardware_info_get_memory_size(size_t *const memory_size);
+bool hardware_info_get_memory_size(size_t *memory_size);
 
 #ifdef __cplusplus
 }

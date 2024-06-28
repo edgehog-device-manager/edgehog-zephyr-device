@@ -82,6 +82,7 @@ jobs:
             io.edgehog.devicemanager.StorageUsage.json \
             io.edgehog.devicemanager.SystemInfo.json \
             io.edgehog.devicemanager.SystemStatus.json \
+            io.edgehog.devicemanager.LedBehavior.json \
             ../edgehog-zephyr-device/interfaces
       - name: Generate interface reference code
         working-directory: edgehog-zephyr-device

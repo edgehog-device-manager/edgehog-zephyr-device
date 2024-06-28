@@ -24,9 +24,6 @@ on:
   push:
   pull_request:
 
-env:
-  LLVM_VERSION: "16"
-
 jobs:
   clang-format:
     runs-on: ubuntu-latest

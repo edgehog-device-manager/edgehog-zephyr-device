@@ -17,6 +17,7 @@ LOG_MODULE_REGISTER(eth, CONFIG_APP_LOG_LEVEL); // NOLINT
  *        Constants, statics and defines        *
  ***********************************************/
 
+// NOLINTBEGIN(cppcoreguidelines-avoid-non-const-global-variables)
 static struct net_mgmt_event_callback eth_cb;
 static struct net_mgmt_event_callback status_cb;
 static struct net_mgmt_event_callback ipv6_cb;
@@ -24,6 +25,7 @@ static struct net_mgmt_event_callback ipv4_cb;
 static struct net_mgmt_event_callback l4_cb;
 
 static K_SEM_DEFINE(ipv4_address_obtained, 0, 1);
+// NOLINTEND(cppcoreguidelines-avoid-non-const-global-variables)
 
 /************************************************
  *       Callbacks declaration/definition       *

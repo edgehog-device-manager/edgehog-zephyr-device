@@ -12,6 +12,7 @@
  * @brief Private Edgehog Device APIs and fields
  */
 
+#include "led.h"
 #include "ota.h"
 
 #include <astarte_device_sdk/device.h>
@@ -25,6 +26,8 @@ struct edgehog_device_t
     char boot_id[ASTARTE_UUID_STR_LEN];
     /** @brief OTA thread data used during the OTA Update operation. */
     ota_thread_t ota_thread;
+    /** @brief LED thread data used during the LED blink. */
+    led_thread_t led_thread;
 };
 
 #endif // EDGEHOG_PRIVATE_H

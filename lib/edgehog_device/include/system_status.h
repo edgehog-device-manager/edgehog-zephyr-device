@@ -9,7 +9,7 @@
 
 /**
  * @file system_status.h
- * @brief System status 
+ * @brief System status
  */
 
 #include "edgehog_device/device.h"
@@ -25,4 +25,3 @@ void publish_system_status(edgehog_device_handle_t edgehog_device);
 #endif
 
 #endif // SYSTEM_STATUS_H
-

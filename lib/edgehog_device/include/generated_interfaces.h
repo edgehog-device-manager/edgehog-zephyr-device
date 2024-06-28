@@ -20,6 +20,7 @@
 extern const astarte_interface_t io_edgehog_devicemanager_BaseImage;
 extern const astarte_interface_t io_edgehog_devicemanager_Commands;
 extern const astarte_interface_t io_edgehog_devicemanager_HardwareInfo;
+extern const astarte_interface_t io_edgehog_devicemanager_LedBehavior;
 extern const astarte_interface_t io_edgehog_devicemanager_OSInfo;
 extern const astarte_interface_t io_edgehog_devicemanager_OTAEvent;
 extern const astarte_interface_t io_edgehog_devicemanager_OTARequest;
