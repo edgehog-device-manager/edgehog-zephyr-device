@@ -21,5 +21,5 @@ manifest:
       remote: secomind
       repo-path: astarte-device-sdk-zephyr.git
       path: astarte-device-sdk-zephyr
-      revision: v0.6.0
+      revision: v0.6.1
       west-commands: scripts/west-commands.yml
