@@ -57,6 +57,45 @@ const astarte_interface_t io_edgehog_devicemanager_BaseImage = {
     .mappings_length = 4U,
 };
 
+static const astarte_mapping_t io_edgehog_devicemanager_BatteryStatus_mappings[3] = {
+
+    {
+        .endpoint = "/%{battery_slot}/levelPercentage",
+        .regex_endpoint = "^/[a-zA-Z_][a-zA-Z0-9_]*/levelPercentage$",
+        .type = ASTARTE_MAPPING_TYPE_DOUBLE,
+        .reliability = ASTARTE_MAPPING_RELIABILITY_UNRELIABLE,
+        .explicit_timestamp = true,
+        .allow_unset = false,
+    },
+    {
+        .endpoint = "/%{battery_slot}/levelAbsoluteError",
+        .regex_endpoint = "^/[a-zA-Z_][a-zA-Z0-9_]*/levelAbsoluteError$",
+        .type = ASTARTE_MAPPING_TYPE_DOUBLE,
+        .reliability = ASTARTE_MAPPING_RELIABILITY_UNRELIABLE,
+        .explicit_timestamp = true,
+        .allow_unset = false,
+    },
+    {
+        .endpoint = "/%{battery_slot}/status",
+        .regex_endpoint = "^/[a-zA-Z_][a-zA-Z0-9_]*/status$",
+        .type = ASTARTE_MAPPING_TYPE_STRING,
+        .reliability = ASTARTE_MAPPING_RELIABILITY_UNRELIABLE,
+        .explicit_timestamp = true,
+        .allow_unset = false,
+    },
+};
+
+const astarte_interface_t io_edgehog_devicemanager_BatteryStatus = {
+    .name = "io.edgehog.devicemanager.BatteryStatus",
+    .major_version = 0,
+    .minor_version = 1,
+    .type = ASTARTE_INTERFACE_TYPE_DATASTREAM,
+    .ownership = ASTARTE_INTERFACE_OWNERSHIP_DEVICE,
+    .aggregation = ASTARTE_INTERFACE_AGGREGATION_OBJECT,
+    .mappings = io_edgehog_devicemanager_BatteryStatus_mappings,
+    .mappings_length = 3U,
+};
+
 static const astarte_mapping_t io_edgehog_devicemanager_Commands_mappings[1] = {
 
     {
