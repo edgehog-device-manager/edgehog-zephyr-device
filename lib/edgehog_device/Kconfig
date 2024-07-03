@@ -142,4 +142,9 @@ module-str = Log level for Edgehog device led controller.
 module-help = Sets log level for Edgehog device led controller.
 source "subsys/logging/Kconfig.template.log_config"
 
+module = EDGEHOG_DEVICE_WIFI_SCAN
+module-str = Log level for Edgehog device WiFi scan.
+module-help = Sets log level for Edgehog device WiFi scan.
+source "subsys/logging/Kconfig.template.log_config"
+
 endmenu

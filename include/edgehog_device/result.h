@@ -71,6 +71,8 @@ typedef enum
     EDGEHOG_RESULT_LED_ALREADY_IN_PROGRESS = 23,
     /** @brief An error occurred during configuration of LED device. */
     EDGEHOG_RESULT_LED_CONFIGURE_ERROR = 24,
+    /** @brief Unable to run a WiFi scan request. */
+    EDGEHOG_RESULT_WIFI_SCAN_REQUEST_FAIL = 25,
 } edgehog_result_t;
 
 #endif // EDGEHOG_DEVICE_RESULT_H

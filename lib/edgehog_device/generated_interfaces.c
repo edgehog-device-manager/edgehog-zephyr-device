@@ -439,4 +439,59 @@ const astarte_interface_t io_edgehog_devicemanager_SystemStatus = {
     .mappings_length = 4U,
 };
 
+static const astarte_mapping_t io_edgehog_devicemanager_WiFiScanResults_mappings[5] = {
+
+    {
+        .endpoint = "/ap/channel",
+        .regex_endpoint = "^/ap/channel$",
+        .type = ASTARTE_MAPPING_TYPE_INTEGER,
+        .reliability = ASTARTE_MAPPING_RELIABILITY_UNRELIABLE,
+        .explicit_timestamp = true,
+        .allow_unset = false,
+    },
+    {
+        .endpoint = "/ap/connected",
+        .regex_endpoint = "^/ap/connected$",
+        .type = ASTARTE_MAPPING_TYPE_BOOLEAN,
+        .reliability = ASTARTE_MAPPING_RELIABILITY_UNRELIABLE,
+        .explicit_timestamp = true,
+        .allow_unset = false,
+    },
+    {
+        .endpoint = "/ap/essid",
+        .regex_endpoint = "^/ap/essid$",
+        .type = ASTARTE_MAPPING_TYPE_STRING,
+        .reliability = ASTARTE_MAPPING_RELIABILITY_UNRELIABLE,
+        .explicit_timestamp = true,
+        .allow_unset = false,
+    },
+    {
+        .endpoint = "/ap/macAddress",
+        .regex_endpoint = "^/ap/macAddress$",
+        .type = ASTARTE_MAPPING_TYPE_STRING,
+        .reliability = ASTARTE_MAPPING_RELIABILITY_UNRELIABLE,
+        .explicit_timestamp = true,
+        .allow_unset = false,
+    },
+    {
+        .endpoint = "/ap/rssi",
+        .regex_endpoint = "^/ap/rssi$",
+        .type = ASTARTE_MAPPING_TYPE_INTEGER,
+        .reliability = ASTARTE_MAPPING_RELIABILITY_UNRELIABLE,
+        .explicit_timestamp = true,
+        .allow_unset = false,
+    },
+};
+
+const astarte_interface_t io_edgehog_devicemanager_WiFiScanResults = {
+    .name = "io.edgehog.devicemanager.WiFiScanResults",
+    .major_version = 0,
+    .minor_version = 2,
+    .type = ASTARTE_INTERFACE_TYPE_DATASTREAM,
+    .ownership = ASTARTE_INTERFACE_OWNERSHIP_DEVICE,
+    .aggregation = ASTARTE_INTERFACE_AGGREGATION_OBJECT,
+    .mappings = io_edgehog_devicemanager_WiFiScanResults_mappings,
+    .mappings_length = 5U,
+};
+
 // NOLINTEND(readability-identifier-naming)

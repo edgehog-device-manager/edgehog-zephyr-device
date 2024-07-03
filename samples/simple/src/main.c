@@ -5,6 +5,7 @@
  */
 
 #include <zephyr/kernel.h>
+#include <zephyr/net/net_mgmt.h>
 
 #if !defined(CONFIG_ASTARTE_DEVICE_SDK_DEVELOP_DISABLE_OR_IGNORE_TLS)
 #include "ca_certificates.h"
@@ -19,6 +20,7 @@ LOG_MODULE_REGISTER(simple_main); // NOLINT
 
 #include <astarte_device_sdk/device.h>
 #include <edgehog_device/device.h>
+#include <edgehog_device/wifi_scan.h>
 
 #ifdef CONFIG_EDGEHOG_DEVICE_ZBUS_OTA_EVENT
 #include <edgehog_device/ota_event.h>
@@ -51,7 +53,17 @@ K_THREAD_STACK_DEFINE(edgehog_thread_stack, EDGEHOG_STACK_SIZE);
 static struct k_thread edgehog_thread_data;
 static atomic_t edgehog_device_thread_flags;
 
+/** Since the wifi_scan request does not provide a way to pass a user_data,
+ * astarte_device_handle was defined as a static reference to pass it to
+ * `NET_MGMT_REGISTER_EVENT_HANDLER`.
+ */
+static astarte_device_handle_t astarte_device_handle;
 // NOLINTEND(cppcoreguidelines-avoid-non-const-global-variables)
+
+#if defined(CONFIG_WIFI)
+NET_MGMT_REGISTER_EVENT_HANDLER(wifi_scan_events, EDGEHOG_WIFI_SCAN_EVENTS_SET,
+    edgehog_wifi_scan_event_handler, &astarte_device_handle);
+#endif
 
 /************************************************
  * Static functions declaration
@@ -149,14 +161,13 @@ int main(void)
     memcpy(astarte_device_config.cred_secr, cred_secr, sizeof(cred_secr));
     memcpy(astarte_device_config.device_id, device_id, sizeof(device_id));
 
-    astarte_device_handle_t astarte_device = NULL;
-    astarte_result = astarte_device_new(&astarte_device_config, &astarte_device);
+    astarte_result = astarte_device_new(&astarte_device_config, &astarte_device_handle);
     if (astarte_result != ASTARTE_RESULT_OK) {
         return -1;
     }
 
     edgehog_device_config_t edgehog_conf = {
-        .astarte_device = astarte_device,
+        .astarte_device = astarte_device_handle,
     };
 
     edgehog_result_t edgehog_result = edgehog_device_new(&edgehog_conf, &edgehog_device);
@@ -168,7 +179,7 @@ int main(void)
 
     LOG_INF("Edgehog device created"); // NOLINT
 
-    astarte_result = astarte_device_connect(astarte_device);
+    astarte_result = astarte_device_connect(astarte_device_handle);
     if (astarte_result != ASTARTE_RESULT_OK) {
         return -1;
     }
@@ -176,7 +187,7 @@ int main(void)
     while (astarte_result == ASTARTE_RESULT_OK || astarte_result == ASTARTE_RESULT_TIMEOUT) {
         k_timepoint_t timepoint = sys_timepoint_calc(K_MSEC(POLL_PERIOD_MS));
 
-        astarte_result = astarte_device_poll(astarte_device);
+        astarte_result = astarte_device_poll(astarte_device_handle);
 #ifndef CONFIG_WIFI
         eth_poll();
 #endif
@@ -191,7 +202,7 @@ int main(void)
 
     edgehog_device_destroy(edgehog_device);
 
-    astarte_result = astarte_device_destroy(astarte_device);
+    astarte_result = astarte_device_destroy(astarte_device_handle);
     if (astarte_result != ASTARTE_RESULT_OK) {
         LOG_ERR("Failed destroying the device."); // NOLINT
         return -1;
