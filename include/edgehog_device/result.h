@@ -73,6 +73,15 @@ typedef enum
     EDGEHOG_RESULT_LED_CONFIGURE_ERROR = 24,
     /** @brief Unable to run a WiFi scan request. */
     EDGEHOG_RESULT_WIFI_SCAN_REQUEST_FAIL = 25,
+    /** @brief Unable to init Edgehog settings. */
+    EDGEHOG_RESULT_SETTINGS_INIT_FAIL = 26,
+    /** @brief Unable to load items from the Edgehog settings. */
+    EDGEHOG_RESULT_SETTINGS_LOAD_FAIL = 27,
+    /** @brief Unable to save an item to the Edgehog settings. */
+    EDGEHOG_RESULT_SETTINGS_SAVE_FAIL = 28,
+    /** @brief Unable to delete an item to the Edgehog settings. */
+    EDGEHOG_RESULT_SETTINGS_DELETE_FAIL = 29,
+
 } edgehog_result_t;
 
 #endif // EDGEHOG_DEVICE_RESULT_H

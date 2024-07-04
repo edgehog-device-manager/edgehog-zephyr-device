@@ -117,6 +117,11 @@ module-str = Log level for Edgehog device NVS utilities
 module-help = Sets log level for Edgehog device NVS utilities.
 source "subsys/logging/Kconfig.template.log_config"
 
+module = EDGEHOG_DEVICE_SETTINGS
+module-str = Log level for Edgehog device Settings utilities
+module-help = Sets log level for Edgehog device Settings utilities.
+source "subsys/logging/Kconfig.template.log_config"
+
 module = EDGEHOG_DEVICE_COMMAND
 module-str = Log level for Edgehog device Command utilities
 module-help = Sets log level for Edgehog device Command utilities.
