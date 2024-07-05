@@ -11,10 +11,11 @@
  * @file settings.h
  * @brief Edgehog device settings API.
  *
- * @details The Edgehog settings subsystem gives a way to store persistent
- * configuration and runtime state. Settings items are stored as key-value pair strings.
- * The keys are organized by package ID `edgehog_device` and subtree, for instance the key
- * `edgehog_device/ota` would define the ota state for edgehog device.
+ * @details The settings are organized in a tree format, and the key used to store/fetch them should
+ * correspond to the path to the corresponding tree location. Any instance of the settings driver
+ * will have a common first branch named `EDGEHOG_ID`. Each instance of this driver will be free to
+ * define its branch(es) using the `subtree` and `key` parameters. The `EDGEHOG_ID`, `subtree`, and
+ * `key` paths will be combined to obtain the full path to each setting.
  */
 
 #include "edgehog_device/device.h"
@@ -42,8 +43,8 @@ edgehog_result_t edgehog_settings_init();
  * passed to the given callback.
  *
  * @param subtree[in] subtree name of the subtree to be loaded.
- * @param load_cb[in] pointer to the callback function..
- * @param param[inout] parameter to be passed when callback function is called..
+ * @param load_cb[in] pointer to the callback function.
+ * @param param[inout] parameter to be passed when callback function is called.
  *
  * @return EDGEHOG_RESULT_OK if successful, otherwise an error code.
  */

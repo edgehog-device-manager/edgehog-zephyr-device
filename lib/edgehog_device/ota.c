@@ -11,15 +11,16 @@
 #include "edgehog_private.h"
 #include "generated_interfaces.h"
 #include "http.h"
-#include "nvs.h"
+#include "settings.h"
 
 #include <stdlib.h>
+
+#include <time.h>
 
 #include <zephyr/device.h>
 #include <zephyr/dfu/flash_img.h>
 #include <zephyr/dfu/mcuboot.h>
 #include <zephyr/drivers/flash.h>
-#include <zephyr/fs/nvs.h>
 #include <zephyr/storage/flash_map.h>
 #include <zephyr/sys/reboot.h>
 
@@ -43,9 +44,9 @@ EDGEHOG_LOG_MODULE_REGISTER(ota, CONFIG_EDGEHOG_DEVICE_OTA_LOG_LEVEL);
 #define FLASH_AREA_IMAGE_PRIMARY FIXED_PARTITION_ID(SLOT0_LABEL)
 #define FLASH_AREA_IMAGE_SECONDARY FIXED_PARTITION_ID(SLOT1_LABEL)
 
-#define OTA_STATE_KEY 1
-#define OTA_PARTITION_ADDR_KEY 2
-#define OTA_REQUEST_ID_KEY 3
+#define OTA_KEY "ota"
+#define OTA_STATE_KEY "state"
+#define OTA_REQUEST_ID_KEY "req_id"
 
 #define THREAD_STACK_SIZE 8192
 #define OTA_STATE_RUN_BIT (1)
@@ -98,6 +99,19 @@ typedef enum
     OTA_EVENT_FAILURE = 8
 } ota_event_t;
 
+/**
+ * @brief OTA settings data.
+ *
+ * @details Defines the OTA data used by Edgehog settings.
+ */
+typedef struct
+{
+    /** @brief OTA request UUID. */
+    char uuid[ASTARTE_UUID_STR_LEN + 1];
+    /** @brief OTA state. */
+    uint8_t ota_state;
+} ota_settings_t;
+
 /************************************************
  *         Static functions declaration         *
  ***********************************************/
@@ -139,7 +153,7 @@ static void pub_ota_event(astarte_device_handle_t astarte_device, const char *re
 static edgehog_result_t edgehog_ota_event_update(
     edgehog_device_handle_t edgehog_dev, ota_request_t *ota_request);
 
-static edgehog_result_t perform_ota(edgehog_device_handle_t edgehog_device, struct nvs_fs *store);
+static edgehog_result_t perform_ota(edgehog_device_handle_t edgehog_device);
 static edgehog_result_t perform_ota_attempt(edgehog_device_handle_t edgehog_device);
 
 /**
@@ -150,6 +164,20 @@ static edgehog_result_t perform_ota_attempt(edgehog_device_handle_t edgehog_devi
  */
 static edgehog_result_t edgehog_ota_event_cancel(
     edgehog_device_handle_t edgehog_dev, const char *request_uuid);
+
+/**
+ * @brief Handle ota settings loading.
+ *
+ * @param[in] key the name with skipped part that was used as name in handler registration.
+ * @param[in] len the size of the data found in the backend.
+ * @param[in] read_cb function provided to read the data from the backend.
+ * @param[inout] cb_arg arguments for the read function provided by the backend.
+ * @param[inout] param parameter given to the settings_load_subtree_direct function.
+ *
+ * @return When nonzero value is returned, further subtree searching is stopped.
+ */
+static int ota_settings_loader(
+    const char *key, size_t len, settings_read_cb read_cb, void *cb_arg, void *param);
 
 /************************************************
  *         Global functions definitions         *
@@ -164,31 +192,32 @@ void edgehog_ota_init(edgehog_device_handle_t edgehog_dev)
 
     memset(&edgehog_dev->ota_thread, 0, sizeof(ota_thread_t));
 
-    struct nvs_fs store;
-    edgehog_result_t res = edgehog_nvs_open(&store);
+    edgehog_result_t res = edgehog_settings_init();
     if (res != EDGEHOG_RESULT_OK) {
-        EDGEHOG_LOG_ERR("Edgehog NVS Open failed");
+        EDGEHOG_LOG_ERR("Edgehog Settings Init failed");
         return;
     }
 
-    // Step 2 check if an UUID is present in NVS. If not there is no need to continue as there
-    // is no pending OTA update.
+    // Step 2 check if an UUID is present in Edgehog settings. If not there is no need to continue
+    // as there is no pending OTA update.
 
-    char req_uuid[ASTARTE_UUID_STR_LEN + 1] = { 0 };
-    size_t req_uuid_size = ASTARTE_UUID_STR_LEN;
-    ssize_t b_read = nvs_read(&store, OTA_REQUEST_ID_KEY, &req_uuid, req_uuid_size);
-    if (b_read <= 0) { /* item was found, show it */
-        EDGEHOG_LOG_INF("No OTA update request UUID found from NVS err :%d.", b_read);
+    ota_settings_t ota_settings = { 0 };
+    res = edgehog_settings_load("ota", ota_settings_loader, &ota_settings);
+    if (res != EDGEHOG_RESULT_OK) {
+        EDGEHOG_LOG_ERR("Edgehog Settings load failed");
+        return;
+    }
+
+    if (strlen(ota_settings.uuid) != ASTARTE_UUID_STR_LEN) {
+        EDGEHOG_LOG_INF("No OTA update request UUID found from Edgehog Settings");
         goto end;
     }
 
     // Step 3 check if the OTA update state is reboot. If not notify astarte of the error.
 
-    uint8_t ota_state = OTA_STATE_IDLE;
-    b_read = nvs_read(&store, OTA_STATE_KEY, &ota_state, sizeof(uint8_t));
-    if (b_read <= 0 || ota_state != OTA_STATE_REBOOT) {
-        EDGEHOG_LOG_ERR("Unable to fetching the OTA state from NVS err:%d.", b_read);
-        pub_ota_event(edgehog_dev->astarte_device, req_uuid, OTA_EVENT_FAILURE, 0,
+    if (ota_settings.ota_state != OTA_STATE_REBOOT) {
+        EDGEHOG_LOG_ERR("Unable to fetch the OTA state from Edgehog settings");
+        pub_ota_event(edgehog_dev->astarte_device, ota_settings.uuid, OTA_EVENT_FAILURE, 0,
             EDGEHOG_RESULT_OTA_INTERNAL_ERROR, "");
         goto end;
     }
@@ -197,14 +226,14 @@ void edgehog_ota_init(edgehog_device_handle_t edgehog_dev)
     if (swap_type != BOOT_SWAP_TYPE_NONE) {
         EDGEHOG_LOG_ERR(
             "Unable to swap the contents to slot 1. Swap type:%s", swap_type_str(swap_type));
-        pub_ota_event(edgehog_dev->astarte_device, req_uuid, OTA_EVENT_FAILURE, 0,
+        pub_ota_event(edgehog_dev->astarte_device, ota_settings.uuid, OTA_EVENT_FAILURE, 0,
             EDGEHOG_RESULT_OTA_SWAP_FAIL, "");
         goto end;
     }
 
     if (boot_is_img_confirmed()) {
         EDGEHOG_LOG_ERR("Boot Image is alredy confirmed, it is not an OTA update process");
-        pub_ota_event(edgehog_dev->astarte_device, req_uuid, OTA_EVENT_FAILURE, 0,
+        pub_ota_event(edgehog_dev->astarte_device, ota_settings.uuid, OTA_EVENT_FAILURE, 0,
             EDGEHOG_RESULT_OTA_SWAP_FAIL, "");
         goto end;
     }
@@ -212,20 +241,21 @@ void edgehog_ota_init(edgehog_device_handle_t edgehog_dev)
     int ret = boot_write_img_confirmed();
     if (ret < 0) {
         EDGEHOG_LOG_ERR("Couldn't confirm this image: %d", ret);
-        pub_ota_event(edgehog_dev->astarte_device, req_uuid, OTA_EVENT_FAILURE, 0,
+        pub_ota_event(edgehog_dev->astarte_device, ota_settings.uuid, OTA_EVENT_FAILURE, 0,
             EDGEHOG_RESULT_OTA_INTERNAL_ERROR, "");
         goto end;
     }
 
     EDGEHOG_LOG_INF("Marked image as OK");
 
-    pub_ota_event(
-        edgehog_dev->astarte_device, req_uuid, OTA_EVENT_SUCCESS, 0, EDGEHOG_RESULT_OK, "");
+    pub_ota_event(edgehog_dev->astarte_device, ota_settings.uuid, OTA_EVENT_SUCCESS, 0,
+        EDGEHOG_RESULT_OK, "");
 
 end:
-    nvs_delete(&store, OTA_REQUEST_ID_KEY);
-    ota_state = OTA_STATE_IDLE;
-    nvs_write(&store, OTA_STATE_KEY, &ota_state, sizeof(uint8_t));
+    edgehog_settings_delete(OTA_KEY, OTA_REQUEST_ID_KEY);
+    ota_settings.ota_state = OTA_STATE_IDLE;
+    edgehog_settings_save(
+        OTA_KEY, OTA_STATE_KEY, &ota_settings.ota_state, sizeof(ota_settings.ota_state));
 }
 
 edgehog_result_t edgehog_ota_event(
@@ -377,16 +407,16 @@ static void ota_thread_entry_point(void *edgehog_device, void *ptr2, void *ptr3)
     pub_ota_event(
         edgehog_dev->astarte_device, req_uuid, OTA_EVENT_ACKNOWLEDGED, 0, EDGEHOG_RESULT_OK, "");
 
-    // Step 2 Open NVS namespace for the OTA update
+    // Step 2 Init Edgehog settings for the OTA update
 
     EDGEHOG_LOG_INF("OTA INIT");
-    struct nvs_fs store;
-    edgehog_result_t edgehog_result = edgehog_nvs_open(&store);
+
+    edgehog_result_t edgehog_result = edgehog_settings_init();
     if (edgehog_result != EDGEHOG_RESULT_OK) {
-        EDGEHOG_LOG_ERR("Error opening the NVS.");
+        EDGEHOG_LOG_ERR("Edgehog Settings Init failed");
         EDGEHOG_LOG_WRN("OTA FAILED");
         pub_ota_event(edgehog_dev->astarte_device, req_uuid, OTA_EVENT_FAILURE, 0,
-            EDGEHOG_RESULT_NVS_ERROR, "");
+            EDGEHOG_RESULT_SETTINGS_INIT_FAIL, "");
         goto selfdestruct;
     }
 
@@ -394,15 +424,15 @@ static void ota_thread_entry_point(void *edgehog_device, void *ptr2, void *ptr3)
 
     EDGEHOG_LOG_INF("DOWNLOAD_AND_DEPLOY");
     uint8_t ota_state = OTA_STATE_IN_PROGRESS;
-    nvs_write(&store, OTA_STATE_KEY, &ota_state, sizeof(uint8_t));
+    edgehog_settings_save(OTA_KEY, OTA_STATE_KEY, &ota_state, sizeof(uint8_t));
 
-    edgehog_result = perform_ota(edgehog_dev, &store);
+    edgehog_result = perform_ota(edgehog_dev);
     if (edgehog_result == EDGEHOG_RESULT_OK) {
         pub_ota_event(
             edgehog_dev->astarte_device, req_uuid, OTA_EVENT_DEPLOYING, 0, EDGEHOG_RESULT_OK, "");
         EDGEHOG_LOG_INF("OTA PREPARE REBOOT");
         ota_state = OTA_STATE_REBOOT;
-        nvs_write(&store, OTA_STATE_KEY, &ota_state, sizeof(uint8_t));
+        edgehog_settings_save(OTA_KEY, OTA_STATE_KEY, &ota_state, sizeof(uint8_t));
 
         struct mcuboot_img_header hdr;
         memset(&hdr, 0, sizeof(struct mcuboot_img_header));
@@ -438,7 +468,7 @@ static void ota_thread_entry_point(void *edgehog_device, void *ptr2, void *ptr3)
         pub_ota_event(
             edgehog_dev->astarte_device, req_uuid, OTA_EVENT_FAILURE, 0, edgehog_result, "");
         ota_state = OTA_STATE_IDLE;
-        nvs_write(&store, OTA_STATE_KEY, &ota_state, sizeof(uint8_t));
+        edgehog_settings_save(OTA_KEY, OTA_STATE_KEY, &ota_state, sizeof(uint8_t));
     }
 
 selfdestruct:
@@ -446,12 +476,12 @@ selfdestruct:
 
     free(ota_thread_data->ota_request.uuid);
     free(ota_thread_data->ota_request.download_url);
-    nvs_delete(&store, OTA_REQUEST_ID_KEY);
+    edgehog_settings_delete(OTA_KEY, OTA_REQUEST_ID_KEY);
     ota_state = OTA_STATE_IDLE;
-    nvs_write(&store, OTA_STATE_KEY, &ota_state, sizeof(uint8_t));
+    edgehog_settings_save(OTA_KEY, OTA_STATE_KEY, &ota_state, sizeof(uint8_t));
 }
 
-static edgehog_result_t perform_ota(edgehog_device_handle_t edgehog_device, struct nvs_fs *store)
+static edgehog_result_t perform_ota(edgehog_device_handle_t edgehog_device)
 {
     edgehog_result_t edgehog_result = EDGEHOG_RESULT_OK;
 
@@ -470,15 +500,13 @@ static edgehog_result_t perform_ota(edgehog_device_handle_t edgehog_device, stru
         return EDGEHOG_RESULT_OTA_INIT_FLASH_ERROR;
     }
 
-    // Step 1 set the request ID to the received uuid in NVS
-
-    size_t b_written = nvs_write(
-        store, OTA_REQUEST_ID_KEY, thread_data->ota_request.uuid, ASTARTE_UUID_STR_LEN + 1);
-    if (b_written != ASTARTE_UUID_STR_LEN + 1) {
-        EDGEHOG_LOG_ERR("Unable to write OTA req_uuid into NVS, OTA canceled");
-        return EDGEHOG_RESULT_NVS_ERROR;
+    // Step 1 set the request ID to the received uuid in Settings
+    edgehog_result = edgehog_settings_save(
+        OTA_KEY, OTA_REQUEST_ID_KEY, thread_data->ota_request.uuid, ASTARTE_UUID_STR_LEN + 1);
+    if (edgehog_result != EDGEHOG_RESULT_OK) {
+        EDGEHOG_LOG_ERR("Unable to write OTA req_uuid into Edgehog Settings, OTA canceled");
+        return edgehog_result;
     }
-
     // Step 2 attempt OTA operation for MAX_OTA_RETRY tries
 
     for (uint8_t update_attempts = 0; update_attempts < MAX_OTA_RETRY; update_attempts++) {
@@ -588,30 +616,31 @@ static edgehog_result_t edgehog_ota_event_cancel(
         return EDGEHOG_RESULT_OTA_INVALID_REQUEST;
     }
 
-    struct nvs_fs store;
-    edgehog_result_t err = edgehog_nvs_open(&store);
-    if (err != EDGEHOG_RESULT_OK) {
-        EDGEHOG_LOG_ERR("Error opening the NVS OTA update namespace.");
+    edgehog_result_t res = edgehog_settings_init();
+    if (res != EDGEHOG_RESULT_OK) {
+        EDGEHOG_LOG_ERR("Edgehog Settings Init failed");
         pub_ota_event(edgehog_dev->astarte_device, request_uuid, OTA_EVENT_FAILURE, 0,
-            EDGEHOG_RESULT_OTA_INTERNAL_ERROR, "Unable to cancel OTA update request, NVS error.");
+            EDGEHOG_RESULT_OTA_INTERNAL_ERROR,
+            "Unable to cancel OTA update request, Edgeghog Settings init error.");
         return EDGEHOG_RESULT_OTA_INTERNAL_ERROR;
     }
 
-    char current_uuid[ASTARTE_UUID_STR_LEN];
-    size_t current_uuid_size = ASTARTE_UUID_STR_LEN;
-    ssize_t b_read = nvs_read(&store, OTA_REQUEST_ID_KEY, current_uuid, current_uuid_size);
-    if (b_read < 0) { /* item was found, show it */
-        EDGEHOG_LOG_ERR("Error fetching the OTA update request UUID from NVS err:%d.", b_read);
+    ota_settings_t ota_settings = { 0 };
+    res = edgehog_settings_load("ota", ota_settings_loader, &ota_settings);
+    if (res != EDGEHOG_RESULT_OK) {
+        EDGEHOG_LOG_ERR("Edgehog Settings load failed");
         pub_ota_event(edgehog_dev->astarte_device, request_uuid, OTA_EVENT_FAILURE, 0,
-            EDGEHOG_RESULT_OTA_INTERNAL_ERROR, "Unable to cancel OTA update request, NVS error.");
+            EDGEHOG_RESULT_OTA_INTERNAL_ERROR,
+            "Unable to cancel OTA update request, Edgeghog Settings load error.");
         return EDGEHOG_RESULT_OTA_INTERNAL_ERROR;
     }
 
-    if (strcmp(current_uuid, request_uuid) != 0) {
+    if (strlen(ota_settings.uuid) != ASTARTE_UUID_STR_LEN) { /* item was found, show it */
+        EDGEHOG_LOG_ERR("Error fetching the OTA update request UUID from Edgehog Settings");
         pub_ota_event(edgehog_dev->astarte_device, request_uuid, OTA_EVENT_FAILURE, 0,
-            EDGEHOG_RESULT_OTA_INVALID_REQUEST,
-            "Unable to cancel OTA update request, not the same UUID.");
-        return EDGEHOG_RESULT_OTA_INVALID_REQUEST;
+            EDGEHOG_RESULT_OTA_INTERNAL_ERROR,
+            "Unable to cancel OTA update request, Edgehog Settings error.");
+        return EDGEHOG_RESULT_OTA_INTERNAL_ERROR;
     }
 
     if (!atomic_test_and_clear_bit(
@@ -700,7 +729,10 @@ static void pub_ota_event(astarte_device_handle_t astarte_device, const char *re
         case EDGEHOG_RESULT_NETWORK_ERROR:
             status_code = "ErrorNetwork";
             break;
-        case EDGEHOG_RESULT_NVS_ERROR:
+        case EDGEHOG_RESULT_SETTINGS_INIT_FAIL:
+        case EDGEHOG_RESULT_SETTINGS_SAVE_FAIL:
+        case EDGEHOG_RESULT_SETTINGS_LOAD_FAIL:
+        case EDGEHOG_RESULT_SETTINGS_DELETE_FAIL:
             status_code = "IOError";
             break;
         case EDGEHOG_RESULT_OTA_INVALID_IMAGE:
@@ -732,10 +764,47 @@ static void pub_ota_event(astarte_device_handle_t astarte_device, const char *re
         { .path = "message", .individual = astarte_individual_from_string(message) },
     };
 
+    const int64_t timestamp = (int64_t) time(NULL);
+
     astarte_result_t res
         = astarte_device_stream_aggregated(astarte_device, io_edgehog_devicemanager_OTAEvent.name,
-            "/event", object_entries, ARRAY_SIZE(object_entries), NULL);
+            "/event", object_entries, ARRAY_SIZE(object_entries), &timestamp);
     if (res != ASTARTE_RESULT_OK) {
         EDGEHOG_LOG_ERR("Unable to send ota_event"); // NOLINT
     }
+}
+
+static int ota_settings_loader(
+    const char *key, size_t len, settings_read_cb read_cb, void *cb_arg, void *param)
+{
+    ARG_UNUSED(len);
+
+    const char *next = NULL;
+    ota_settings_t *dest = (ota_settings_t *) param;
+
+    size_t key_len = settings_name_next(key, &next);
+    if (!next) {
+
+        if (strncmp(key, OTA_STATE_KEY, key_len) == 0) {
+            int res = read_cb(cb_arg, &(dest->ota_state), sizeof(dest->ota_state));
+            if (res < 0) {
+                EDGEHOG_LOG_ERR("Unable to read ota state from settings: %d", res);
+                return res;
+            }
+
+            return 0;
+        }
+
+        if (strncmp(key, OTA_REQUEST_ID_KEY, key_len) == 0) {
+            int res = read_cb(cb_arg, &(dest->uuid), sizeof(dest->uuid));
+            if (res < 0) {
+                EDGEHOG_LOG_ERR("Unable to read ota request uuid from settings: %d", res);
+                return res;
+            }
+
+            return 0;
+        }
+    }
+
+    return -ENOENT;
 }
