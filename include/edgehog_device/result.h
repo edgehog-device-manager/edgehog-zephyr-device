@@ -81,6 +81,12 @@ typedef enum
     EDGEHOG_RESULT_SETTINGS_SAVE_FAIL = 28,
     /** @brief Unable to delete an item to the Edgehog settings. */
     EDGEHOG_RESULT_SETTINGS_DELETE_FAIL = 29,
+    /** @brief Unable to schedule a Telemetry timer. */
+    EDGEHOG_RESULT_TELEMETRY_START_FAIL = 30,
+    /** @brief Unable to store a telemetry entry. */
+    EDGEHOG_RESULT_TELEMETRY_STORE_FAIL = 31,
+    /** @brief Unable to stop a telemetry entry. */
+    EDGEHOG_RESULT_TELEMETRY_STOP_FAIL = 32,
 
 } edgehog_result_t;
 

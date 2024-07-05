@@ -533,4 +533,35 @@ const astarte_interface_t io_edgehog_devicemanager_WiFiScanResults = {
     .mappings_length = 5U,
 };
 
+static const astarte_mapping_t io_edgehog_devicemanager_config_Telemetry_mappings[2] = {
+
+    {
+        .endpoint = "/request/%{interface_name}/enable",
+        .regex_endpoint = "^/request/[a-zA-Z_][a-zA-Z0-9_]*/enable$",
+        .type = ASTARTE_MAPPING_TYPE_BOOLEAN,
+        .reliability = ASTARTE_MAPPING_RELIABILITY_UNIQUE,
+        .explicit_timestamp = false,
+        .allow_unset = true,
+    },
+    {
+        .endpoint = "/request/%{interface_name}/periodSeconds",
+        .regex_endpoint = "^/request/[a-zA-Z_][a-zA-Z0-9_]*/periodSeconds$",
+        .type = ASTARTE_MAPPING_TYPE_LONGINTEGER,
+        .reliability = ASTARTE_MAPPING_RELIABILITY_UNIQUE,
+        .explicit_timestamp = false,
+        .allow_unset = true,
+    },
+};
+
+const astarte_interface_t io_edgehog_devicemanager_config_Telemetry = {
+    .name = "io.edgehog.devicemanager.config.Telemetry",
+    .major_version = 0,
+    .minor_version = 1,
+    .type = ASTARTE_INTERFACE_TYPE_PROPERTIES,
+    .ownership = ASTARTE_INTERFACE_OWNERSHIP_SERVER,
+    .aggregation = ASTARTE_INTERFACE_AGGREGATION_INDIVIDUAL,
+    .mappings = io_edgehog_devicemanager_config_Telemetry_mappings,
+    .mappings_length = 2U,
+};
+
 // NOLINTEND(readability-identifier-naming)

@@ -17,6 +17,7 @@
 #include "log.h"
 #include "os_info.h"
 #include "runtime_info.h"
+#include "settings.h"
 #include "storage_usage.h"
 #include "system_info.h"
 #include "system_status.h"
@@ -67,6 +68,12 @@ edgehog_result_t edgehog_device_new(
 
     edgehog_device->astarte_device = config->astarte_device;
 
+    res = edgehog_settings_init();
+    if (res != EDGEHOG_RESULT_OK) {
+        EDGEHOG_LOG_ERR("Edgehog Settings Init failed");
+        goto failure;
+    }
+
     astarte_uuid_t boot_id;
     astarte_uuid_generate_v4(boot_id);
     astarte_result_t astarte_result
@@ -76,6 +83,14 @@ edgehog_result_t edgehog_device_new(
         EDGEHOG_LOG_ERR("Unable to generate edgehog boot id");
         goto failure;
     }
+
+    edgehog_telemetry_t *edgehog_telemetry
+        = edgehog_telemetry_new(config->telemetry_config, config->telemetry_config_len);
+    if (!edgehog_telemetry) {
+        EDGEHOG_LOG_ERR("Unable to create edgehog telemetry update");
+        goto failure;
+    }
+    edgehog_device->edgehog_telemetry = edgehog_telemetry;
 
     res = add_interfaces(config->astarte_device);
 
@@ -102,7 +117,13 @@ edgehog_result_t edgehog_device_start(edgehog_device_handle_t edgehog_device)
 {
     edgehog_initial_publish(edgehog_device);
 
-    return EDGEHOG_RESULT_OK;
+    edgehog_result_t res
+        = edgehog_telemetry_start(edgehog_device, edgehog_device->edgehog_telemetry);
+    if (res != EDGEHOG_RESULT_OK) {
+        EDGEHOG_LOG_ERR("Unable to start Edgehog device");
+    }
+
+    return res;
 }
 
 void edgehog_device_datastream_object_events_handler(
@@ -149,6 +170,42 @@ void edgehog_device_datastream_individual_events_handler(
     }
 }
 
+void edgehog_device_property_set_events_handler(
+    edgehog_device_handle_t edgehog_device, astarte_device_property_set_event_t event)
+{
+    if (!edgehog_device) {
+        EDGEHOG_LOG_ERR("Unable to handle event, Edgehog device undefined");
+        return;
+    }
+
+    astarte_device_data_event_t rx_event = event.data_event;
+
+    if (strcmp(rx_event.interface_name, io_edgehog_devicemanager_config_Telemetry.name) == 0) {
+        edgehog_result_t telemetry_result
+            = edgehog_telemetry_config_set_event(edgehog_device, &event);
+        if (telemetry_result != EDGEHOG_RESULT_OK) {
+            EDGEHOG_LOG_ERR("Unable to handle Telemetry set event request");
+        }
+    }
+}
+
+void edgehog_device_property_unset_events_handler(
+    edgehog_device_handle_t edgehog_device, astarte_device_data_event_t event)
+{
+    if (!edgehog_device) {
+        EDGEHOG_LOG_ERR("Unable to handle event, Edgehog device undefined");
+        return;
+    }
+
+    if (strcmp(event.interface_name, io_edgehog_devicemanager_config_Telemetry.name) == 0) {
+        edgehog_result_t telemetry_result
+            = edgehog_telemetry_config_unset_event(edgehog_device, &event);
+        if (telemetry_result != EDGEHOG_RESULT_OK) {
+            EDGEHOG_LOG_ERR("Unable to handle Telemetry unset event request");
+        }
+    }
+}
+
 /************************************************
  * Static functions definition
  ***********************************************/
@@ -172,6 +229,7 @@ static edgehog_result_t add_interfaces(astarte_device_handle_t device)
 #ifdef CONFIG_WIFI
         &io_edgehog_devicemanager_WiFiScanResults,
 #endif
+        &io_edgehog_devicemanager_config_Telemetry,
     };
 
     for (int i = 0; i < ARRAY_SIZE(interfaces); i++) {
@@ -199,4 +257,26 @@ static void edgehog_initial_publish(edgehog_device_handle_t edgehog_device)
 #ifdef CONFIG_WIFI
     edgehog_wifi_scan_start(edgehog_device->astarte_device);
 #endif
+}
+
+void edgehog_device_publish_telemetry(edgehog_device_handle_t device, telemetry_type_t type)
+{
+    switch (type) {
+        case EDGEHOG_TELEMETRY_HW_INFO:
+            publish_hardware_info(device);
+            break;
+#ifdef CONFIG_WIFI
+        case EDGEHOG_TELEMETRY_WIFI_SCAN:
+            edgehog_wifi_scan_start(device->astarte_device);
+            break;
+#endif
+        case EDGEHOG_TELEMETRY_SYSTEM_STATUS:
+            publish_system_status(device);
+            break;
+        case EDGEHOG_TELEMETRY_STORAGE_USAGE:
+            publish_storage_usage(device);
+            break;
+        default:
+            return;
+    }
 }

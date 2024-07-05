@@ -192,17 +192,11 @@ void edgehog_ota_init(edgehog_device_handle_t edgehog_dev)
 
     memset(&edgehog_dev->ota_thread, 0, sizeof(ota_thread_t));
 
-    edgehog_result_t res = edgehog_settings_init();
-    if (res != EDGEHOG_RESULT_OK) {
-        EDGEHOG_LOG_ERR("Edgehog Settings Init failed");
-        return;
-    }
-
-    // Step 2 check if an UUID is present in Edgehog settings. If not there is no need to continue
+    // Step 1 check if an UUID is present in Edgehog settings. If not there is no need to continue
     // as there is no pending OTA update.
 
     ota_settings_t ota_settings = { 0 };
-    res = edgehog_settings_load("ota", ota_settings_loader, &ota_settings);
+    edgehog_result_t res = edgehog_settings_load("ota", ota_settings_loader, &ota_settings);
     if (res != EDGEHOG_RESULT_OK) {
         EDGEHOG_LOG_ERR("Edgehog Settings load failed");
         return;

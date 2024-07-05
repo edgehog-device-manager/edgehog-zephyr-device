@@ -85,6 +85,7 @@ jobs:
             io.edgehog.devicemanager.LedBehavior.json \
             io.edgehog.devicemanager.WiFiScanResults.json \
             io.edgehog.devicemanager.BatteryStatus.json \
+            io.edgehog.devicemanager.config.Telemetry.json \
             ../edgehog-zephyr-device/interfaces
       - name: Generate interface reference code
         working-directory: edgehog-zephyr-device

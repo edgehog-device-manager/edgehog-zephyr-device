@@ -79,6 +79,6 @@ void publish_system_status(edgehog_device_handle_t edgehog_device)
         io_edgehog_devicemanager_SystemStatus.name, "/systemStatus", object_entries,
         ARRAY_SIZE(object_entries), &timestamp);
     if (res != ASTARTE_RESULT_OK) {
-        EDGEHOG_LOG_ERR("Unable to send syste_status"); // NOLINT
+        EDGEHOG_LOG_ERR("Unable to send system_status"); // NOLINT
     }
 }

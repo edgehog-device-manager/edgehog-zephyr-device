@@ -157,4 +157,9 @@ module-str = Log level for Edgehog device Battery status informantions.
 module-help = Sets log level for Edgehog device Battery status informantions.
 source "subsys/logging/Kconfig.template.log_config"
 
+module = EDGEHOG_DEVICE_TELEMETRY
+module-str = Log level for Edgehog device telemtry utilities.
+module-help = Sets log level for Edgehog device telemtry utilities.
+source "subsys/logging/Kconfig.template.log_config"
+
 endmenu
