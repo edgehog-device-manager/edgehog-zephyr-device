@@ -54,7 +54,7 @@ static edgehog_result_t edgehog_led_setup(const struct gpio_dt_spec *edgehog_led
  *
  * @param[in] value An astarte individual value representing the LED behaviour to select.
  * @param[out] blink_entry k_thread_entry_t struct used to store the blink entry function.
- * @return ASTARTE_RESULT_OK if publish has been successful, an error code otherwise.
+ * @return EDGEHOG_RESULT_OK if publish has been successful, an error code otherwise.
  */
 static edgehog_result_t get_blink_entry(astarte_individual_t value, k_thread_entry_t *blink_entry);
 
