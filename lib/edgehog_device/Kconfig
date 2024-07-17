@@ -152,4 +152,9 @@ module-str = Log level for Edgehog device WiFi scan.
 module-help = Sets log level for Edgehog device WiFi scan.
 source "subsys/logging/Kconfig.template.log_config"
 
+module = EDGEHOG_DEVICE_BATTERY_STATUS
+module-str = Log level for Edgehog device Battery status informantions.
+module-help = Sets log level for Edgehog device Battery status informantions.
+source "subsys/logging/Kconfig.template.log_config"
+
 endmenu
