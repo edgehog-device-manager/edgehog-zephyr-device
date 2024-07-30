@@ -20,6 +20,7 @@ LOG_MODULE_REGISTER(simple_main); // NOLINT
 
 #include <astarte_device_sdk/device.h>
 #include <edgehog_device/device.h>
+#include <edgehog_device/telemetry.h>
 #include <edgehog_device/wifi_scan.h>
 
 #ifdef CONFIG_EDGEHOG_DEVICE_ZBUS_OTA_EVENT
@@ -37,6 +38,7 @@ LOG_MODULE_REGISTER(simple_main); // NOLINT
  ***********************************************/
 
 #define POLL_PERIOD_MS 100
+#define TELEMETRY_PERIOD_S 5
 
 #define HTTP_TIMEOUT_MS (3 * MSEC_PER_SEC)
 #define MQTT_FIRST_POLL_TIMEOUT_MS (3 * MSEC_PER_SEC)
@@ -107,6 +109,19 @@ static void datastream_individual_events_handler(
     astarte_device_datastream_individual_event_t event);
 
 /**
+ * @brief Handler for astarte set property event.
+ *
+ * @param event Astarte device data event pointer.
+ */
+static void properties_set_events_handler(astarte_device_property_set_event_t event);
+/**
+ * @brief Handler for astarte unset property event.
+ *
+ * @param event Astarte device data event pointer.
+ */
+static void properties_unset_events_handler(astarte_device_data_event_t event);
+
+/**
  * @brief Initialize System Time
  */
 static void system_time_init();
@@ -156,6 +171,8 @@ int main(void)
     astarte_device_config.disconnection_cbk = astarte_disconnection_events_handler;
     astarte_device_config.datastream_object_cbk = datastream_object_events_handler;
     astarte_device_config.datastream_individual_cbk = datastream_individual_events_handler;
+    astarte_device_config.property_set_cbk = properties_set_events_handler;
+    astarte_device_config.property_unset_cbk = properties_unset_events_handler;
     astarte_device_config.cbk_user_data = (void *) &edgehog_device;
 
     memcpy(astarte_device_config.cred_secr, cred_secr, sizeof(cred_secr));
@@ -166,8 +183,15 @@ int main(void)
         return -1;
     }
 
+    edgehog_device_telemetry_config_t telemetry_config = {
+        .type = EDGEHOG_TELEMETRY_SYSTEM_STATUS,
+        .period_seconds = TELEMETRY_PERIOD_S,
+    };
+
     edgehog_device_config_t edgehog_conf = {
         .astarte_device = astarte_device_handle,
+        .telemetry_config = &telemetry_config,
+        .telemetry_config_len = 1,
     };
 
     edgehog_result_t edgehog_result = edgehog_device_new(&edgehog_conf, &edgehog_device);
@@ -294,6 +318,22 @@ static void datastream_individual_events_handler(astarte_device_datastream_indiv
         = (edgehog_device_handle_t *) event.data_event.user_data;
 
     edgehog_device_datastream_individual_events_handler(*edgehog_device, event);
+}
+
+static void properties_set_events_handler(astarte_device_property_set_event_t event)
+{
+
+    edgehog_device_handle_t *edgehog_device
+        = (edgehog_device_handle_t *) event.data_event.user_data;
+
+    edgehog_device_property_set_events_handler(*edgehog_device, event);
+}
+
+static void properties_unset_events_handler(astarte_device_data_event_t event)
+{
+    edgehog_device_handle_t *edgehog_device = (edgehog_device_handle_t *) event.user_data;
+
+    edgehog_device_property_unset_events_handler(*edgehog_device, event);
 }
 
 static void astarte_disconnection_events_handler(astarte_device_disconnection_event_t event)

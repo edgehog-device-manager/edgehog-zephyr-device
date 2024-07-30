@@ -14,6 +14,7 @@
 
 #include "led.h"
 #include "ota.h"
+#include "telemetry_private.h"
 
 #include <astarte_device_sdk/device.h>
 #include <astarte_device_sdk/uuid.h>
@@ -28,6 +29,19 @@ struct edgehog_device_t
     ota_thread_t ota_thread;
     /** @brief LED thread data used during the LED blink. */
     led_thread_t led_thread;
+    /** @brief Telemetry data ... */
+    edgehog_telemetry_t *edgehog_telemetry;
 };
+
+/**
+ * @brief Publish a telemetry.
+ *
+ * @details This function publishs a telemetry based on telemetry_type parameter.
+ *
+ * @param device A valid edgehog device handle.
+ * @param type One of telemetry_type_t values.
+ *
+ */
+void edgehog_device_publish_telemetry(edgehog_device_handle_t device, telemetry_type_t type);
 
 #endif // EDGEHOG_PRIVATE_H

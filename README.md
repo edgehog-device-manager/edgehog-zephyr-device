@@ -30,6 +30,7 @@ The following information is sent to the remote Edgehog instance:
 - [Led Behavior](doc/led.md)
 - WiFi APs seen by board antenna
 - Battery status API
+- Data Rate Control for telemetry
 
 ### Adding the module as a dependency to an application
 

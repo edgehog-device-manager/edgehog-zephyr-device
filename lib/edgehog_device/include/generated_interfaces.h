@@ -30,6 +30,7 @@ extern const astarte_interface_t io_edgehog_devicemanager_StorageUsage;
 extern const astarte_interface_t io_edgehog_devicemanager_SystemInfo;
 extern const astarte_interface_t io_edgehog_devicemanager_SystemStatus;
 extern const astarte_interface_t io_edgehog_devicemanager_WiFiScanResults;
+extern const astarte_interface_t io_edgehog_devicemanager_config_Telemetry;
 // NOLINTEND(readability-identifier-naming)
 
 #endif /* GENERATED_INTERFACES_H */

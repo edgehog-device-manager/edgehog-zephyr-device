@@ -65,7 +65,8 @@ edgehog_result_t edgehog_settings_save(
     int res = settings_save_one(edgehog_subtree_path, value, value_len);
 
     if (res != 0) {
-        EDGEHOG_LOG_ERR("Unable to save item to the Edgehog setting: %d", res);
+        EDGEHOG_LOG_ERR(
+            "Unable to save item { %s } to the Edgehog setting: %d", edgehog_subtree_path, res);
         return EDGEHOG_RESULT_SETTINGS_SAVE_FAIL;
     }
     return EDGEHOG_RESULT_OK;

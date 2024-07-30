@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Add support for `io.edgehog.devicemanager.LedBehavior` interface.
 - Add support for `io.edgehog.devicemanager.WiFiScanResults` interface.
 - Add support for `io.edgehog.devicemanager.BatteryStatus` interface.
+- Add support for `io.edgehog.devicemanager.config.Telemetry` interface.
 
 ### Changed
 - Updated the Astarte device SDK to `v0.6.1`.

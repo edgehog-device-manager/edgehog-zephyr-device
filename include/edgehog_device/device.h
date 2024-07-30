@@ -13,6 +13,7 @@
  */
 
 #include "edgehog_device/result.h"
+#include "edgehog_device/telemetry.h"
 
 #include <astarte_device_sdk/device.h>
 
@@ -42,6 +43,10 @@ typedef struct
      * his ownership belongs to the caller.
      */
     astarte_device_handle_t astarte_device;
+    /** @brief The telemetries configured by the user. */
+    edgehog_device_telemetry_config_t *telemetry_config;
+    /** @brief The len of telemetries. */
+    size_t telemetry_config_len;
 } edgehog_device_config_t;
 
 #ifdef __cplusplus
@@ -97,7 +102,7 @@ edgehog_result_t edgehog_device_start(edgehog_device_handle_t edgehog_device);
 /**
  * @brief Handler for astarte datastream object event.
  *
- * @details This function must be called when an Astarte datastream object event is reveived.
+ * @details This function must be called when an Astarte datastream object event is received.
  *
  * @param edgehog_device A valid Edgehog device handle.
  * @param event Astarte device datastream object event pointer.
@@ -108,13 +113,35 @@ void edgehog_device_datastream_object_events_handler(
 /**
  * @brief Handler for astarte datastream individual event.
  *
- * @details This function must be called when an Astarte datastream individual event is reveived.
+ * @details This function must be called when an Astarte datastream individual event is received.
  *
  * @param edgehog_device A valid Edgehog device handle.
  * @param event Astarte device datastream individual event pointer.
  */
 void edgehog_device_datastream_individual_events_handler(
     edgehog_device_handle_t edgehog_device, astarte_device_datastream_individual_event_t event);
+
+/**
+ * @brief Handler for astarte set property event.
+ *
+ * @details This function must be called when an Astarte property set event is received.
+ *
+ * @param edgehog_device A valid Edgehog device handle.
+ * @param event Astarte device data event pointer.
+ */
+void edgehog_device_property_set_events_handler(
+    edgehog_device_handle_t edgehog_device, astarte_device_property_set_event_t event);
+
+/**
+ * @brief Handler for astarte unset property event.
+ *
+ * @details This function must be called when an Astarte property unset event is received.
+ *
+ * @param edgehog_device A valid Edgehog device handle.
+ * @param event  Astarte device data event pointer.
+ */
+void edgehog_device_property_unset_events_handler(
+    edgehog_device_handle_t edgehog_device, astarte_device_data_event_t event);
 
 #ifdef __cplusplus
 }
