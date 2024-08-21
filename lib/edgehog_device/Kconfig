@@ -4,14 +4,15 @@
 
 config EDGEHOG_DEVICE
 	bool "Edgehog device library"
-	select ASTARTE_DEVICE_SDK
-	select NVS
-	select IMG_MANAGER
-	select FLASH
-	select FLASH_MAP
-	select FLASH_PAGE_LAYOUT
-	select STREAM_FLASH
-	select REBOOT
+	depends on ASTARTE_DEVICE_SDK
+	depends on NVS
+	depends on IMG_MANAGER
+	depends on FLASH
+	depends on FLASH_MAP
+	depends on FLASH_PAGE_LAYOUT
+	depends on STREAM_FLASH
+	depends on REBOOT
+	depends on ENTROPY_GENERATOR
 	help
 	  This option enables the Edgehog device library
 
@@ -46,7 +47,7 @@ config EDGEHOG_DEVICE_USE_EDGEHOG_PARTITION
 config EDGEHOG_DEVICE_ZBUS_OTA_EVENT
 	bool "Enable ZBus OTA channel for receiving OTA event"
 	depends on EDGEHOG_DEVICE
-	select ZBUS
+	depends on ZBUS
 	default false
 	help
 		Enable this option to receive OTA events in a ZBus observers.
@@ -160,6 +161,11 @@ source "subsys/logging/Kconfig.template.log_config"
 module = EDGEHOG_DEVICE_TELEMETRY
 module-str = Log level for Edgehog device telemtry utilities.
 module-help = Sets log level for Edgehog device telemtry utilities.
+source "subsys/logging/Kconfig.template.log_config"
+
+module = EDGEHOG_DEVICE_UUID
+module-str = Log level for Edgehog device uuid utilities.
+module-help = Sets log level for Edgehog device uuid utilities.
 source "subsys/logging/Kconfig.template.log_config"
 
 endmenu

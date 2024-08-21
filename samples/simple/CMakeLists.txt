@@ -16,6 +16,8 @@ cmake_minimum_required(VERSION 3.20.0)
 
 # add private configuration for common modules before declaring the zephyr project
 concat_if_exists(${CMAKE_CURRENT_LIST_DIR}/private.conf EXTRA_CONF_FILE)
+# add per board cmake configuration
+include(${CMAKE_CURRENT_LIST_DIR}/boards/${BOARD}.cmake OPTIONAL)
 
 find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
 project(simple)

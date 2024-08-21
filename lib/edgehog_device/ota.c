@@ -106,7 +106,7 @@ typedef enum
 typedef struct
 {
     /** @brief OTA request UUID. */
-    char uuid[ASTARTE_UUID_STR_LEN + 1];
+    char uuid[UUID_STR_LEN + 1];
     /** @brief OTA state. */
     uint8_t ota_state;
 } ota_settings_t;
@@ -201,7 +201,7 @@ void edgehog_ota_init(edgehog_device_handle_t edgehog_dev)
         return;
     }
 
-    if (strlen(ota_settings.uuid) != ASTARTE_UUID_STR_LEN) {
+    if (strlen(ota_settings.uuid) != UUID_STR_LEN) {
         EDGEHOG_LOG_INF("No OTA update request UUID found from Edgehog Settings");
         goto end;
     }
@@ -495,7 +495,7 @@ static edgehog_result_t perform_ota(edgehog_device_handle_t edgehog_device)
 
     // Step 1 set the request ID to the received uuid in Settings
     edgehog_result = edgehog_settings_save(
-        OTA_KEY, OTA_REQUEST_ID_KEY, thread_data->ota_request.uuid, ASTARTE_UUID_STR_LEN + 1);
+        OTA_KEY, OTA_REQUEST_ID_KEY, thread_data->ota_request.uuid, UUID_STR_LEN + 1);
     if (edgehog_result != EDGEHOG_RESULT_OK) {
         EDGEHOG_LOG_ERR("Unable to write OTA req_uuid into Edgehog Settings, OTA canceled");
         return edgehog_result;
@@ -628,7 +628,7 @@ static edgehog_result_t edgehog_ota_event_cancel(
         return EDGEHOG_RESULT_OTA_INTERNAL_ERROR;
     }
 
-    if (strlen(ota_settings.uuid) != ASTARTE_UUID_STR_LEN) { /* item was found, show it */
+    if (strlen(ota_settings.uuid) != UUID_STR_LEN) { /* item was found, show it */
         EDGEHOG_LOG_ERR("Error fetching the OTA update request UUID from Edgehog Settings");
         pub_ota_event(edgehog_dev->astarte_device, request_uuid, OTA_EVENT_FAILURE, 0,
             EDGEHOG_RESULT_OTA_INTERNAL_ERROR,

@@ -15,11 +15,12 @@ manifest:
   projects:
     - name: zephyr
       remote: zephyrproject-rtos
-      revision: v3.6.0
+      revision: v3.7.0
       import: true
     - name: astarte-device-sdk-zephyr
       remote: secomind
       repo-path: astarte-device-sdk-zephyr.git
       path: astarte-device-sdk-zephyr
-      revision: v0.6.1
+      revision: v0.7.0
       west-commands: scripts/west-commands.yml
+      import: true

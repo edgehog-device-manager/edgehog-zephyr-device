@@ -13,6 +13,7 @@ python -m black --line-length 100 ./scripts/*.py
 """
 
 import json
+import re
 import subprocess
 import sys
 from linecache import getline
@@ -33,6 +34,10 @@ uses one of the samples as application.
 
 Will build each application from scratch and using target qemu_cortex_m3.
 """
+
+# Allowed number of lines for each .c and .h files.
+# Add the comment '// NOLINENUMBERLINT' in one of such files to exclude the file from this check.
+FILE_LINES_LIMIT = 1000
 
 severity_colours = {
     "UNSPECIFIED": fore("dark_gray"),
@@ -99,8 +104,6 @@ class WestCommandStatic(WestCommand):
             "$PWD/skipfile.txt",
         ]
         codechecker_exports = ["json", args.export] if args.export else ["json"]
-        # TODO: there might be a way to avoid using the flag -DCONFIG_MINIMAL_LIBC=y
-        # See: https://github.com/zephyrproject-rtos/zephyr/issues/62278
         cmd = [
             "west build",
             f"-p {args.pristine}",
@@ -154,6 +157,25 @@ class WestCommandStatic(WestCommand):
 
                 log.inf("\n" + "\n".join(pretty_msg))
 
+        for file, n in calculate_file_sizes(module_path):
+            has_reports = True
+            pretty_msg = []
+
+            severity = "STYLE"
+            analyzer_name = "internal-analyzer"
+            checker_name = "readability-file-line-limit"
+            message = f"Maximum line number exceeded ({n}/{FILE_LINES_LIMIT})"
+
+            summary[severity] += 1
+
+            pretty_msg += [
+                stylize(f"{severity} [{analyzer_name}:{checker_name}]", severity_colours[severity])
+            ]
+            pretty_msg += [f"Message: {message}"]
+            pretty_msg += [stylize("--> ", fore("blue")) + f"{file}:{0}:{0}"]
+
+            log.inf("\n" + "\n".join(pretty_msg))
+
         if has_reports:
             final_message = ["\nSummary for the diagnosed issues: "] + [
                 stylize(f"{s}", severity_colours[s]) + f": {n} issues detected"
@@ -164,3 +186,52 @@ class WestCommandStatic(WestCommand):
             sys.exit(1)
 
         log.inf(stylize("No issue detected.", fore("green")))
+
+
+def calculate_file_sizes(module_path: Path):
+    """
+    Calculate the number of lines for all the .c and .h files in the project.
+    The number of lines will refer to the number of lines without counting comments and emptylines.
+
+    Parameters
+    ----------
+    module_path : Path
+        The module path for the Astarte device.
+
+    Returns
+    -------
+    list
+        A list of pairs, with the first element is the path to the file and the second element is
+        the number of lines of the file.
+    """
+    files = (
+        list(module_path.joinpath("lib").joinpath("astarte_device_sdk").glob("*.c"))
+        + list(module_path.joinpath("include").joinpath("astarte_device_sdk").glob("*.h"))
+        + list(
+            module_path.joinpath("lib")
+            .joinpath("astarte_device_sdk")
+            .joinpath("include")
+            .glob("*.h")
+        )
+    )
+
+    file_lengths = []
+    for file in files:
+
+        with open(file, "r", encoding="utf-8") as fp:
+            if any(re.match(r"^// +NOLINENUMBERLINT.*", line) for line in fp.readlines()):
+                continue
+
+        cap = subprocess.run(
+            f"gcc -fpreprocessed -dD -E {file}",
+            shell=True,
+            cwd=module_path,
+            timeout=60,
+            check=True,
+            capture_output=True,
+        )
+        file_line_n = len([line for line in cap.stdout.splitlines() if line.strip()])
+        if file_line_n > FILE_LINES_LIMIT:
+            file_lengths.append((file, file_line_n))
+
+    return file_lengths

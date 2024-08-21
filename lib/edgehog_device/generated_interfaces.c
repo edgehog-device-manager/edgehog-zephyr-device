@@ -61,7 +61,7 @@ static const astarte_mapping_t io_edgehog_devicemanager_BatteryStatus_mappings[3
 
     {
         .endpoint = "/%{battery_slot}/levelPercentage",
-        .regex_endpoint = "^/[a-zA-Z_][a-zA-Z0-9_]*/levelPercentage$",
+        .regex_endpoint = "^/[^/#+]+/levelPercentage$",
         .type = ASTARTE_MAPPING_TYPE_DOUBLE,
         .reliability = ASTARTE_MAPPING_RELIABILITY_UNRELIABLE,
         .explicit_timestamp = true,
@@ -69,7 +69,7 @@ static const astarte_mapping_t io_edgehog_devicemanager_BatteryStatus_mappings[3
     },
     {
         .endpoint = "/%{battery_slot}/levelAbsoluteError",
-        .regex_endpoint = "^/[a-zA-Z_][a-zA-Z0-9_]*/levelAbsoluteError$",
+        .regex_endpoint = "^/[^/#+]+/levelAbsoluteError$",
         .type = ASTARTE_MAPPING_TYPE_DOUBLE,
         .reliability = ASTARTE_MAPPING_RELIABILITY_UNRELIABLE,
         .explicit_timestamp = true,
@@ -77,7 +77,7 @@ static const astarte_mapping_t io_edgehog_devicemanager_BatteryStatus_mappings[3
     },
     {
         .endpoint = "/%{battery_slot}/status",
-        .regex_endpoint = "^/[a-zA-Z_][a-zA-Z0-9_]*/status$",
+        .regex_endpoint = "^/[^/#+]+/status$",
         .type = ASTARTE_MAPPING_TYPE_STRING,
         .reliability = ASTARTE_MAPPING_RELIABILITY_UNRELIABLE,
         .explicit_timestamp = true,
@@ -178,7 +178,7 @@ static const astarte_mapping_t io_edgehog_devicemanager_LedBehavior_mappings[1] 
 
     {
         .endpoint = "/%{led_id}/behavior",
-        .regex_endpoint = "^/[a-zA-Z_][a-zA-Z0-9_]*/behavior$",
+        .regex_endpoint = "^/[^/#+]+/behavior$",
         .type = ASTARTE_MAPPING_TYPE_STRING,
         .reliability = ASTARTE_MAPPING_RELIABILITY_UNIQUE,
         .explicit_timestamp = false,
@@ -373,7 +373,7 @@ static const astarte_mapping_t io_edgehog_devicemanager_StorageUsage_mappings[2]
 
     {
         .endpoint = "/%{label}/totalBytes",
-        .regex_endpoint = "^/[a-zA-Z_][a-zA-Z0-9_]*/totalBytes$",
+        .regex_endpoint = "^/[^/#+]+/totalBytes$",
         .type = ASTARTE_MAPPING_TYPE_LONGINTEGER,
         .reliability = ASTARTE_MAPPING_RELIABILITY_UNRELIABLE,
         .explicit_timestamp = true,
@@ -381,7 +381,7 @@ static const astarte_mapping_t io_edgehog_devicemanager_StorageUsage_mappings[2]
     },
     {
         .endpoint = "/%{label}/freeBytes",
-        .regex_endpoint = "^/[a-zA-Z_][a-zA-Z0-9_]*/freeBytes$",
+        .regex_endpoint = "^/[^/#+]+/freeBytes$",
         .type = ASTARTE_MAPPING_TYPE_LONGINTEGER,
         .reliability = ASTARTE_MAPPING_RELIABILITY_UNRELIABLE,
         .explicit_timestamp = true,
@@ -537,7 +537,7 @@ static const astarte_mapping_t io_edgehog_devicemanager_config_Telemetry_mapping
 
     {
         .endpoint = "/request/%{interface_name}/enable",
-        .regex_endpoint = "^/request/[a-zA-Z_][a-zA-Z0-9_]*/enable$",
+        .regex_endpoint = "^/request/[^/#+]+/enable$",
         .type = ASTARTE_MAPPING_TYPE_BOOLEAN,
         .reliability = ASTARTE_MAPPING_RELIABILITY_UNIQUE,
         .explicit_timestamp = false,
@@ -545,7 +545,7 @@ static const astarte_mapping_t io_edgehog_devicemanager_config_Telemetry_mapping
     },
     {
         .endpoint = "/request/%{interface_name}/periodSeconds",
-        .regex_endpoint = "^/request/[a-zA-Z_][a-zA-Z0-9_]*/periodSeconds$",
+        .regex_endpoint = "^/request/[^/#+]+/periodSeconds$",
         .type = ASTARTE_MAPPING_TYPE_LONGINTEGER,
         .reliability = ASTARTE_MAPPING_RELIABILITY_UNIQUE,
         .explicit_timestamp = false,

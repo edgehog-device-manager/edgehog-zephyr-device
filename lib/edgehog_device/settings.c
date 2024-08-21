@@ -19,7 +19,7 @@ edgehog_result_t edgehog_settings_init()
 {
     int res = settings_subsys_init();
     if (res != 0) {
-        EDGEHOG_LOG_ERR("Unable to init edgehog settingds:%d.", res);
+        EDGEHOG_LOG_ERR("Unable to init edgehog settings:%d.", res);
         return EDGEHOG_RESULT_SETTINGS_INIT_FAIL;
     }
 

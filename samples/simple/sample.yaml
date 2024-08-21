@@ -11,6 +11,5 @@ tests:
   simple.default:
     build_only: true
     integration_platforms:
-      - esp_wrover_kit
       - mimxrt1064_evk
       - native_sim

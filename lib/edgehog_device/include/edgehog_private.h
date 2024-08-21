@@ -15,16 +15,16 @@
 #include "led.h"
 #include "ota.h"
 #include "telemetry_private.h"
+#include "uuid.h"
 
 #include <astarte_device_sdk/device.h>
-#include <astarte_device_sdk/uuid.h>
 
 struct edgehog_device_t
 {
     /** @brief Handle of an Astarte device. */
     astarte_device_handle_t astarte_device;
     /** @brief UUID representing the Boot Id. */
-    char boot_id[ASTARTE_UUID_STR_LEN];
+    char boot_id[UUID_STR_LEN + 1];
     /** @brief OTA thread data used during the OTA Update operation. */
     ota_thread_t ota_thread;
     /** @brief LED thread data used during the LED blink. */

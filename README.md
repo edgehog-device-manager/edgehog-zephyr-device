@@ -108,24 +108,7 @@ pip install -r ~/zephyr-workspace/edgehog-zephyr-device/scripts/requirements.txt
 
 #### Building and running a sample application
 
-To build one of the samples applications, run the following command:
-
-```shell
-west build -p always -b <BOARD> ./edgehog-zephyr-device/samples/<SAMPLE>
-```
-
-Where `<BOARD>` is one of the [boards](https://docs.zephyrproject.org/latest/boards/index.html)
-supported by Zephyr and `<SAMPLE>` is one of the samples contained in the `samples` folder.
-
-Once you have built the application, run the following command to flash it on the ESP board:
-```shell
-west flash
-```
-
-And the following command to run on an emulated board:
-```shell
-west build -t run
-```
+Follow the [sample specific README](samples/simple/README.md).
 
 #### One time configuration
 
