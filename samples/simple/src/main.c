@@ -344,7 +344,7 @@ static void astarte_disconnection_events_handler(astarte_device_disconnection_ev
 
 static void system_time_init()
 {
-#ifdef CONFIG_NET_CONFIG_SNTP_INIT
+#ifdef CONFIG_SNTP
     int ret = 0;
     struct sntp_time now;
     struct timespec tspec;

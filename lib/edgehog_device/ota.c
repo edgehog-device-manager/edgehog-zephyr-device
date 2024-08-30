@@ -12,10 +12,9 @@
 #include "generated_interfaces.h"
 #include "http.h"
 #include "settings.h"
+#include "system_time.h"
 
 #include <stdlib.h>
-
-#include <time.h>
 
 #include <zephyr/device.h>
 #include <zephyr/dfu/flash_img.h>
@@ -758,11 +757,12 @@ static void pub_ota_event(astarte_device_handle_t astarte_device, const char *re
         { .path = "message", .individual = astarte_individual_from_string(message) },
     };
 
-    const int64_t timestamp = (int64_t) time(NULL);
+    int64_t timestamp_ms = 0;
+    system_time_current_ms(&timestamp_ms);
 
     astarte_result_t res
         = astarte_device_stream_aggregated(astarte_device, io_edgehog_devicemanager_OTAEvent.name,
-            "/event", object_entries, ARRAY_SIZE(object_entries), &timestamp);
+            "/event", object_entries, ARRAY_SIZE(object_entries), &timestamp_ms);
     if (res != ASTARTE_RESULT_OK) {
         EDGEHOG_LOG_ERR("Unable to send ota_event"); // NOLINT
     }

@@ -10,7 +10,7 @@
 
 #ifdef CONFIG_WIFI
 
-#include <time.h>
+#include "system_time.h"
 
 #include <zephyr/net/net_event.h>
 #include <zephyr/net/net_if.h>
@@ -121,7 +121,8 @@ static void handle_wifi_scan_result(astarte_device_handle_t astarte_device,
         return;
     }
 
-    const int64_t timestamp = (int64_t) time(NULL);
+    int64_t timestamp_ms = 0;
+    system_time_current_ms(&timestamp_ms);
 
     bool ap_is_connected
         = connected_ap_mac != NULL && strcmp(connected_ap_mac, mac_string_buf) == 0;
@@ -136,7 +137,7 @@ static void handle_wifi_scan_result(astarte_device_handle_t astarte_device,
 
     astarte_result_t res = astarte_device_stream_aggregated(astarte_device,
         io_edgehog_devicemanager_WiFiScanResults.name, "/ap", object_entries,
-        ARRAY_SIZE(object_entries), &timestamp);
+        ARRAY_SIZE(object_entries), &timestamp_ms);
     if (res != ASTARTE_RESULT_OK) {
         EDGEHOG_LOG_ERR("Unable to send WiFiScanResults"); // NOLINT
     }

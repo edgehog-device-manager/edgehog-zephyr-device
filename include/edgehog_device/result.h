@@ -87,6 +87,8 @@ typedef enum
     EDGEHOG_RESULT_TELEMETRY_STORE_FAIL = 31,
     /** @brief Unable to stop a telemetry entry. */
     EDGEHOG_RESULT_TELEMETRY_STOP_FAIL = 32,
+    /** @brief A function has been called with incorrect parameters. */
+    EDGEHOG_RESULT_INVALID_PARAM = 33,
 
 } edgehog_result_t;
 

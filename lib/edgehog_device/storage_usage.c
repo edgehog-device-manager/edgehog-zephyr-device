@@ -8,8 +8,7 @@
 
 #include "edgehog_private.h"
 #include "nvs.h"
-
-#include <time.h>
+#include "system_time.h"
 
 #include <astarte_device_sdk/device.h>
 #include <astarte_device_sdk/result.h>
@@ -31,11 +30,12 @@ void publish_storage_usage(edgehog_device_handle_t edgehog_device)
             { .path = "freeBytes", .individual = astarte_individual_from_longinteger(free_space) }
         };
 
-        const int64_t timestamp = (int64_t) time(NULL);
+        int64_t timestamp_ms = 0;
+        system_time_current_ms(&timestamp_ms);
 
         astarte_result_t res = astarte_device_stream_aggregated(edgehog_device->astarte_device,
             io_edgehog_devicemanager_StorageUsage.name, "/" NVS_PARTITION_LABEL, object_entries,
-            ARRAY_SIZE(object_entries), &timestamp);
+            ARRAY_SIZE(object_entries), &timestamp_ms);
         if (res != ASTARTE_RESULT_OK) {
             EDGEHOG_LOG_ERR("Unable to send syste_status"); // NOLINT
         }

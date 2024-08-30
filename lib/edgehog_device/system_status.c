@@ -8,8 +8,7 @@
 
 #include "edgehog_private.h"
 #include "hardware_info.h"
-
-#include <time.h>
+#include "system_time.h"
 
 #include <zephyr/kernel.h>
 
@@ -73,11 +72,12 @@ void publish_system_status(edgehog_device_handle_t edgehog_device)
             .individual = astarte_individual_from_longinteger(k_uptime_get()) },
     };
 
-    const int64_t timestamp = (int64_t) time(NULL);
+    int64_t timestamp_ms = 0;
+    system_time_current_ms(&timestamp_ms);
 
     astarte_result_t res = astarte_device_stream_aggregated(edgehog_device->astarte_device,
         io_edgehog_devicemanager_SystemStatus.name, "/systemStatus", object_entries,
-        ARRAY_SIZE(object_entries), &timestamp);
+        ARRAY_SIZE(object_entries), &timestamp_ms);
     if (res != ASTARTE_RESULT_OK) {
         EDGEHOG_LOG_ERR("Unable to send system_status"); // NOLINT
     }

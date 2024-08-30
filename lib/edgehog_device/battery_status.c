@@ -8,8 +8,7 @@
 
 #include "edgehog_private.h"
 #include "generated_interfaces.h"
-
-#include <time.h>
+#include "system_time.h"
 
 #include <astarte_device_sdk/device.h>
 #include <astarte_device_sdk/result.h>
@@ -48,7 +47,8 @@ edgehog_result_t edgehog_battery_status_publish(
             .individual = astarte_individual_from_double(battery_status->level_absolute_error) },
         { .path = "status", .individual = astarte_individual_from_string(battery_state) } };
 
-    const int64_t timestamp = (int64_t) time(NULL);
+    int64_t timestamp_ms = 0;
+    system_time_current_ms(&timestamp_ms);
 
     size_t path_size = strlen(battery_status->battery_slot) + 2;
     char path[path_size];
@@ -62,7 +62,7 @@ edgehog_result_t edgehog_battery_status_publish(
 
     astarte_result_t res = astarte_device_stream_aggregated(edgehog_device->astarte_device,
         io_edgehog_devicemanager_BatteryStatus.name, path, object_entries,
-        ARRAY_SIZE(object_entries), &timestamp);
+        ARRAY_SIZE(object_entries), &timestamp_ms);
     if (res != ASTARTE_RESULT_OK) {
         EDGEHOG_LOG_ERR("Unable to send battery status");
         return EDGEHOG_RESULT_ASTARTE_ERROR;
