@@ -1,0 +1,43 @@
+/*
+ * (C) Copyright 2024, SECO Mind Srl
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+/delete-node/ &slot0_partition;
+/delete-node/ &slot1_partition;
+/delete-node/ &storage_partition;
+/delete-node/ &scratch_partition;
+
+&flash0 {
+	partitions {
+        compatible = "fixed-partitions";
+		#address-cells = <1>;
+		#size-cells = <1>;
+
+        slot0_partition: partition@10000 {
+			label = "image-0";
+			reg = <0x00010000 DT_SIZE_K(792)>;
+		};
+
+		slot1_partition: partition@D6000 {
+			label = "image-1";
+			reg = <0x00D6000 DT_SIZE_K(792)>;
+		};
+
+		astarte_partition: partition@19C000 {
+			label = "astarte";
+			reg = <0x0019C000 DT_SIZE_K(128)>;
+		};
+
+        edgehog_partition: partition@1BC000 {
+			label = "edgehog_storage";
+			reg = <0x001BC000 DT_SIZE_K(16)>;
+		};
+
+        storage_partition: partition@1C0000 {
+			label = "storage";
+			reg = <0x001C0000 DT_SIZE_M(256)>;
+		};
+	};
+};

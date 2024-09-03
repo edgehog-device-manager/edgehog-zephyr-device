@@ -14,3 +14,4 @@ tests:
       - esp_wrover_kit
       - mimxrt1064_evk
       - native_sim
+      - stm32h573i_dk
