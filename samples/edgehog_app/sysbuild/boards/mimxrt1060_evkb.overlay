@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include "../../boards/mimxrt1064_evk.overlay"
+#include "../../boards/mimxrt1060_evkb.overlay"
 
 / {
 	chosen {
