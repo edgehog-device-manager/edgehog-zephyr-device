@@ -152,13 +152,13 @@ int main(void)
         ca_certificate_root, sizeof(ca_certificate_root));
 #endif
 
-#if !defined(EDGEHOG_DEVICE_DEVELOP_DISABLE_OR_IGNORE_TLS)
+#if !defined(CONFIG_EDGEHOG_DEVICE_DEVELOP_DISABLE_OR_IGNORE_TLS)
     tls_credential_add(CONFIG_EDGEHOG_DEVICE_CA_CERT_OTA_TAG, TLS_CREDENTIAL_CA_CERTIFICATE,
         ota_ca_certificate_root, sizeof(ota_ca_certificate_root));
 #endif
 
     char cred_secr[ASTARTE_PAIRING_CRED_SECR_LEN + 1] = CONFIG_CREDENTIAL_SECRET;
-    char device_id[ASTARTE_PAIRING_DEVICE_ID_LEN + 1] = CONFIG_DEVICE_ID;
+    char device_id[ASTARTE_DEVICE_ID_LEN + 1] = CONFIG_DEVICE_ID;
 
     edgehog_device_handle_t edgehog_device = NULL;
 
