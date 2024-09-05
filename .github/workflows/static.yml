@@ -93,4 +93,4 @@ jobs:
         run: pip install -r $PWD/scripts/requirements.txt
       - name: Run static analisys
         working-directory: edgehog-zephyr-device
-        run: west static --sample simple
+        run: west static --sample edgehog_app

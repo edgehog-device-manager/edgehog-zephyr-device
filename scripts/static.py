@@ -75,7 +75,7 @@ class WestCommandStatic(WestCommand):
 
         # Add some options using the standard argparse module API.
         parser.add_argument("-p", "--pristine", help="west build pristine flag", default="auto")
-        parser.add_argument("-s", "--sample", help="name of the sample analyze", default="simple")
+        parser.add_argument("-s", "--sample", help="name of the sample analyze", default="edgehog_app")
         parser.add_argument("-e", "--export", help="an additional (optional) export type")
 
         return parser  # gets stored as self.parser

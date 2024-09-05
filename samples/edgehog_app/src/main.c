@@ -13,8 +13,6 @@
 #endif
 
 #include <zephyr/logging/log.h>
-LOG_MODULE_REGISTER(simple_main); // NOLINT
-
 #include <zephyr/net/sntp.h>
 #include <zephyr/posix/time.h>
 
@@ -36,6 +34,8 @@ LOG_MODULE_REGISTER(simple_main); // NOLINT
 /************************************************
  * Constants and defines
  ***********************************************/
+
+LOG_MODULE_REGISTER(edgehog_app, CONFIG_APP_LOG_LEVEL); // NOLINT
 
 #define POLL_PERIOD_MS 100
 #define TELEMETRY_PERIOD_S 5
@@ -291,7 +291,7 @@ ZBUS_CHAN_ADD_OBS(edgehog_ota_chan, ota_evt_subscriber, 3);
 static void astarte_connection_events_handler(astarte_device_connection_event_t event)
 {
     (void) event;
-    LOG_INF("Astarte device connected, session_present."); // NOLINT
+    LOG_INF("Astarte device connected"); // NOLINT
 
     if (!atomic_test_and_set_bit(
             &edgehog_device_thread_flags, EDGEHOG_DEVICE_THREAD_FLAGS_TERMINATION)) {

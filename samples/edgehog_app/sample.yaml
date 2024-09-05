@@ -5,10 +5,10 @@
 # the Zephyr testing tool. In this file, multiple combinations can be specified,
 # so that you can easily test all of them locally or in CI.
 sample:
-  description: Simple sample for using the library
-  name: simple-sample
+  description: Sample edgehog_app for using the library
+  name: edgehog_app
 tests:
-  simple.default:
+  edgehog_app.default:
     build_only: true
     integration_platforms:
       - mimxrt1064_evk

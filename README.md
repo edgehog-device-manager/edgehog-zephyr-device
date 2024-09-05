@@ -108,7 +108,7 @@ pip install -r ~/zephyr-workspace/edgehog-zephyr-device/scripts/requirements.txt
 
 #### Building and running a sample application
 
-Follow the [sample specific README](samples/simple/README.md).
+Follow the [sample specific README](samples/edgehog_app/README.md).
 
 #### One time configuration
 
