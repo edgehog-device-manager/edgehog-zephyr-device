@@ -25,3 +25,6 @@ doc/html
 
 # samples private conf used to store secrets like wifi passwords and credential secrets
 samples/*/private.conf
+
+# cache
+.cache

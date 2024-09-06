@@ -46,12 +46,13 @@ This option assumes you are using a fully deployed Astarte instance with valid c
 an official certificate authority.
 
 ```conf
-CONFIG_ASTARTE_DEVICE_SDK_DEVICE_ID="<DEVICE_ID>"
 CONFIG_ASTARTE_DEVICE_SDK_HOSTNAME="<HOSTNAME>"
-CONFIG_ASTARTE_DEVICE_SDK_CA_CERT_TAG=1
+CONFIG_ASTARTE_DEVICE_SDK_HTTPS_CA_CERT_TAG=1
+CONFIG_ASTARTE_DEVICE_SDK_MQTTS_CA_CERT_TAG=1
 CONFIG_ASTARTE_DEVICE_SDK_CLIENT_CERT_TAG=2
 CONFIG_ASTARTE_DEVICE_SDK_REALM_NAME="<REALM_NAME>"
 
+CONFIG_DEVICE_ID="<DEVICE_ID>"
 CONFIG_CREDENTIAL_SECRET="<CREDENTIAL_SECRET>"
 ```
 Where `<DEVICE_ID>` is the device ID of the device you would like to use in the sample, `<HOSTNAME>`
@@ -81,11 +82,18 @@ Use ``--sysbuild`` to select the `sysbuild` build infrastructure with `west buil
 By default, sysbuild use the `app.overlay` from MCUboot folder, so if you want MCUboot to use your board's overlay file, you can pass `mcuboot_DTC_OVERLAY_FILE` parameter to `west build`.
 
 ```
-west build -b mimxrt1064_evk --sysbuild samples/simple -Dmcuboot_DTC_OVERLAY_FILE=${PWD}/samples/simple/boards/mimxrt1064_evk.overlay
+west build -b mimxrt1064_evk --sysbuild samples/edgehog_app -Dmcuboot_DTC_OVERLAY_FILE=${PWD}/samples/edgehog_app/boards/mimxrt1064_evk.overlay
 ```
 
 Or you can put your board overlay file in the `sysbuild/boards` directory, and this parameter was automatically added by `sysbuild.cmake` contained in this sample.
 
 ```
-west build -b mimxrt1064_evk --sysbuild samples/simple
+west build -b mimxrt1064_evk --sysbuild samples/edgehog_app
+```
+
+### Flash runner for nxp boards
+
+The default runner used for nxp boards is `jlink`. To flash without a debug link use:
+```sh
+west flash --runner=linkserver
 ```

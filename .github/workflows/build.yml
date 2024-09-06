@@ -61,7 +61,7 @@ jobs:
         working-directory: astarte-device-sdk-zephyr
         run: west blobs fetch hal_espressif
 
-      - name: Build simple sample
+      - name: Build edgehog_app sample
         working-directory: edgehog-zephyr-device
         run: |
-          west twister -T samples/simple -v --inline-logs --integration
+          west twister -T samples/edgehog_app -v --inline-logs --integration

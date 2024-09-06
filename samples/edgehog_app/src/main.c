@@ -13,8 +13,6 @@
 #endif
 
 #include <zephyr/logging/log.h>
-LOG_MODULE_REGISTER(simple_main); // NOLINT
-
 #include <zephyr/net/sntp.h>
 #include <zephyr/posix/time.h>
 
@@ -36,6 +34,8 @@ LOG_MODULE_REGISTER(simple_main); // NOLINT
 /************************************************
  * Constants and defines
  ***********************************************/
+
+LOG_MODULE_REGISTER(edgehog_app, CONFIG_APP_LOG_LEVEL); // NOLINT
 
 #define POLL_PERIOD_MS 100
 #define TELEMETRY_PERIOD_S 5
@@ -120,7 +120,6 @@ static void properties_set_events_handler(astarte_device_property_set_event_t ev
  * @param event Astarte device data event pointer.
  */
 static void properties_unset_events_handler(astarte_device_data_event_t event);
-
 /**
  * @brief Initialize System Time
  */
@@ -152,13 +151,13 @@ int main(void)
         ca_certificate_root, sizeof(ca_certificate_root));
 #endif
 
-#if !defined(EDGEHOG_DEVICE_DEVELOP_DISABLE_OR_IGNORE_TLS)
+#if !defined(CONFIG_EDGEHOG_DEVICE_DEVELOP_DISABLE_OR_IGNORE_TLS)
     tls_credential_add(CONFIG_EDGEHOG_DEVICE_CA_CERT_OTA_TAG, TLS_CREDENTIAL_CA_CERTIFICATE,
         ota_ca_certificate_root, sizeof(ota_ca_certificate_root));
 #endif
 
     char cred_secr[ASTARTE_PAIRING_CRED_SECR_LEN + 1] = CONFIG_CREDENTIAL_SECRET;
-    char device_id[ASTARTE_PAIRING_DEVICE_ID_LEN + 1] = CONFIG_DEVICE_ID;
+    char device_id[ASTARTE_DEVICE_ID_LEN + 1] = CONFIG_DEVICE_ID;
 
     edgehog_device_handle_t edgehog_device = NULL;
 
@@ -292,7 +291,7 @@ ZBUS_CHAN_ADD_OBS(edgehog_ota_chan, ota_evt_subscriber, 3);
 static void astarte_connection_events_handler(astarte_device_connection_event_t event)
 {
     (void) event;
-    LOG_INF("Astarte device connected, session_present."); // NOLINT
+    LOG_INF("Astarte device connected"); // NOLINT
 
     if (!atomic_test_and_set_bit(
             &edgehog_device_thread_flags, EDGEHOG_DEVICE_THREAD_FLAGS_TERMINATION)) {

@@ -21,6 +21,7 @@
 #include "storage_usage.h"
 #include "system_info.h"
 #include "system_status.h"
+#include "uuid.h"
 
 #include <stdlib.h>
 
@@ -29,7 +30,6 @@
 
 #include <astarte_device_sdk/device.h>
 #include <astarte_device_sdk/interface.h>
-#include <astarte_device_sdk/uuid.h>
 
 EDGEHOG_LOG_MODULE_REGISTER(edgehog_device, CONFIG_EDGEHOG_DEVICE_DEVICE_LOG_LEVEL);
 
@@ -74,12 +74,8 @@ edgehog_result_t edgehog_device_new(
         goto failure;
     }
 
-    astarte_uuid_t boot_id;
-    astarte_uuid_generate_v4(boot_id);
-    astarte_result_t astarte_result
-        = astarte_uuid_to_string(boot_id, edgehog_device->boot_id, ASTARTE_UUID_STR_LEN + 1);
-
-    if (astarte_result != ASTARTE_RESULT_OK) {
+    res = uuid_generate_v4_string(edgehog_device->boot_id);
+    if (res != EDGEHOG_RESULT_OK) {
         EDGEHOG_LOG_ERR("Unable to generate edgehog boot id");
         goto failure;
     }

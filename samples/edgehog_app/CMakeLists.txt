@@ -18,7 +18,7 @@ cmake_minimum_required(VERSION 3.20.0)
 concat_if_exists(${CMAKE_CURRENT_LIST_DIR}/private.conf EXTRA_CONF_FILE)
 
 find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
-project(simple)
+project(edgehog_app)
 
 FILE(GLOB app_sources src/*.c)
 
