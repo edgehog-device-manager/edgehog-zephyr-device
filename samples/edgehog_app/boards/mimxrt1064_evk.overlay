@@ -20,17 +20,9 @@
 			reg = <0x00000000 DT_SIZE_M(4)>;
 		};
 
-		/*
-		* Reserve the final 16 KiB for edgehog partition
-		*/
-		edgehog_partition: partition@400000 {
-			label = "edgehog_storage";
-			reg = <0x00400000 DT_SIZE_K(16)>;
-		};
-
-		astarte_partition: partition@404000 {
+		astarte_partition: partition@400000 {
 			label = "astarte";
-			reg = <0x00404000 DT_SIZE_M(2)>;
+			reg = <0x00400000 DT_SIZE_M(2)>;
 		};
 	};
 };
@@ -44,12 +36,20 @@
 
 		slot0_partition: partition@20000 {
 			label = "image-0";
-			reg = <0x00020000 DT_SIZE_K(1976)>;
+			reg = <0x00020000 DT_SIZE_K(1952)>;
 		};
 
-		slot1_partition: partition@20E000 {
+		slot1_partition: partition@208000 {
 			label = "image-1";
-			reg = <0x0020E000 DT_SIZE_K(1976)>;
+			reg = <0x00208000 DT_SIZE_K(1952)>;
+		};
+
+		/*
+		* Reserve the final 64 KiB for edgehog partition
+		*/
+		edgehog_partition: partition@3F0000 {
+			label = "edgehog_storage";
+			reg = <0x003F0000 DT_SIZE_K(64)>;
 		};
 	};
 };
