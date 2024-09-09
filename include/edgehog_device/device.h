@@ -12,6 +12,12 @@
  * @brief Device management
  */
 
+/**
+ * @defgroup device Device management
+ * @ingroup edgehog_device
+ * @{
+ */
+
 #include "edgehog_device/result.h"
 #include "edgehog_device/telemetry.h"
 
@@ -74,10 +80,9 @@ extern "C" {
  *  edgehog_result_t edgehog_result = edgehog_device_new(&edgehog_conf, &edgehog_device);
  *
  * @param[in] config An edgehog_device_config_t struct.
- * @param[out] handle Device instance initialized.
+ * @param[out] edgehog_handle Device instance initialized.
  * @return EDGEHOG_RESULT_OK if successful, otherwise an error code.
  */
-
 edgehog_result_t edgehog_device_new(
     edgehog_device_config_t *config, edgehog_device_handle_t *edgehog_handle);
 
@@ -93,7 +98,7 @@ void edgehog_device_destroy(edgehog_device_handle_t edgehog_device);
  * @brief start Edgehog device.
  *
  * @details This function starts the device, enabling the telemetry update if configured.
- * @param device A valid Edgehog device handle.
+ * @param edgehog_device A valid Edgehog device handle.
  * @return EDGEHOG_RESULT_OK if the device was successfully started, another edgehog_err_t
  * otherwise.
  */
@@ -146,5 +151,9 @@ void edgehog_device_property_unset_events_handler(
 #ifdef __cplusplus
 }
 #endif
+
+/**
+ * @}
+ */
 
 #endif // EDGEHOG_DEVICE_DEVICE_H
