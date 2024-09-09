@@ -12,6 +12,12 @@
  * @brief WiFi scan API
  */
 
+/**
+ * @defgroup wifi WiFi scan
+ * @ingroup edgehog_device
+ * @{
+ */
+
 #include "edgehog_device/device.h"
 
 #ifdef CONFIG_WIFI
@@ -51,5 +57,9 @@ void edgehog_wifi_scan_event_handler(
 }
 #endif
 #endif
+
+/**
+ * @}
+ */
 
 #endif // EDGEHOG_DEVICE_WIFI_SCAN_H

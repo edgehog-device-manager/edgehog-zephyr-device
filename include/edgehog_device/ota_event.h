@@ -12,12 +12,18 @@
  * @brief Edgehog OTA event.
  */
 
+/**
+ * @defgroup ota OTA event
+ * @ingroup edgehog_device
+ * @{
+ */
+
 #ifdef CONFIG_EDGEHOG_DEVICE_ZBUS_OTA_EVENT
 
 #include <zephyr/zbus/zbus.h>
 
 /**
- * @brief Edgehog event codes.
+ * @brief Edgehog ota event codes.
  */
 typedef enum
 {
@@ -43,5 +49,9 @@ typedef struct
 } edgehog_ota_chan_event_t;
 
 #endif
+
+/**
+ * @}
+ */
 
 #endif // EDGEHOG_DEVICE_OTA_EVENT_H

@@ -13,6 +13,12 @@
  */
 
 /**
+ * @defgroup results Results
+ * @ingroup edgehog_device
+ * @{
+ */
+
+/**
  * @brief Edgehog Device return codes.
  *
  * @details Edgehog Device return codes. EDGEHOG_RESULT_OK is always returned when no errors
@@ -91,5 +97,9 @@ typedef enum
     EDGEHOG_RESULT_INVALID_PARAM = 33,
 
 } edgehog_result_t;
+
+/**
+ * @}
+ */
 
 #endif // EDGEHOG_DEVICE_RESULT_H

@@ -13,6 +13,12 @@
  */
 
 /**
+ * @defgroup telemetry Telemetry
+ * @ingroup edgehog_device
+ * @{
+ */
+
+/**
  * @brief Edgehog telemetry types.
  *
  * @details This enum is used for configuring the telemetry type in
@@ -51,5 +57,9 @@ typedef struct
     /** @brief Interval of period in seconds. */
     long period_seconds;
 } edgehog_device_telemetry_config_t;
+
+/**
+ * @}
+ */
 
 #endif // EDGEHOG_DEVICE_TELEMETRY_H

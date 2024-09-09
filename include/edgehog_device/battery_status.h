@@ -12,6 +12,12 @@
  * @brief Edgehog device battery status API.
  */
 
+/**
+ * @defgroup battery Battery status
+ * @ingroup edgehog_device
+ * @{
+ */
+
 #include "edgehog_device/device.h"
 #include "edgehog_device/result.h"
 
@@ -70,5 +76,9 @@ edgehog_result_t edgehog_battery_status_publish(
 #ifdef __cplusplus
 }
 #endif
+
+/**
+ * @}
+ */
 
 #endif // EDGEHOG_DEVICE_BATTERY_STATUS_H
