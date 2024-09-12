@@ -18,6 +18,11 @@
 extern "C" {
 #endif
 
+/**
+ * @brief Publish a base image informations.
+ *
+ * @param[in] edgehog_device A valid Edgehog device handle.
+ */
 void publish_base_image(edgehog_device_handle_t edgehog_device);
 
 #ifdef __cplusplus

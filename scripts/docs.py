@@ -81,6 +81,7 @@ class WestCommandDocs(WestCommand):
         """
         module_path = Path(self.topdir).joinpath("edgehog-zephyr-device")
         if args.clean:
+            log.inf(stylize("make -C doc clean", fore("cyan")))
             subprocess.run(
                 "make -C doc clean",
                 shell=True,

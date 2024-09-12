@@ -18,6 +18,11 @@
 extern "C" {
 #endif
 
+/**
+ * @brief Publish a system informations.
+ *
+ * @param[in] edgehog_device A valid Edgehog device handle.
+ */
 void publish_system_info(edgehog_device_handle_t edgehog_device);
 
 #ifdef __cplusplus

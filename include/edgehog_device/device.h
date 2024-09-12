@@ -30,6 +30,12 @@
 /** @brief Patch version number */
 #define EDGEHOG_DEVICE_PATCH 0
 
+/**
+ * @brief Handle for an instance of an Edgehog device.
+ *
+ * @details Each handle is a pointer to an opaque internally allocated data struct containing
+ * all the data for the Edgehog device.
+ */
 typedef struct edgehog_device_t *edgehog_device_handle_t;
 
 /**

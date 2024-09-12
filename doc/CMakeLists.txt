@@ -40,7 +40,14 @@ endif()
 # Doxygen (standalone)
 
 set(DOXY_OUT ${CMAKE_CURRENT_BINARY_DIR}/doxygen)
+
+if("${EDGEHOG_DEVICE_EXTENDED_DOCS}" STREQUAL "yes")
+message(STATUS "Generating extended documentation.")
+set(DOXYFILE_IN ${CMAKE_CURRENT_LIST_DIR}/edgehog-zephyr-device.extended.doxyfile.in)
+else()
 set(DOXYFILE_IN ${CMAKE_CURRENT_LIST_DIR}/edgehog-zephyr-device.doxyfile.in)
+endif()
+
 set(DOXYFILE_OUT ${CMAKE_CURRENT_BINARY_DIR}/zephyr.doxyfile)
 set(EDGEHOG_DEVICE_VERSION "${Edgehog_Device_VERSION}")
 

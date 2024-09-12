@@ -39,6 +39,7 @@ EDGEHOG_LOG_MODULE_REGISTER(telemetry, CONFIG_EDGEHOG_DEVICE_TELEMETRY_LOG_LEVEL
 K_THREAD_STACK_DEFINE(message_queue_stack_area, MESSAGE_QUEUE_STACK_SIZE);
 // NOLINTEND(cppcoreguidelines-avoid-non-const-global-variables)
 
+/** @brief Data struct for a telemetry instance. */
 typedef struct
 {
     /** @brief Type of telemetry. */

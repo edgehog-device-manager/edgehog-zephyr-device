@@ -12,6 +12,12 @@
 EDGEHOG_LOG_MODULE_REGISTER(edgehog_settings, CONFIG_EDGEHOG_DEVICE_SETTINGS_LOG_LEVEL);
 
 /************************************************
+ *        Defines, constants and typedef        *
+ ***********************************************/
+
+#define EGDEHOG_ID "edgehog_device"
+
+/************************************************
  * Global functions definition
  ***********************************************/
 

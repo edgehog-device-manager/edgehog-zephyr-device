@@ -23,6 +23,7 @@ EDGEHOG_LOG_MODULE_REGISTER(system_status, CONFIG_EDGEHOG_DEVICE_SYSTEM_STATUS_L
  *        Defines, constants and typedef        *
  ***********************************************/
 
+/** @brief Data struct for a thread info instance. */
 typedef struct
 {
     /** @brief Size of allocated thread's stack. */

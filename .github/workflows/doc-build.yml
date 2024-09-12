@@ -35,16 +35,15 @@ on:
     - 'scripts/requirements.txt'
 
 env:
-  # The latest CMake available directly with apt is 3.18, but we need >=3.20,
+  # The latest CMake available directly with apt is 3.18, but we need >=3.20
   # so we fetch that through pip.
-  CMAKE_VERSION: 3.22.1
-  DOXYGEN_VERSION: 1.9.6
+  CMAKE_VERSION: 3.20.5
+  DOXYGEN_VERSION: 1.12.0
 
 jobs:
   doc-build-html:
     name: "Documentation Build (HTML)"
     runs-on: ubuntu-latest
-    container: ghcr.io/zephyrproject-rtos/ci:v0.26.6
     timeout-minutes: 45
     concurrency:
       group: doc-build-html-${{ github.ref }}
@@ -69,14 +68,32 @@ jobs:
         tar xf doxygen-${DOXYGEN_VERSION}.linux.bin.tar.gz
         echo "${PWD}/doxygen-${DOXYGEN_VERSION}/bin" >> $GITHUB_PATH
 
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: 3.11
+
     - name: Install python packages
       run: |
-        pip3 install cmake==${CMAKE_VERSION}
+        pip install cmake==${CMAKE_VERSION}
+        pip install coverxygen
 
-    - name: West setup
+    - name: Checkout Astarte SDK individually
+      uses: actions/checkout@v4
+      with:
+        repository: secomind/astarte-device-sdk-zephyr
+        path: astarte-device-sdk-zephyr
+        ssh-key: ${{ secrets.SSH_EDGEHOG_DEVICE_ZEPHYR_PRIV_KEY }}
+
+    - name: Set CI manifest as defaults
       working-directory: edgehog-zephyr-device
-      run: |
-        west init -l .
+      run: mv west-ci.yml west.yml
+
+    - name: Setup Zephyr project
+      uses: zephyrproject-rtos/action-zephyr-setup@v1
+      with:
+        app-path: edgehog-zephyr-device
+        toolchains: x86_64-zephyr-elf
 
     - name: Build documentation
       working-directory: edgehog-zephyr-device

@@ -19,7 +19,6 @@
 #include <stdint.h>
 
 /**
- * @typedef http_download_payload_cbk_t
  * @brief Chunk of download from the server.
  */
 typedef struct
@@ -38,7 +37,7 @@ typedef struct
  * @typedef http_download_payload_cbk_t
  * @brief Callback used when chunk of download is received from the server.
  *
- * @param http_download Download information.
+ * @param sock_id Socket id of the connection.
  * @param download_chunk Download chunk information.
  * @param user_data User specified data specified in *http_download_t* struct.
  *
@@ -47,6 +46,7 @@ typedef struct
 typedef edgehog_result_t (*http_download_payload_cbk_t)(
     int sock_id, http_download_chunk_t *download_chunk, void *user_data);
 
+/** @brief Data struct for a Http download instance. */
 typedef struct
 {
     /** @brief Callback for a chunk download event. */
