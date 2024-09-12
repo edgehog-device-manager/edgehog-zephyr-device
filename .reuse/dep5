@@ -1,7 +1,0 @@
-Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
-Upstream-Name: edgehog-zephyr-device
-Source: https://github.com/secomind/edgehog-zephyr-device
-
-Files: skipfile.txt
-Copyright: SECO Mind Srl
-License: CC0-1.0
