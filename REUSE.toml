@@ -1,0 +1,25 @@
+# (C) Copyright 2024, SECO Mind Srl
+#
+# SPDX-License-Identifier: Apache-2.0
+
+version = 1
+SPDX-PackageName = "Edgehog Device Zephyr"
+SPDX-PackageDownloadLocation = "https://github.com/secomind/edgehog-zephyr-device"
+
+[[annotations]]
+path = "skipfile.txt"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "SECO Mind Srl"
+SPDX-License-Identifier = "CC0-1.0"
+
+[[annotations]]
+path = "lib/edgehog_device/generated_interfaces.c"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "SECO Mind Srl"
+SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = "lib/edgehog_device/include/generated_interfaces.h"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "SECO Mind Srl"
+SPDX-License-Identifier = "Apache-2.0"
