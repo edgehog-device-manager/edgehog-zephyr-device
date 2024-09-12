@@ -51,7 +51,7 @@ Second, a new entry should be added to the projects list:
       remote: secomind
       repo-path: edgehog-zephyr-device.git
       path: edgehog-zephyr-device
-      revision: main
+      revision: v0.6.0
 ```
 Remember to run `west update` after performing changes to the manifest file.
 
