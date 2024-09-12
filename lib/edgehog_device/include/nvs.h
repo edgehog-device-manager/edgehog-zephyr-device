@@ -18,17 +18,22 @@
 #include <zephyr/fs/nvs.h>
 
 #ifdef CONFIG_EDGEHOG_DEVICE_USE_EDGEHOG_PARTITION
+/** @brief The devicetree partition name for the NVS. */
 #define NVS_PARTITION edgehog_partition
 #else
+/** @brief The devicetree partition name for the NVS. */
 #define NVS_PARTITION storage_partition
 #endif
 
 #if DT_NODE_HAS_PROP(DT_NODELABEL(NVS_PARTITION), label)
+/** @brief The devicetree partition label for the NVS. */
 #define NVS_PARTITION_LABEL DT_PROP(DT_NODELABEL(NVS_PARTITION), label)
 #else
+/** @brief The devicetree partition label for the NVS. */
 #define NVS_PARTITION_LABEL "storage"
 #endif
 
+/** @brief The devicetree partition size for the NVS. */
 #define NVS_PARTITION_SIZE DT_REG_SIZE(DT_NODELABEL(NVS_PARTITION))
 
 #ifdef __cplusplus
@@ -40,7 +45,7 @@ extern "C" {
  *
  * @details This function open an Edgehog non-volatile storage.
  *
- * @param[in/out] out_fs If successful (return code is zero), handle will be
+ * @param[inout] out_fs If successful (return code is zero), handle will be
  *                        returned in this argument.
  * @return EDGEHOG_RESULT_OK if storage handle was opened successfully, an edgehog_result_t
  * otherwise.

@@ -23,8 +23,6 @@
 
 #include <zephyr/settings/settings.h>
 
-#define EGDEHOG_ID "edgehog_device"
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -42,9 +40,9 @@ edgehog_result_t edgehog_settings_init();
  * @details This function loads the settings for a specific subtree, all the values found are
  * passed to the given callback.
  *
- * @param subtree[in] subtree name of the subtree to be loaded.
- * @param load_cb[in] pointer to the callback function.
- * @param param[inout] parameter to be passed when callback function is called.
+ * @param[in] subtree subtree name of the subtree to be loaded.
+ * @param[in] load_cb pointer to the callback function.
+ * @param[inout] param parameter to be passed when callback function is called.
  *
  * @return EDGEHOG_RESULT_OK if successful, otherwise an error code.
  */
@@ -56,10 +54,10 @@ edgehog_result_t edgehog_settings_load(
  *
  * @details This function write a single serialized value to persisted storage.
  *
- *  @param subtree[in] subtree name of the subtree to be stored.
- *  @param key[in] key of the settings item.
- *  @param value[in] Pointer to the value of the settings item.
- *  @param value_len[in] Pointer to the value of the settings item.
+ *  @param[in] subtree subtree name of the subtree to be stored.
+ *  @param[in] key key of the settings item.
+ *  @param[in] value Pointer to the value of the settings item.
+ *  @param[in] value_len Pointer to the value of the settings item.
  *
  * @return EDGEHOG_RESULT_OK if successful, otherwise an error code.
  */
@@ -71,8 +69,8 @@ edgehog_result_t edgehog_settings_save(
  *
  * @details This function delete a single serialized value from the persisted storage.
  *
- *  @param[in] subtree[in] subtree name of the subtree to be stored.
- *  @param[in] key[in] key of the settings item.
+ *  @param[in] subtree subtree name of the subtree to be stored.
+ *  @param[in] key key of the settings item.
  *
  * @return EDGEHOG_RESULT_OK if successful, otherwise an error code.
  */

@@ -25,7 +25,7 @@ These partitions are:
 
 A portion of the flash memory can be partitioned into multiple image areas, each contains two image slots, a primary slot and a secondary slot. Normally, the bootloader will only run an image from the primary slot, so images must be built such that they can run from that fixed location in flash. If the bootloader needs to run the image resident in the secondary slot, it must copy its contents into the primary slot by overwriting the contents of the primary slot.
 
-Currently we use Mcuboot with `BOOT_UPGRADE_ONLY` enabled, this option overwrite the primary slot with the upgrade image instead of swapping them. This prevents the fallback recovery, but uses a much simpler code path. 
+Currently we use Mcuboot with `BOOT_UPGRADE_ONLY` enabled, this option overwrite the primary slot with the upgrade image instead of swapping them. This prevents the fallback recovery, but uses a much simpler code path.
 
 ## Signing the application
 In order to upgrade to an image, images must be signed. To make development easier, MCUboot is distributed with some example keys.
@@ -35,7 +35,8 @@ See [Mcuboot-Signing application](https://docs.mcuboot.com/readme-zephyr.html) s
 ## OTA Procedure
 
 OTA flowchart:
-``` mermaid 
+```mermaid
+%% This is a mermaid graph. Your can render it using the live editor at: https://mermaid.live
 flowchart TD
     INIT[[INIT]]
     ACKNOWLEDGED:::sBlock
@@ -72,9 +73,9 @@ flowchart TD
     REB_RESULT --> |SystemRollback/?|FAILURE
     REB_RESULT --> Success
     Success --> INIT
-    
+
     style FAILURE fill:#f44336,color:#fff
-    style INIT fill:#9E9E9E,color:#fff	
+    style INIT fill:#9E9E9E,color:#fff
     style Success fill:#4CAF50,color:#fff
     classDef sBlock fill:#2196F3,color:#fff
     classDef cBlock fill:#000000,color:#fff

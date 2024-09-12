@@ -15,6 +15,9 @@
 #include "edgehog_device/device.h"
 #include "edgehog_device/telemetry.h"
 
+/**
+ * @brief Internal struct for an instance of an Edgehog telemetry.
+ */
 typedef struct edgehog_telemetry_data edgehog_telemetry_t;
 
 #ifdef __cplusplus
@@ -39,6 +42,9 @@ edgehog_telemetry_t *edgehog_telemetry_new(
  *
  * @param edgehog_device A valid Edgehog device handle.
  * @param edgehog_telemetry A valid Edgehog telemetry pointer.
+ *
+ * @return EDGEHOG_RESULT_OK if the telemetry routine is started successfully, an edgehog_result_t
+ * otherwise.
  */
 edgehog_result_t edgehog_telemetry_start(
     edgehog_device_handle_t edgehog_device, edgehog_telemetry_t *edgehog_telemetry);
@@ -49,6 +55,9 @@ edgehog_result_t edgehog_telemetry_start(
  * @details This function destroy an Edgehog telemetry.
  *
  * @param edgehog_telemetry A valid Edgehog telemetry handle.
+ *
+ * @return EDGEHOG_RESULT_OK if the telemetry is destroyed successfully, an edgehog_result_t
+ * otherwise.
  */
 edgehog_result_t edgehog_telemetry_destroy(edgehog_telemetry_t *edgehog_telemetry);
 

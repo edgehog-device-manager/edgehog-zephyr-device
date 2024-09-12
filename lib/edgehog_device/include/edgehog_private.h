@@ -19,6 +19,11 @@
 
 #include <astarte_device_sdk/device.h>
 
+/**
+ * @brief Internal struct for an instance of an Edgehog device.
+ *
+ * @warning Users should not modify the content of this struct directly
+ */
 struct edgehog_device_t
 {
     /** @brief Handle of an Astarte device. */

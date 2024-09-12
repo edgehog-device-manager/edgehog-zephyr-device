@@ -17,8 +17,10 @@
 
 #include <zephyr/kernel.h>
 
+/** @brief The devicetree node identifier for the Edgehog LED alias. */
 #define EDGEHOG_LED_NODE DT_ALIAS(edgehog_led)
 
+/** @brief Data struct for a led thread instance. */
 typedef struct
 {
     /** @brief LED thread running state. */

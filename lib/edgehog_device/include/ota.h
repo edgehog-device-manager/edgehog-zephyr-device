@@ -52,9 +52,12 @@ typedef struct
     atomic_t ota_run_state;
 } ota_thread_data_t;
 
+/** @brief Data struct for a ota thread instance. */
 typedef struct
 {
+    /** @brief OTA thread data. */
     ota_thread_data_t ota_thread_data;
+    /** @brief Thread handle. */
     struct k_thread ota_thread_handle;
 } ota_thread_t;
 

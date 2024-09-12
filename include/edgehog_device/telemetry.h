@@ -26,17 +26,17 @@
  */
 typedef enum
 {
-    /**< The telemetry type is invalid. */
+    /** @brief The telemetry type is invalid. */
     EDGEHOG_TELEMETRY_INVALID = 0,
-    /**< The hardware info telemetry type. */
+    /** @brief The hardware info telemetry type. */
     EDGEHOG_TELEMETRY_HW_INFO,
-    /**< The wifi scan telemetry type. */
+    /** @brief The wifi scan telemetry type. */
     EDGEHOG_TELEMETRY_WIFI_SCAN,
-    /**< The system status telemetry type. */
+    /** @brief The system status telemetry type. */
     EDGEHOG_TELEMETRY_SYSTEM_STATUS,
-    /**< The storage usage telemetry type. */
+    /** @brief The storage usage telemetry type. */
     EDGEHOG_TELEMETRY_STORAGE_USAGE,
-    /**< Don't use it, It is a placeholder for the enum len. */
+    /** @brief Don't use it, It is a placeholder for the enum len. */
     EDGEHOG_TELEMETRY_LEN
 } telemetry_type_t;
 
