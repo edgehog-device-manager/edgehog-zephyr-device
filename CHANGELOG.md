@@ -19,7 +19,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Add support for `io.edgehog.devicemanager.config.Telemetry` interface.
 
 ### Changed
-- Updated the Astarte device SDK to `v0.7.0`.
+- Updated the Astarte device SDK to `v0.7.1`.
 - Updated Zephyr to `v3.7.0`.
 
 ## [0.5.0] - 2024-05-13
