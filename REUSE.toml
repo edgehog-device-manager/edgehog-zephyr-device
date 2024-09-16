@@ -4,7 +4,7 @@
 
 version = 1
 SPDX-PackageName = "Edgehog Device Zephyr"
-SPDX-PackageDownloadLocation = "https://github.com/secomind/edgehog-zephyr-device"
+SPDX-PackageDownloadLocation = "https://github.com/edgehog-device-manager/edgehog-zephyr-device"
 
 [[annotations]]
 path = "skipfile.txt"

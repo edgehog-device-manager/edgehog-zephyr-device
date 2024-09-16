@@ -9,8 +9,8 @@ manifest:
   remotes:
     - name: zephyrproject-rtos
       url-base: https://github.com/zephyrproject-rtos
-    - name: secomind
-      url-base: git@github.com:secomind
+    - name: astarte-platform
+      url-base: https://github.com/astarte-platform
 
   projects:
     - name: zephyr
@@ -28,7 +28,7 @@ manifest:
           - picolibc
           - mcuboot
     - name: astarte-device-sdk-zephyr
-      remote: secomind
+      remote: astarte-platform
       repo-path: astarte-device-sdk-zephyr.git
       path: astarte-device-sdk-zephyr
       revision: v0.7.1
