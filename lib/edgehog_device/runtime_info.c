@@ -26,7 +26,7 @@ EDGEHOG_LOG_MODULE_REGISTER(runtime_info, CONFIG_EDGEHOG_DEVICE_RUNTIME_INFO_LOG
 #define RUNTIME_VERSION_PROP "/version"
 #define RUNTIME_ENV_PROP "/environment"
 #define RUNTIME_NAME "edgehog-zephyr-device"
-#define RUNTIME_URL "https://github.com/secomind/edgehog-zephyr-device"
+#define RUNTIME_URL "https://github.com/edgehog-device-manager/edgehog-zephyr-device"
 // RUNTIME_VERSION will be like: "99.99.99" resulting 8 chars.
 #define RUNTIME_VERSION_SIZE 8
 // ENVIRONMENT will be like: "Zephyr 255.255.255" resulting 18 chars.
