@@ -34,7 +34,7 @@ jobs:
       - name: Checkout Astarte SDK individually
         uses: actions/checkout@v4
         with:
-          repository: secomind/astarte-device-sdk-zephyr
+          repository: astarte-platform/astarte-device-sdk-zephyr
           path: astarte-device-sdk-zephyr
           ssh-key: ${{ secrets.SSH_EDGEHOG_DEVICE_ZEPHYR_PRIV_KEY }}
       - name: Checkout
@@ -69,7 +69,7 @@ jobs:
       - name: Checkout Astarte SDK individually
         uses: actions/checkout@v4
         with:
-          repository: secomind/astarte-device-sdk-zephyr
+          repository: astarte-platform/astarte-device-sdk-zephyr
           path: astarte-device-sdk-zephyr
           ssh-key: ${{ secrets.SSH_EDGEHOG_DEVICE_ZEPHYR_PRIV_KEY }}
       - name: Checkout

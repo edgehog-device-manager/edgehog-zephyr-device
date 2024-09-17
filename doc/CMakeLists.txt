@@ -7,7 +7,7 @@ project(Edgehog-Device-Doc LANGUAGES)
 
 set(MIN_WEST_VERSION 1.0.0)
 
-set(Edgehog_Device_VERSION 0.5.0)
+set(Edgehog_Device_VERSION 0.6.0)
 
 message(STATUS "Zephyr base: ${EDGEHOG_DEVICE_BASE}")
 message(STATUS "Documentation tag: ${DOC_TAG}")

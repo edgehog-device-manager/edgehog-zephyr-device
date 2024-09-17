@@ -40,18 +40,18 @@ First, a new remote should be added:
 ```yml
   remotes:
     # ... other remotes ...
-    - name: secomind
-      url-base: https://github.com/secomind
+    - name: edgehog-device-manager
+      url-base: https://github.com/edgehog-device-manager
 ```
 Second, a new entry should be added to the projects list:
 ```yml
   projects:
     # ... other projects ...
     - name: edgehog-zephyr-device
-      remote: secomind
+      remote: edgehog-device-manager
       repo-path: edgehog-zephyr-device.git
       path: edgehog-zephyr-device
-      revision: main
+      revision: v0.6.0
 ```
 Remember to run `west update` after performing changes to the manifest file.
 
@@ -80,7 +80,7 @@ python3 -m venv ~/zephyr-workspace/.venv
 source ~/zephyr-workspace/.venv/bin/activate
 pip install west
 # Clone the example application repo
-git clone https://github.com/secomind/edgehog-zephyr-device.git ~/zephyr-workspace/edgehog-zephyr-device
+git clone https://github.com/edgehog-device-manager/edgehog-zephyr-device.git ~/zephyr-workspace/edgehog-zephyr-device
 ```
 
 #### Initializing the workspace
