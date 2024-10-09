@@ -50,16 +50,27 @@ edgehog_result_t edgehog_telemetry_start(
     edgehog_device_handle_t edgehog_device, edgehog_telemetry_t *edgehog_telemetry);
 
 /**
+ * @brief Stop the Edgehog telemetry service.
+ *
+ * @details This function stops an Edgehog telemetry service.
+ *
+ * @param edgehog_telemetry A valid Edgehog telemetry pointer.
+ * @param timeout A timeout for the stop operation.
+ *
+ * @return EDGEHOG_RESULT_OK if the telemetry service is stopped successfully within the timeout,
+ * EDGEHOG_RESULT_TELEMETRY_STOP_TIMEOUT otherwise.
+ */
+edgehog_result_t edgehog_telemetry_stop(
+    edgehog_telemetry_t *edgehog_telemetry, k_timeout_t timeout);
+
+/**
  * @brief Destroy Edgehog telemetry.
  *
  * @details This function destroy an Edgehog telemetry.
  *
  * @param edgehog_telemetry A valid Edgehog telemetry handle.
- *
- * @return EDGEHOG_RESULT_OK if the telemetry is destroyed successfully, an edgehog_result_t
- * otherwise.
  */
-edgehog_result_t edgehog_telemetry_destroy(edgehog_telemetry_t *edgehog_telemetry);
+void edgehog_telemetry_destroy(edgehog_telemetry_t *edgehog_telemetry);
 
 /**
  * @brief Handle received Edgehog telemetry config set event.

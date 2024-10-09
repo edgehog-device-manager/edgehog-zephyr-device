@@ -106,6 +106,7 @@ failure:
 
 void edgehog_device_destroy(edgehog_device_handle_t edgehog_device)
 {
+    edgehog_telemetry_destroy(edgehog_device->edgehog_telemetry);
     free(edgehog_device);
 }
 
@@ -119,6 +120,15 @@ edgehog_result_t edgehog_device_start(edgehog_device_handle_t edgehog_device)
         EDGEHOG_LOG_ERR("Unable to start Edgehog device");
     }
 
+    return res;
+}
+
+edgehog_result_t edgehog_device_stop(edgehog_device_handle_t edgehog_device, k_timeout_t timeout)
+{
+    edgehog_result_t res = edgehog_telemetry_stop(edgehog_device->edgehog_telemetry, timeout);
+    if (res != EDGEHOG_RESULT_OK) {
+        EDGEHOG_LOG_ERR("Unable to stop the Edgehog device within the timeout");
+    }
     return res;
 }
 

@@ -33,7 +33,8 @@ EDGEHOG_LOG_MODULE_REGISTER(telemetry, CONFIG_EDGEHOG_DEVICE_TELEMETRY_LOG_LEVEL
 
 #define MESSAGE_QUEUE_STACK_SIZE 2048
 #define MESSAGE_QUEUE_PRIORITY 5
-#define TELEMETRY_RUN_BIT (1)
+#define MESSAGE_QUEUE_TIMEOUT 100
+#define TELEMETRY_RUNNING_BIT (1)
 
 // NOLINTBEGIN(cppcoreguidelines-avoid-non-const-global-variables)
 K_THREAD_STACK_DEFINE(message_queue_stack_area, MESSAGE_QUEUE_STACK_SIZE);
@@ -75,7 +76,7 @@ struct edgehog_telemetry_data
     struct k_msgq message_queue;
     /** @brief Ring buffer that holds queued messages. */
     char queue_buffer[EDGEHOG_TELEMETRY_LEN * sizeof(telemetry_type_t)];
-    /** @brief Ring buffer that holds queued messages. */
+    /** @brief Run state for the telemetry thread. */
     atomic_t telemetry_run_state;
 };
 
@@ -336,12 +337,10 @@ static void message_queue_entry_point(void *device_ptr, void *queue_ptr, void *u
     struct k_msgq *msgq = (struct k_msgq *) queue_ptr;
     telemetry_type_t type = EDGEHOG_TELEMETRY_INVALID;
 
-    while (true) {
-        int res = k_msgq_get(msgq, &type, K_FOREVER);
-        if (res == 0) {
+    while (atomic_test_bit(
+        &edgehog_device->edgehog_telemetry->telemetry_run_state, TELEMETRY_RUNNING_BIT)) {
+        if (k_msgq_get(msgq, &type, K_MSEC(MESSAGE_QUEUE_TIMEOUT)) == 0) {
             edgehog_device_publish_telemetry(edgehog_device, type);
-        } else {
-            EDGEHOG_LOG_ERR("Unable to receive a message from a message queue: %d", res);
         }
     }
 }
@@ -394,8 +393,8 @@ edgehog_result_t edgehog_telemetry_start(
         return EDGEHOG_RESULT_TELEMETRY_START_FAIL;
     }
 
-    if (atomic_test_and_set_bit(&edgehog_telemetry->telemetry_run_state, TELEMETRY_RUN_BIT)) {
-        EDGEHOG_LOG_ERR("Unable to set TELEMETRY RUN BIT");
+    if (atomic_test_and_set_bit(&edgehog_telemetry->telemetry_run_state, TELEMETRY_RUNNING_BIT)) {
+        EDGEHOG_LOG_ERR("Failed starting telemetry service as it's already running");
         return EDGEHOG_RESULT_TELEMETRY_START_FAIL;
     }
 
@@ -409,7 +408,7 @@ edgehog_result_t edgehog_telemetry_start(
 
     if (!thread_id) {
         EDGEHOG_LOG_ERR("Unable to start telemetry message thread");
-        atomic_clear_bit(&edgehog_telemetry->telemetry_run_state, TELEMETRY_RUN_BIT);
+        atomic_clear_bit(&edgehog_telemetry->telemetry_run_state, TELEMETRY_RUNNING_BIT);
         return EDGEHOG_RESULT_TELEMETRY_START_FAIL;
     }
 
@@ -505,7 +504,23 @@ edgehog_result_t edgehog_telemetry_config_unset_event(
     return telemetry_stop(telemetry);
 }
 
-edgehog_result_t edgehog_telemetry_destroy(edgehog_telemetry_t *edgehog_telemetry)
+edgehog_result_t edgehog_telemetry_stop(edgehog_telemetry_t *edgehog_telemetry, k_timeout_t timeout)
+{
+    // Request the thread to self exit
+    atomic_clear_bit(&edgehog_telemetry->telemetry_run_state, TELEMETRY_RUNNING_BIT);
+    // Wait for the thread to self exit
+    int res = k_thread_join(&edgehog_telemetry->message_queue_thread, timeout);
+    switch (res) {
+        case 0:
+            return EDGEHOG_RESULT_OK;
+        case -EAGAIN:
+            return EDGEHOG_RESULT_TELEMETRY_STOP_TIMEOUT;
+        default:
+            return EDGEHOG_RESULT_INTERNAL_ERROR;
+    }
+}
+
+void edgehog_telemetry_destroy(edgehog_telemetry_t *edgehog_telemetry)
 {
     for (int i = 0; i < EDGEHOG_TELEMETRY_LEN; i++) {
         telemetry_t *telemetry = edgehog_telemetry->telemetries[i];
@@ -519,8 +534,6 @@ edgehog_result_t edgehog_telemetry_destroy(edgehog_telemetry_t *edgehog_telemetr
     }
 
     free(edgehog_telemetry);
-
-    return EDGEHOG_RESULT_OK;
 }
 
 /************************************************
@@ -742,7 +755,7 @@ static edgehog_result_t telemetry_schedule(telemetry_t *telemetry, edgehog_devic
 
     store_telemetry(telemetry);
 
-    if (!atomic_test_bit(&device->edgehog_telemetry->telemetry_run_state, TELEMETRY_RUN_BIT)) {
+    if (!atomic_test_bit(&device->edgehog_telemetry->telemetry_run_state, TELEMETRY_RUNNING_BIT)) {
         return EDGEHOG_RESULT_OK;
     }
 

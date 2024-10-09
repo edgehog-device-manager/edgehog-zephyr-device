@@ -91,10 +91,12 @@ typedef enum
     EDGEHOG_RESULT_TELEMETRY_START_FAIL = 30,
     /** @brief Unable to store a telemetry entry. */
     EDGEHOG_RESULT_TELEMETRY_STORE_FAIL = 31,
+    /** @brief A timeout occurred while stopping the telemetry timer. */
+    EDGEHOG_RESULT_TELEMETRY_STOP_TIMEOUT = 32,
     /** @brief Unable to stop a telemetry entry. */
-    EDGEHOG_RESULT_TELEMETRY_STOP_FAIL = 32,
+    EDGEHOG_RESULT_TELEMETRY_STOP_FAIL = 33,
     /** @brief A function has been called with incorrect parameters. */
-    EDGEHOG_RESULT_INVALID_PARAM = 33,
+    EDGEHOG_RESULT_INVALID_PARAM = 34,
 
 } edgehog_result_t;
 
