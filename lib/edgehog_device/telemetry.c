@@ -44,7 +44,7 @@ K_THREAD_STACK_DEFINE(message_queue_stack_area, MESSAGE_QUEUE_STACK_SIZE);
 typedef struct
 {
     /** @brief Type of telemetry. */
-    telemetry_type_t type;
+    edgehog_telemetry_type_t type;
     /** @brief Interval of period in seconds. */
     int64_t period_seconds;
     /** @brief Enables the telemetry. */
@@ -65,7 +65,7 @@ typedef struct
 struct edgehog_telemetry_data
 {
     /** @brief Telemetries configured by the user. */
-    edgehog_device_telemetry_config_t *telemetries_config;
+    edgehog_telemetry_config_t *telemetries_config;
     /** @brief Len of telemetries configured. */
     size_t telemetries_config_len;
     /** @brief Running telemetries. */
@@ -75,7 +75,7 @@ struct edgehog_telemetry_data
     /** @brief Message queue. */
     struct k_msgq message_queue;
     /** @brief Ring buffer that holds queued messages. */
-    char queue_buffer[EDGEHOG_TELEMETRY_LEN * sizeof(telemetry_type_t)];
+    char queue_buffer[EDGEHOG_TELEMETRY_LEN * sizeof(edgehog_telemetry_type_t)];
     /** @brief Run state for the telemetry thread. */
     atomic_t telemetry_run_state;
 };
@@ -104,19 +104,20 @@ static edgehog_result_t load_telemetries_from_settings(telemetry_t **telemetries
  * @return EDGEHOG_RESULT_OK if the load is handled successfully, an edgehog_result_t
  * otherwise.
  */
-static void load_telemetries_from_config(edgehog_device_telemetry_config_t *telemetries_config,
+static void load_telemetries_from_config(edgehog_telemetry_config_t *telemetries_config,
     size_t telemetry_config_len, telemetry_t **telemetries);
 
 /**
  * @brief Create a new instance of telemetry_t.
  *
- * @param[in] type The telemetry_type_t to create.
+ * @param[in] type The edgehog_telemetry_type_t to create.
  * @param[in] period_seconds The interval in seconds.
  * @param[in] enable The enable flag.
  *
  * @return The telemetry_t if the creation was successfully, NULL otherwise.
  */
-static telemetry_t *telemetry_new(telemetry_type_t type, int64_t period_seconds, bool enable);
+static telemetry_t *telemetry_new(
+    edgehog_telemetry_type_t type, int64_t period_seconds, bool enable);
 
 /**
  * @brief Check the existence of telemetry type in the telemetries array.
@@ -126,7 +127,7 @@ static telemetry_t *telemetry_new(telemetry_type_t type, int64_t period_seconds,
  *
  * @return True if the telemetry exists, false otherwise.
  */
-static bool exist(telemetry_type_t type, telemetry_t **telemetries);
+static bool exist(edgehog_telemetry_type_t type, telemetry_t **telemetries);
 
 /**
  * @brief Get a telemetry_t from the telemetries array.
@@ -136,7 +137,7 @@ static bool exist(telemetry_type_t type, telemetry_t **telemetries);
  *
  * @return The telemtry_t if the telemetry exists, NULL otherwise.
  */
-static telemetry_t *get_telemetry(telemetry_type_t type, telemetry_t **telemetries);
+static telemetry_t *get_telemetry(edgehog_telemetry_type_t type, telemetry_t **telemetries);
 
 /**
  * @brief Get a telemtry_type_t from an Astarte interface name.
@@ -145,7 +146,7 @@ static telemetry_t *get_telemetry(telemetry_type_t type, telemetry_t **telemetri
  *
  * @return The telemtry_type_t if the telemetry exists, EDGEHOG_TELEMETRY_INVALID otherwise.
  */
-static telemetry_type_t get_telemetry_type(const char *interface_name);
+static edgehog_telemetry_type_t get_telemetry_type(const char *interface_name);
 
 /**
  * @brief Get the telemetry array index for specific telemetry type.
@@ -154,18 +155,18 @@ static telemetry_type_t get_telemetry_type(const char *interface_name);
  *
  * @return The index of array, -1 otherwise.
  */
-static int get_telemetry_index(telemetry_type_t type);
+static int get_telemetry_index(edgehog_telemetry_type_t type);
 
 /**
  * @brief Get the telemetry period from the config.
  *
- * @param[in] telemetry_type The telemetry_type_t to search.
+ * @param[in] telemetry_type The edgehog_telemetry_type_t to search.
  * @param[in] edgehog_telemetry The struct of configured telemetries.
  *
  * @return The periods in seconds if the telemetry exists, -1 otherwise.
  */
 static int64_t get_telemetry_period_from_config(
-    telemetry_type_t telemetry_type, edgehog_telemetry_t *edgehog_telemetry);
+    edgehog_telemetry_type_t telemetry_type, edgehog_telemetry_t *edgehog_telemetry);
 
 /**
  * @brief Set a telemtry_t to the telemtries.
@@ -188,23 +189,23 @@ static void set_telemetry(telemetry_t *telemetry, telemetry_t **telemetries);
 static edgehog_result_t store_telemetry(telemetry_t *telemetry);
 
 /**
- * @brief Remove a telemetry_type_t from the telemetries.
+ * @brief Remove a edgehog_telemetry_type_t from the telemetries.
  *
- * @param[in] type The telemetry_type_t to remove.
+ * @param[in] type The edgehog_telemetry_type_t to remove.
  * @param[inout] telemetries The array of telemetries.
  */
-static void remove_telemetry(telemetry_type_t type, telemetry_t **telemetries);
+static void remove_telemetry(edgehog_telemetry_type_t type, telemetry_t **telemetries);
 
 /**
- * @brief Check the exstince of telemetry_type_t in the config.
+ * @brief Check the exstince of edgehog_telemetry_type_t in the config.
  *
- * @param[in] telemetry_type The telemetry_type_t to search.
+ * @param[in] telemetry_type The edgehog_telemetry_type_t to search.
  * @param[in] edgehog_telemetry The struct of configured telemetries.
  *
  * @return True if the telemetry exists, false otherwise.
  */
 static bool telemetry_type_is_present_in_config(
-    telemetry_type_t telemetry_type, edgehog_telemetry_t *edgehog_telemetry);
+    edgehog_telemetry_type_t telemetry_type, edgehog_telemetry_t *edgehog_telemetry);
 
 /**
  * @brief Parse an Astarte device data event.
@@ -217,7 +218,7 @@ static bool telemetry_type_is_present_in_config(
  * otherwise.
  */
 static edgehog_result_t parse_config_event(
-    astarte_device_data_event_t *event, telemetry_type_t *type, char **endpoint);
+    astarte_device_data_event_t *event, edgehog_telemetry_type_t *type, char **endpoint);
 
 /**
  * @brief Schedule a new telemetry.
@@ -270,7 +271,7 @@ static int telemetry_settings_loader(
     }
 
     const int base = 10;
-    telemetry_type_t type = (telemetry_type_t) strtol(&key[0], NULL, base);
+    edgehog_telemetry_type_t type = (edgehog_telemetry_type_t) strtol(&key[0], NULL, base);
 
     if (type <= EDGEHOG_TELEMETRY_INVALID || type >= EDGEHOG_TELEMETRY_LEN) {
         return -ENOENT;
@@ -335,7 +336,7 @@ static void message_queue_entry_point(void *device_ptr, void *queue_ptr, void *u
     ARG_UNUSED(unused);
     edgehog_device_handle_t edgehog_device = (edgehog_device_handle_t) device_ptr;
     struct k_msgq *msgq = (struct k_msgq *) queue_ptr;
-    telemetry_type_t type = EDGEHOG_TELEMETRY_INVALID;
+    edgehog_telemetry_type_t type = EDGEHOG_TELEMETRY_INVALID;
 
     while (atomic_test_bit(
         &edgehog_device->edgehog_telemetry->telemetry_run_state, TELEMETRY_RUNNING_BIT)) {
@@ -350,7 +351,7 @@ static void message_queue_entry_point(void *device_ptr, void *queue_ptr, void *u
  ***********************************************/
 
 edgehog_telemetry_t *edgehog_telemetry_new(
-    edgehog_device_telemetry_config_t *telemetry_config, size_t telemetry_config_len)
+    edgehog_telemetry_config_t *telemetry_config, size_t telemetry_config_len)
 {
 
     edgehog_telemetry_t *edgehog_telemetry = calloc(1, sizeof(edgehog_telemetry_t));
@@ -363,14 +364,14 @@ edgehog_telemetry_t *edgehog_telemetry_new(
     edgehog_telemetry->telemetries_config_len = telemetry_config_len;
 
     if (telemetry_config_len > 0) {
-        edgehog_telemetry->telemetries_config = calloc(
-            edgehog_telemetry->telemetries_config_len, sizeof(edgehog_device_telemetry_config_t));
+        edgehog_telemetry->telemetries_config
+            = calloc(edgehog_telemetry->telemetries_config_len, sizeof(edgehog_telemetry_config_t));
         if (!edgehog_telemetry->telemetries_config) {
             EDGEHOG_LOG_ERR("Out of memory %s: %d", __FILE__, __LINE__);
             goto error;
         }
         memcpy(edgehog_telemetry->telemetries_config, telemetry_config,
-            telemetry_config_len * sizeof(edgehog_device_telemetry_config_t));
+            telemetry_config_len * sizeof(edgehog_telemetry_config_t));
     }
 
     load_telemetries_from_settings(edgehog_telemetry->telemetries);
@@ -399,7 +400,7 @@ edgehog_result_t edgehog_telemetry_start(
     }
 
     k_msgq_init(&edgehog_telemetry->message_queue, edgehog_telemetry->queue_buffer,
-        sizeof(telemetry_type_t), EDGEHOG_TELEMETRY_LEN);
+        sizeof(edgehog_telemetry_type_t), EDGEHOG_TELEMETRY_LEN);
 
     k_tid_t thread_id
         = k_thread_create(&edgehog_telemetry->message_queue_thread, message_queue_stack_area,
@@ -427,7 +428,7 @@ edgehog_result_t edgehog_telemetry_config_set_event(
 {
 
     char *endpoint = NULL;
-    telemetry_type_t type = EDGEHOG_TELEMETRY_INVALID;
+    edgehog_telemetry_type_t type = EDGEHOG_TELEMETRY_INVALID;
     edgehog_result_t res = parse_config_event(&event->data_event, &type, &endpoint);
 
     if (res != EDGEHOG_RESULT_OK) {
@@ -472,7 +473,7 @@ edgehog_result_t edgehog_telemetry_config_unset_event(
     edgehog_device_handle_t edgehog_dev, astarte_device_data_event_t *event)
 {
     char *endpoint = NULL;
-    telemetry_type_t type = EDGEHOG_TELEMETRY_INVALID;
+    edgehog_telemetry_type_t type = EDGEHOG_TELEMETRY_INVALID;
     edgehog_result_t res = parse_config_event(event, &type, &endpoint);
 
     if (res != EDGEHOG_RESULT_OK) {
@@ -529,7 +530,7 @@ void edgehog_telemetry_destroy(edgehog_telemetry_t *edgehog_telemetry)
     }
 
     for (int i = 0; i < edgehog_telemetry->telemetries_config_len; i++) {
-        edgehog_device_telemetry_config_t *telemetry = edgehog_telemetry->telemetries_config;
+        edgehog_telemetry_config_t *telemetry = edgehog_telemetry->telemetries_config;
         free(telemetry);
     }
 
@@ -546,11 +547,11 @@ static edgehog_result_t load_telemetries_from_settings(telemetry_t **telemetries
         SETTINGS_TELEMETRY_KEY, telemetry_settings_loader, (void *) telemetries);
 }
 
-static void load_telemetries_from_config(edgehog_device_telemetry_config_t *telemetries_config,
+static void load_telemetries_from_config(edgehog_telemetry_config_t *telemetries_config,
     size_t telemetry_config_len, telemetry_t **telemetries)
 {
     for (int i = 0; i < telemetry_config_len; i++) {
-        edgehog_device_telemetry_config_t telemetry_config = telemetries_config[i];
+        edgehog_telemetry_config_t telemetry_config = telemetries_config[i];
         if (!exist(telemetry_config.type, telemetries)) {
             telemetry_t *telemetry
                 = telemetry_new(telemetry_config.type, telemetry_config.period_seconds, true);
@@ -561,7 +562,8 @@ static void load_telemetries_from_config(edgehog_device_telemetry_config_t *tele
     }
 }
 
-static telemetry_t *telemetry_new(telemetry_type_t type, int64_t period_seconds, bool enable)
+static telemetry_t *telemetry_new(
+    edgehog_telemetry_type_t type, int64_t period_seconds, bool enable)
 {
     telemetry_t *telemetry = (telemetry_t *) calloc(1, sizeof(telemetry_t));
 
@@ -578,7 +580,7 @@ static telemetry_t *telemetry_new(telemetry_type_t type, int64_t period_seconds,
     return telemetry;
 }
 
-static telemetry_type_t get_telemetry_type(const char *interface_name)
+static edgehog_telemetry_type_t get_telemetry_type(const char *interface_name)
 {
     if (strcmp(interface_name, io_edgehog_devicemanager_HardwareInfo.name) == 0) {
         return EDGEHOG_TELEMETRY_HW_INFO;
@@ -595,7 +597,7 @@ static telemetry_type_t get_telemetry_type(const char *interface_name)
     return EDGEHOG_TELEMETRY_INVALID;
 }
 
-static int get_telemetry_index(telemetry_type_t type)
+static int get_telemetry_index(edgehog_telemetry_type_t type)
 {
     if (type > EDGEHOG_TELEMETRY_INVALID && type < EDGEHOG_TELEMETRY_LEN) {
         return (int) type - 1;
@@ -603,7 +605,7 @@ static int get_telemetry_index(telemetry_type_t type)
     return -1;
 }
 
-static bool exist(telemetry_type_t type, telemetry_t **telemetries)
+static bool exist(edgehog_telemetry_type_t type, telemetry_t **telemetries)
 {
     int telemetry_idx = get_telemetry_index(type);
 
@@ -620,7 +622,7 @@ static bool exist(telemetry_type_t type, telemetry_t **telemetries)
     return false;
 }
 
-static telemetry_t *get_telemetry(telemetry_type_t type, telemetry_t **telemetries)
+static telemetry_t *get_telemetry(edgehog_telemetry_type_t type, telemetry_t **telemetries)
 {
     int telemetry_idx = get_telemetry_index(type);
 
@@ -633,7 +635,7 @@ static telemetry_t *get_telemetry(telemetry_type_t type, telemetry_t **telemetri
 }
 
 static int64_t get_telemetry_period_from_config(
-    telemetry_type_t telemetry_type, edgehog_telemetry_t *edgehog_telemetry)
+    edgehog_telemetry_type_t telemetry_type, edgehog_telemetry_t *edgehog_telemetry)
 {
     for (int i = 0; i < edgehog_telemetry->telemetries_config_len; i++) {
         if (telemetry_type == edgehog_telemetry->telemetries_config[i].type) {
@@ -657,7 +659,7 @@ static void set_telemetry(telemetry_t *telemetry, telemetry_t **telemetries)
     telemetries[telemetry_idx] = telemetry;
 }
 
-static void remove_telemetry(telemetry_type_t type, telemetry_t **telemetries)
+static void remove_telemetry(edgehog_telemetry_type_t type, telemetry_t **telemetries)
 {
     int telemetry_idx = get_telemetry_index(type);
 
@@ -696,7 +698,7 @@ static edgehog_result_t store_telemetry(telemetry_t *telemetry)
 }
 
 static bool telemetry_type_is_present_in_config(
-    telemetry_type_t telemetry_type, edgehog_telemetry_t *edgehog_telemetry)
+    edgehog_telemetry_type_t telemetry_type, edgehog_telemetry_t *edgehog_telemetry)
 {
     for (int i = 0; i < edgehog_telemetry->telemetries_config_len; i++) {
         if (telemetry_type == edgehog_telemetry->telemetries_config[i].type) {
@@ -707,7 +709,7 @@ static bool telemetry_type_is_present_in_config(
 }
 
 static edgehog_result_t parse_config_event(
-    astarte_device_data_event_t *event, telemetry_type_t *type, char **endpoint)
+    astarte_device_data_event_t *event, edgehog_telemetry_type_t *type, char **endpoint)
 {
     if (!event) {
         EDGEHOG_LOG_ERR("Unable to handle event, event undefined");
@@ -724,7 +726,7 @@ static edgehog_result_t parse_config_event(
         return EDGEHOG_RESULT_ASTARTE_ERROR;
     }
 
-    telemetry_type_t telemetry_type = get_telemetry_type(interface_name);
+    edgehog_telemetry_type_t telemetry_type = get_telemetry_type(interface_name);
     if (telemetry_type == EDGEHOG_TELEMETRY_INVALID) {
         EDGEHOG_LOG_ERR("Unable to handle config telemetry update, telemetry type %s not supported",
             interface_name);

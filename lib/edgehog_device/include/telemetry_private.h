@@ -28,12 +28,12 @@ extern "C" {
  *
  * @details This function creates an Edgehog telemetry.
  *
- * @param telemetry_config An edgehog_device_telemetry_config_t struct.
+ * @param telemetry_config An edgehog_telemetry_config_t struct.
  * @param telemetry_config_len Number of telemetry config elements.
  * @return A pointer to Edgehog telemetry or a NULL if an error occurred.
  */
 edgehog_telemetry_t *edgehog_telemetry_new(
-    edgehog_device_telemetry_config_t *telemetry_config, size_t telemetry_config_len);
+    edgehog_telemetry_config_t *telemetry_config, size_t telemetry_config_len);
 
 /**
  * @brief Start Edgehog telemetry.

@@ -58,7 +58,7 @@ typedef struct
      */
     astarte_device_handle_t astarte_device;
     /** @brief The telemetries configured by the user. */
-    edgehog_device_telemetry_config_t *telemetry_config;
+    edgehog_telemetry_config_t *telemetry_config;
     /** @brief The len of telemetries. */
     size_t telemetry_config_len;
 } edgehog_device_config_t;
