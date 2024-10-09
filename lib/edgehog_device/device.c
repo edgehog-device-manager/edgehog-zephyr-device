@@ -80,13 +80,13 @@ edgehog_result_t edgehog_device_new(
         goto failure;
     }
 
-    edgehog_telemetry_t *edgehog_telemetry
+    edgehog_telemetry_t *telemetry
         = edgehog_telemetry_new(config->telemetry_config, config->telemetry_config_len);
-    if (!edgehog_telemetry) {
+    if (!telemetry) {
         EDGEHOG_LOG_ERR("Unable to create edgehog telemetry update");
         goto failure;
     }
-    edgehog_device->edgehog_telemetry = edgehog_telemetry;
+    edgehog_device->telemetry = telemetry;
 
     res = add_interfaces(config->astarte_device);
 
@@ -106,7 +106,7 @@ failure:
 
 void edgehog_device_destroy(edgehog_device_handle_t edgehog_device)
 {
-    edgehog_telemetry_destroy(edgehog_device->edgehog_telemetry);
+    edgehog_telemetry_destroy(edgehog_device->telemetry);
     free(edgehog_device);
 }
 
@@ -114,8 +114,7 @@ edgehog_result_t edgehog_device_start(edgehog_device_handle_t edgehog_device)
 {
     edgehog_initial_publish(edgehog_device);
 
-    edgehog_result_t res
-        = edgehog_telemetry_start(edgehog_device, edgehog_device->edgehog_telemetry);
+    edgehog_result_t res = edgehog_telemetry_start(edgehog_device);
     if (res != EDGEHOG_RESULT_OK) {
         EDGEHOG_LOG_ERR("Unable to start Edgehog device");
     }
@@ -125,7 +124,7 @@ edgehog_result_t edgehog_device_start(edgehog_device_handle_t edgehog_device)
 
 edgehog_result_t edgehog_device_stop(edgehog_device_handle_t edgehog_device, k_timeout_t timeout)
 {
-    edgehog_result_t res = edgehog_telemetry_stop(edgehog_device->edgehog_telemetry, timeout);
+    edgehog_result_t res = edgehog_telemetry_stop(edgehog_device->telemetry, timeout);
     if (res != EDGEHOG_RESULT_OK) {
         EDGEHOG_LOG_ERR("Unable to stop the Edgehog device within the timeout");
     }
@@ -188,7 +187,7 @@ void edgehog_device_property_set_events_handler(
 
     if (strcmp(rx_event.interface_name, io_edgehog_devicemanager_config_Telemetry.name) == 0) {
         edgehog_result_t telemetry_result
-            = edgehog_telemetry_config_set_event(edgehog_device, &event);
+            = edgehog_telemetry_config_set_event(edgehog_device->telemetry, &event);
         if (telemetry_result != EDGEHOG_RESULT_OK) {
             EDGEHOG_LOG_ERR("Unable to handle Telemetry set event request");
         }
@@ -205,7 +204,7 @@ void edgehog_device_property_unset_events_handler(
 
     if (strcmp(event.interface_name, io_edgehog_devicemanager_config_Telemetry.name) == 0) {
         edgehog_result_t telemetry_result
-            = edgehog_telemetry_config_unset_event(edgehog_device, &event);
+            = edgehog_telemetry_config_unset_event(edgehog_device->telemetry, &event);
         if (telemetry_result != EDGEHOG_RESULT_OK) {
             EDGEHOG_LOG_ERR("Unable to handle Telemetry unset event request");
         }

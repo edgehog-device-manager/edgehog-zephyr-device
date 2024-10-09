@@ -35,7 +35,7 @@ struct edgehog_device_t
     /** @brief LED thread data used during the LED blink. */
     led_thread_t led_thread;
     /** @brief Telemetry data ... */
-    edgehog_telemetry_t *edgehog_telemetry;
+    edgehog_telemetry_t *telemetry;
 };
 
 /**
