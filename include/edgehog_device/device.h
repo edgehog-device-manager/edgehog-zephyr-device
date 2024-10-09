@@ -18,6 +18,8 @@
  * @{
  */
 
+#include <zephyr/sys_clock.h>
+
 #include "edgehog_device/result.h"
 #include "edgehog_device/telemetry.h"
 
@@ -109,6 +111,19 @@ void edgehog_device_destroy(edgehog_device_handle_t edgehog_device);
  * otherwise.
  */
 edgehog_result_t edgehog_device_start(edgehog_device_handle_t edgehog_device);
+
+/**
+ * @brief Stop the Edgehog device.
+ *
+ * @note When this function timeouts it is not ensured that the telemetry service  won't be running
+ * for some additional time after the function returned.
+ *
+ * @param edgehog_device A valid Edgehog device handle.
+ * @param timeout A timeout to use for stopping the telemetry services.
+ * @return EDGEHOG_RESULT_OK if successful, EDGEHOG_RESULT_TELEMETRY_STOP_TIMEOUT if the timeout
+ * has expired before the telemetry service stopped, otherwise an error code.
+ */
+edgehog_result_t edgehog_device_stop(edgehog_device_handle_t edgehog_device, k_timeout_t timeout);
 
 /**
  * @brief Handler for astarte datastream object event.
