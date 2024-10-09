@@ -24,81 +24,67 @@ typedef struct edgehog_telemetry_data edgehog_telemetry_t;
 extern "C" {
 #endif
 /**
- * @brief create Edgehog telemetry.
+ * @brief Create an Edgehog telemetry service.
  *
- * @details This function creates an Edgehog telemetry.
- *
- * @param telemetry_config An edgehog_telemetry_config_t struct.
- * @param telemetry_config_len Number of telemetry config elements.
+ * @param configs An array of user configuration entries.
+ * @param configs_len Number of configuration elements.
  * @return A pointer to Edgehog telemetry or a NULL if an error occurred.
  */
-edgehog_telemetry_t *edgehog_telemetry_new(
-    edgehog_telemetry_config_t *telemetry_config, size_t telemetry_config_len);
+edgehog_telemetry_t *edgehog_telemetry_new(edgehog_telemetry_config_t *configs, size_t configs_len);
 
 /**
- * @brief Start Edgehog telemetry.
+ * @brief Start an Edgehog telemetry service.
  *
- * @details This function starts an Edgehog telemetry.
- *
- * @param edgehog_device A valid Edgehog device handle.
- * @param edgehog_telemetry A valid Edgehog telemetry pointer.
+ * @param device A valid Edgehog device handle.
  *
  * @return EDGEHOG_RESULT_OK if the telemetry routine is started successfully, an edgehog_result_t
  * otherwise.
  */
-edgehog_result_t edgehog_telemetry_start(
-    edgehog_device_handle_t edgehog_device, edgehog_telemetry_t *edgehog_telemetry);
+edgehog_result_t edgehog_telemetry_start(edgehog_device_handle_t device);
 
 /**
- * @brief Stop the Edgehog telemetry service.
+ * @brief Stop an Edgehog telemetry service.
  *
- * @details This function stops an Edgehog telemetry service.
- *
- * @param edgehog_telemetry A valid Edgehog telemetry pointer.
+ * @param telemetry A valid Edgehog telemetry pointer.
  * @param timeout A timeout for the stop operation.
  *
  * @return EDGEHOG_RESULT_OK if the telemetry service is stopped successfully within the timeout,
  * EDGEHOG_RESULT_TELEMETRY_STOP_TIMEOUT otherwise.
  */
-edgehog_result_t edgehog_telemetry_stop(
-    edgehog_telemetry_t *edgehog_telemetry, k_timeout_t timeout);
+edgehog_result_t edgehog_telemetry_stop(edgehog_telemetry_t *telemetry, k_timeout_t timeout);
 
 /**
- * @brief Destroy Edgehog telemetry.
+ * @brief Destroy an Edgehog telemetry service.
  *
- * @details This function destroy an Edgehog telemetry.
- *
- * @param edgehog_telemetry A valid Edgehog telemetry handle.
+ * @param telemetry A valid Edgehog telemetry handle.
  */
-void edgehog_telemetry_destroy(edgehog_telemetry_t *edgehog_telemetry);
+void edgehog_telemetry_destroy(edgehog_telemetry_t *telemetry);
 
 /**
  * @brief Handle received Edgehog telemetry config set event.
  *
  * @details This function handles a config telemetry set event request from Astarte.
  *
- * @param edgehog_dev A valid Edgehog device handle.
- * @param event A valid Astarte property set event.
+ * @param telemetry A valid Edgehog telemetry handle.
+ * @param event A valid Astarte property set event data.
  *
- * @return EDGEHOG_RESULT_OK if the LED event is handled successfully, an edgehog_result_t
- * otherwise.
+ * @return EDGEHOG_RESULT_OK if successful, an edgehog_result_t otherwise.
  */
 edgehog_result_t edgehog_telemetry_config_set_event(
-    edgehog_device_handle_t edgehog_dev, astarte_device_property_set_event_t *event);
+    edgehog_telemetry_t *telemetry, astarte_device_property_set_event_t *event);
 
 /**
  * @brief Handle received Edgehog telemetry config unset event.
  *
  * @details This function handles a config telemetry unset event request from Astarte.
  *
- * @param edgehog_dev A valid Edgehog device handle.
- * @param event A valid Astarte datastream individual event.
+ * @param telemetry A valid Edgehog telemetry handle.
+ * @param event A valid Astarte device event data.
  *
- * @return EDGEHOG_RESULT_OK if the LED event is handled successfully, an edgehog_result_t
- * otherwise.
+ * @return EDGEHOG_RESULT_OK if successful, an edgehog_result_t otherwise.
  */
 edgehog_result_t edgehog_telemetry_config_unset_event(
-    edgehog_device_handle_t edgehog_dev, astarte_device_data_event_t *event);
+    edgehog_telemetry_t *telemetry, astarte_device_data_event_t *event);
 
 #ifdef __cplusplus
 }
