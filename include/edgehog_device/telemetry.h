@@ -22,7 +22,7 @@
  * @brief Edgehog telemetry types.
  *
  * @details This enum is used for configuring the telemetry type in
- * `edgehog_device_telemetry_config_t` struct.
+ * `edgehog_telemetry_config_t` struct.
  */
 typedef enum
 {
@@ -38,13 +38,13 @@ typedef enum
     EDGEHOG_TELEMETRY_STORAGE_USAGE,
     /** @brief Don't use it, It is a placeholder for the enum len. */
     EDGEHOG_TELEMETRY_LEN
-} telemetry_type_t;
+} edgehog_telemetry_type_t;
 
 /**
  * @brief Edgehog device telemtry configuration struct
  *
  * Example:
- *  edgehog_device_telemetry_config_t telemetry_config =
+ *  edgehog_telemetry_config_t telemetry_config =
  *  {
  *      .type = EDGEHOG_TELEMETRY_WIFI_SCAN,
  *      .period_seconds = 5
@@ -53,10 +53,10 @@ typedef enum
 typedef struct
 {
     /** @brief Type of telemetry. */
-    telemetry_type_t type;
+    edgehog_telemetry_type_t type;
     /** @brief Interval of period in seconds. */
     long period_seconds;
-} edgehog_device_telemetry_config_t;
+} edgehog_telemetry_config_t;
 
 /**
  * @}

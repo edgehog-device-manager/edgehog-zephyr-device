@@ -265,7 +265,7 @@ static void edgehog_initial_publish(edgehog_device_handle_t edgehog_device)
 #endif
 }
 
-void edgehog_device_publish_telemetry(edgehog_device_handle_t device, telemetry_type_t type)
+void edgehog_device_publish_telemetry(edgehog_device_handle_t device, edgehog_telemetry_type_t type)
 {
     switch (type) {
         case EDGEHOG_TELEMETRY_HW_INFO:

@@ -44,9 +44,10 @@ struct edgehog_device_t
  * @details This function publishs a telemetry based on telemetry_type parameter.
  *
  * @param device A valid edgehog device handle.
- * @param type One of telemetry_type_t values.
+ * @param type One of edgehog_telemetry_type_t values.
  *
  */
-void edgehog_device_publish_telemetry(edgehog_device_handle_t device, telemetry_type_t type);
+void edgehog_device_publish_telemetry(
+    edgehog_device_handle_t device, edgehog_telemetry_type_t type);
 
 #endif // EDGEHOG_PRIVATE_H
