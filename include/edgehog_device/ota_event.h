@@ -29,6 +29,7 @@ typedef enum
 {
     EDGEHOG_OTA_INVALID_EVENT = 0, /**< An invalid event. */
     EDGEHOG_OTA_INIT_EVENT, /**< Edgehog OTA routine init. */
+    EDGEHOG_OTA_REBOOTING_EVENT, /**< Edgehog OTA routine reboot. */
     EDGEHOG_OTA_FAILED_EVENT, /**< Edgehog OTA routine failed. */
     EDGEHOG_OTA_SUCCESS_EVENT /**< Edgehog OTA routine successful. */
 } edgehog_ota_event_t;
@@ -47,6 +48,8 @@ typedef struct
     /** @brief Edgehog OTA event. */
     edgehog_ota_event_t event;
 } edgehog_ota_chan_event_t;
+
+ZBUS_CHAN_DECLARE(edgehog_ota_chan);
 
 #endif
 
