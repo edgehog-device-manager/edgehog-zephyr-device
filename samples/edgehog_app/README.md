@@ -16,8 +16,6 @@ We assume a device with a known device id has been manually registered in the As
 The credential secret obtained through the registration should be added to the configuration.
 The configuration can be added to the `prj.conf` file of this example.
 
-All use cases require setting the WiFi SSID and password to valid values.
-
 ### Configuration for testing or demonstration
 
 This option assumes you are using this example with an Astarte instance similar to the
