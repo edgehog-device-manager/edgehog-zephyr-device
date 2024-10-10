@@ -22,10 +22,6 @@ project(edgehog_app)
 
 FILE(GLOB app_sources src/*.c)
 
-if(NOT CONFIG_WIFI)
-    LIST(REMOVE_ITEM app_sources ${CMAKE_CURRENT_LIST_DIR}/src/wifi.c)
-endif()
-
 # Verify that this sample is built through sysbuild to ensure MCUboot is
 # automatically included and that sample specific MCUboot configurations are
 # used when building MCUboot.
