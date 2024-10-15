@@ -31,12 +31,9 @@ ZTEST(edgehog_device, test_edgehog_device_new)
     edgehog_result_t edgehog_result = edgehog_device_new(&edgehog_conf, &edgehog_device);
 
     zassert_true(edgehog_result != EDGEHOG_RESULT_OK,
-        "edgehog_result returned by edgehog_device_new function is == EDGEHOG_RESULT_OK");
+        "Result of edgehog device creation with edgehog_device_new is EDGEHOG_RESULT_OK");
 
-    zassert_true(edgehog_device == NULL,
-        "edgehog_device_handle_t returned by edgehog_device_new function is not valid");
-
-    edgehog_device_destroy(edgehog_device);
+    zassert_true(edgehog_device == NULL, "Device created with edgehog_device_new is not NULL");
 }
 
 ZTEST_SUITE(edgehog_device, NULL, NULL, NULL, NULL, NULL);
