@@ -522,7 +522,8 @@ edgehog_result_t edgehog_telemetry_stop(edgehog_telemetry_t *telemetry, k_timeou
 void edgehog_telemetry_destroy(edgehog_telemetry_t *telemetry)
 {
     for (int i = 0; i < EDGEHOG_TELEMETRY_LEN; i++) {
-        if (k_timer_remaining_get(&telemetry->entries[i]->timer) != 0) {
+        if ((telemetry->entries[i])
+            && (k_timer_remaining_get(&telemetry->entries[i]->timer) != 0)) {
             k_timer_stop(&telemetry->entries[i]->timer);
         }
         free(telemetry->entries[i]);
