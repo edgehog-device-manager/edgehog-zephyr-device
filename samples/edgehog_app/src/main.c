@@ -182,7 +182,7 @@ int main(void)
         return -1;
     }
 
-    edgehog_device_telemetry_config_t telemetry_config = {
+    edgehog_telemetry_config_t telemetry_config = {
         .type = EDGEHOG_TELEMETRY_SYSTEM_STATUS,
         .period_seconds = TELEMETRY_PERIOD_S,
     };
