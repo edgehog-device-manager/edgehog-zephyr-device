@@ -29,7 +29,8 @@ typedef enum
 {
     EDGEHOG_OTA_INVALID_EVENT = 0, /**< An invalid event. */
     EDGEHOG_OTA_INIT_EVENT, /**< Edgehog OTA routine init. */
-    EDGEHOG_OTA_REBOOTING_EVENT, /**< Edgehog OTA routine reboot. */
+    EDGEHOG_OTA_PENDING_REBOOT_EVENT, /**< Edgehog OTA routine pending reboot. */
+    EDGEHOG_OTA_CONFIRM_REBOOT_EVENT, /**< Edgehog OTA routine reboot confirmation. */
     EDGEHOG_OTA_FAILED_EVENT, /**< Edgehog OTA routine failed. */
     EDGEHOG_OTA_SUCCESS_EVENT /**< Edgehog OTA routine successful. */
 } edgehog_ota_event_t;
