@@ -451,8 +451,8 @@ static void ota_thread_entry_point(void *edgehog_device, void *ptr2, void *ptr3)
             edgehog_dev->astarte_device, req_uuid, OTA_EVENT_DEPLOYED, 0, EDGEHOG_RESULT_OK, "");
         pub_ota_event(
             edgehog_dev->astarte_device, req_uuid, OTA_EVENT_REBOOTING, 0, EDGEHOG_RESULT_OK, "");
-        EDGEHOG_LOG_INF("Device restart in 5 seconds");
-        k_sleep(K_SECONDS(5));
+        EDGEHOG_LOG_INF("Device restart scheduled in maximum 1 minute");
+        k_sleep(K_SECONDS(60));
         EDGEHOG_LOG_INF("Device restart now");
         sys_reboot(SYS_REBOOT_WARM);
 
@@ -667,13 +667,13 @@ static void pub_ota_event(astarte_device_handle_t astarte_device, const char *re
 {
     char *status = NULL;
     char *status_code = NULL;
-#ifdef EDGEHOG_DEVICE_ZBUS_OTA_EVENT
+#ifdef CONFIG_EDGEHOG_DEVICE_ZBUS_OTA_EVENT
     edgehog_ota_chan_event_t ota_chan_event = { .event = EDGEHOG_OTA_INVALID_EVENT };
 #endif
     switch (event) {
         case OTA_EVENT_ACKNOWLEDGED:
             status = "Acknowledged";
-#ifdef EDGEHOG_DEVICE_ZBUS_OTA_EVENT
+#ifdef CONFIG_EDGEHOG_DEVICE_ZBUS_OTA_EVENT
             ota_chan_event.event = EDGEHOG_OTA_INIT_EVENT;
 #endif
             break;
@@ -688,22 +688,25 @@ static void pub_ota_event(astarte_device_handle_t astarte_device, const char *re
             break;
         case OTA_EVENT_REBOOTING:
             status = "Rebooting";
+#ifdef CONFIG_EDGEHOG_DEVICE_ZBUS_OTA_EVENT
+            ota_chan_event.event = EDGEHOG_OTA_REBOOTING_EVENT;
+#endif
             break;
         case OTA_EVENT_SUCCESS:
             status = "Success";
-#ifdef EDGEHOG_DEVICE_ZBUS_OTA_EVENT
+#ifdef CONFIG_EDGEHOG_DEVICE_ZBUS_OTA_EVENT
             ota_chan_event.event = EDGEHOG_OTA_SUCCESS_EVENT;
 #endif
             break;
         case OTA_EVENT_FAILURE:
             status = "Failure";
-#ifdef EDGEHOG_DEVICE_ZBUS_OTA_EVENT
+#ifdef CONFIG_EDGEHOG_DEVICE_ZBUS_OTA_EVENT
             ota_chan_event.event = EDGEHOG_OTA_FAILED_EVENT;
 #endif
             break;
         default: // OTA_EVENT_ERROR
             status = "Error";
-#ifdef EDGEHOG_DEVICE_ZBUS_OTA_EVENT
+#ifdef CONFIG_EDGEHOG_DEVICE_ZBUS_OTA_EVENT
             ota_chan_event.event = EDGEHOG_OTA_FAILED_EVENT;
 #endif
             break;
