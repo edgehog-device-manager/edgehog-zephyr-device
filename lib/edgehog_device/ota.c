@@ -35,6 +35,7 @@ EDGEHOG_LOG_MODULE_REGISTER(ota, CONFIG_EDGEHOG_DEVICE_OTA_LOG_LEVEL);
 #define OTA_PROGRESS_PERC 100
 #define OTA_PROGRESS_PERC_ROUNDING_STEP 10
 #define OTA_ATTEMPS_DELAY_MS 2000
+#define OTA_REBOOT_MAX_DELAY_S 60
 
 #define SLOT0_LABEL slot0_partition
 #define SLOT1_LABEL slot1_partition
@@ -52,12 +53,16 @@ EDGEHOG_LOG_MODULE_REGISTER(ota, CONFIG_EDGEHOG_DEVICE_OTA_LOG_LEVEL);
 
 // NOLINTBEGIN(cppcoreguidelines-avoid-non-const-global-variables)
 K_THREAD_STACK_DEFINE(ota_thread_stack, THREAD_STACK_SIZE);
-// NOLINTEND(cppcoreguidelines-avoid-non-const-global-variables)
 
 #ifdef CONFIG_EDGEHOG_DEVICE_ZBUS_OTA_EVENT
-ZBUS_CHAN_DEFINE(edgehog_ota_chan, edgehog_ota_chan_event_t, NULL, NULL, ZBUS_OBSERVERS_EMPTY,
+#define ZBUS_SUBSCRIBER_NOTIFICATION_QUEUE_SIZE 5
+ZBUS_CHAN_DEFINE(edgehog_ota_chan, edgehog_ota_chan_event_t, NULL, NULL,
+    ZBUS_OBSERVERS(edgehog_ota_internal_subscriber),
     ZBUS_MSG_INIT(.event = EDGEHOG_OTA_INVALID_EVENT));
+ZBUS_SUBSCRIBER_DEFINE(edgehog_ota_internal_subscriber, ZBUS_SUBSCRIBER_NOTIFICATION_QUEUE_SIZE);
 #endif
+// NOLINTEND(cppcoreguidelines-avoid-non-const-global-variables)
+
 /**
  * @brief OTA machine states.
  *
@@ -124,6 +129,11 @@ static const char *swap_type_str(int swap_type);
  * @brief OTA thread entry function.
  */
 static void ota_thread_entry_point(void *edgehog_device, void *ptr2, void *ptr3);
+
+/**
+ * @brief Waits for a reboot signal from the applcation, with a maximum wait time.
+ */
+static void wait_for_reboot(void);
 
 /**
  * @brief Callback used when download data is received from the server.
@@ -451,8 +461,8 @@ static void ota_thread_entry_point(void *edgehog_device, void *ptr2, void *ptr3)
             edgehog_dev->astarte_device, req_uuid, OTA_EVENT_DEPLOYED, 0, EDGEHOG_RESULT_OK, "");
         pub_ota_event(
             edgehog_dev->astarte_device, req_uuid, OTA_EVENT_REBOOTING, 0, EDGEHOG_RESULT_OK, "");
-        EDGEHOG_LOG_INF("Device restart in 5 seconds");
-        k_sleep(K_SECONDS(5));
+        EDGEHOG_LOG_INF("Device restart scheduled in maximum %d seconds", OTA_REBOOT_MAX_DELAY_S);
+        wait_for_reboot();
         EDGEHOG_LOG_INF("Device restart now");
         sys_reboot(SYS_REBOOT_WARM);
 
@@ -472,6 +482,25 @@ selfdestruct:
     edgehog_settings_delete(OTA_KEY, OTA_REQUEST_ID_KEY);
     ota_state = OTA_STATE_IDLE;
     edgehog_settings_save(OTA_KEY, OTA_STATE_KEY, &ota_state, sizeof(uint8_t));
+}
+
+static void wait_for_reboot(void)
+{
+#ifdef CONFIG_EDGEHOG_DEVICE_ZBUS_OTA_EVENT
+    k_timepoint_t wait_timepoint = sys_timepoint_calc(K_SECONDS(OTA_REBOOT_MAX_DELAY_S));
+    while (!K_TIMEOUT_EQ(sys_timepoint_timeout(wait_timepoint), K_NO_WAIT)) {
+        const struct zbus_channel *chan = NULL;
+        edgehog_ota_chan_event_t ota = { 0 };
+        if ((zbus_sub_wait(&edgehog_ota_internal_subscriber, &chan, K_SECONDS(1)) == 0)
+            && (&edgehog_ota_chan == chan) && (zbus_chan_read(chan, &ota, K_SECONDS(1)) == 0)
+            && (ota.event == EDGEHOG_OTA_CONFIRM_REBOOT_EVENT)) {
+            EDGEHOG_LOG_INF("Reboot confirmation received, skipping wait time.");
+            break;
+        }
+    }
+#else
+    k_sleep(K_SECONDS(OTA_REBOOT_MAX_DELAY_S));
+#endif
 }
 
 static edgehog_result_t perform_ota(edgehog_device_handle_t edgehog_device)
@@ -667,13 +696,13 @@ static void pub_ota_event(astarte_device_handle_t astarte_device, const char *re
 {
     char *status = NULL;
     char *status_code = NULL;
-#ifdef EDGEHOG_DEVICE_ZBUS_OTA_EVENT
+#ifdef CONFIG_EDGEHOG_DEVICE_ZBUS_OTA_EVENT
     edgehog_ota_chan_event_t ota_chan_event = { .event = EDGEHOG_OTA_INVALID_EVENT };
 #endif
     switch (event) {
         case OTA_EVENT_ACKNOWLEDGED:
             status = "Acknowledged";
-#ifdef EDGEHOG_DEVICE_ZBUS_OTA_EVENT
+#ifdef CONFIG_EDGEHOG_DEVICE_ZBUS_OTA_EVENT
             ota_chan_event.event = EDGEHOG_OTA_INIT_EVENT;
 #endif
             break;
@@ -688,22 +717,25 @@ static void pub_ota_event(astarte_device_handle_t astarte_device, const char *re
             break;
         case OTA_EVENT_REBOOTING:
             status = "Rebooting";
+#ifdef CONFIG_EDGEHOG_DEVICE_ZBUS_OTA_EVENT
+            ota_chan_event.event = EDGEHOG_OTA_PENDING_REBOOT_EVENT;
+#endif
             break;
         case OTA_EVENT_SUCCESS:
             status = "Success";
-#ifdef EDGEHOG_DEVICE_ZBUS_OTA_EVENT
+#ifdef CONFIG_EDGEHOG_DEVICE_ZBUS_OTA_EVENT
             ota_chan_event.event = EDGEHOG_OTA_SUCCESS_EVENT;
 #endif
             break;
         case OTA_EVENT_FAILURE:
             status = "Failure";
-#ifdef EDGEHOG_DEVICE_ZBUS_OTA_EVENT
+#ifdef CONFIG_EDGEHOG_DEVICE_ZBUS_OTA_EVENT
             ota_chan_event.event = EDGEHOG_OTA_FAILED_EVENT;
 #endif
             break;
         default: // OTA_EVENT_ERROR
             status = "Error";
-#ifdef EDGEHOG_DEVICE_ZBUS_OTA_EVENT
+#ifdef CONFIG_EDGEHOG_DEVICE_ZBUS_OTA_EVENT
             ota_chan_event.event = EDGEHOG_OTA_FAILED_EVENT;
 #endif
             break;
