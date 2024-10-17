@@ -15,29 +15,48 @@ rsource "../../Kconfig"
 
 menu "Sample application"
 
-config DEVICE_ID
+config ASTARTE_DEVICE_ID
 	string "Astarte device ID"
     default ""
 	help
 	  Device ID to be used to connect to Astarte.
 
-config CREDENTIAL_SECRET
+config ASTARTE_CREDENTIAL_SECRET
     string "Astarte credential secret"
     default ""
     help
         The credential secret to be used to connect to Astarte.
 
-config WIFI_SSID
-    string "WiFi SSID"
-    default "myssid"
+config SAMPLE_DURATION_SECONDS
+    int "Sample maximum duration (s)"
+    default 240
     help
-        SSID (network name) for the example to connect to.
+        Use this setting to change for how long the sample will run.
+        The default is four minutes.
 
-config WIFI_PASSWORD
-    string "WiFi Password"
-    default "mypassword"
+config ASTARTE_DEVICE_THREAD_STACK_SIZE
+    int "Astarte device thread stack size (Bytes)"
+    default 16384
     help
-        WiFi password (WPA or WPA2) for the example to use.
+        Use this setting to change the size of the stack for the thread running the Astarte device.
+
+config ASTARTE_DEVICE_THREAD_PRIORITY
+    int "Astarte device thread priority"
+    default 0
+    help
+        Use this setting to change the priority of the Astarte device thread.
+
+config EDGEHOG_DEVICE_THREAD_STACK_SIZE
+    int "Edgehog device thread stack size (Bytes)"
+    default 16384
+    help
+        Use this setting to change the size of the stack for the thread running the Astarte device.
+
+config EDGEHOG_DEVICE_THREAD_PRIORITY
+    int "Edgehog device thread priority"
+    default 0
+    help
+        Use this setting to change the priority of the Astarte device thread.
 
 endmenu
 
