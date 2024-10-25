@@ -16,8 +16,6 @@ We assume a device with a known device id has been manually registered in the As
 The credential secret obtained through the registration should be added to the configuration.
 The configuration can be added to the `prj.conf` file of this example.
 
-All use cases require setting the WiFi SSID and password to valid values.
-
 ### Configuration for testing or demonstration
 
 This option assumes you are using this example with an Astarte instance similar to the
@@ -28,13 +26,14 @@ tutorials.
 
 The following entries should be modified in the `proj.conf` file.
 ```conf
-CONFIG_ASTARTE_DEVICE_SDK_DEVICE_ID="<DEVICE_ID>"
 CONFIG_ASTARTE_DEVICE_SDK_HOSTNAME="<HOSTNAME>"
-CONFIG_ASTARTE_DEVICE_SDK_DEVELOP_DISABLE_OR_IGNORE_TLS=y
+CONFIG_ASTARTE_DEVICE_SDK_DEVELOP_USE_NON_TLS_HTTP=y
+CONFIG_ASTARTE_DEVICE_SDK_DEVELOP_USE_NON_TLS_MQTT=y
 CONFIG_ASTARTE_DEVICE_SDK_CLIENT_CERT_TAG=1
 CONFIG_ASTARTE_DEVICE_SDK_REALM_NAME="<REALM_NAME>"
 
-CONFIG_CREDENTIAL_SECRET="<CREDENTIAL_SECRET>"
+CONFIG_ASTARTE_DEVICE_ID="<DEVICE_ID>"
+CONFIG_ASTARTE_CREDENTIAL_SECRET="<CREDENTIAL_SECRET>"
 ```
 Where `<DEVICE_ID>` is the device ID of the device you would like to use in the sample, `<HOSTNAME>`
 is the hostname for your Astarte instance, `<REALM_NAME>` is the name of your testing realm and
@@ -52,8 +51,8 @@ CONFIG_ASTARTE_DEVICE_SDK_MQTTS_CA_CERT_TAG=1
 CONFIG_ASTARTE_DEVICE_SDK_CLIENT_CERT_TAG=2
 CONFIG_ASTARTE_DEVICE_SDK_REALM_NAME="<REALM_NAME>"
 
-CONFIG_DEVICE_ID="<DEVICE_ID>"
-CONFIG_CREDENTIAL_SECRET="<CREDENTIAL_SECRET>"
+CONFIG_ASTARTE_DEVICE_ID="<DEVICE_ID>"
+CONFIG_ASTARTE_CREDENTIAL_SECRET="<CREDENTIAL_SECRET>"
 ```
 Where `<DEVICE_ID>` is the device ID of the device you would like to use in the sample, `<HOSTNAME>`
 is the hostname for your Astarte instance, `<REALM_NAME>` is the name of your testing realm and
@@ -93,7 +92,8 @@ west build -b mimxrt1064_evk --sysbuild samples/edgehog_app
 
 ### Flash runner for nxp boards
 
-The default runner used for nxp boards is `jlink`. To flash without a debug link use:
+The default runner used for nxp boards is `jlink` which requires an external probe.
+To flash the sample on the i.MX RT boards using the on board probe change the runner to linkserver:
 ```sh
 west flash --runner=linkserver
 ```

@@ -12,4 +12,6 @@ tests:
     build_only: true
     integration_platforms:
       - mimxrt1064_evk
+      - mimxrt1060_evkb
+      - stm32h573i_dk
       - native_sim
