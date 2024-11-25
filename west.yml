@@ -21,6 +21,6 @@ manifest:
       remote: astarte-platform
       repo-path: astarte-device-sdk-zephyr.git
       path: astarte-device-sdk-zephyr
-      revision: master
+      revision: 5e49ac978a07b4eb487b23301d4278b7c498d938
       west-commands: scripts/west-commands.yml
       import: true
