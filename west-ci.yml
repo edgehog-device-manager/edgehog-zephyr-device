@@ -15,7 +15,7 @@ manifest:
   projects:
     - name: zephyr
       remote: zephyrproject-rtos
-      revision: v3.7.0
+      revision: v4.0.0
       import:
         # By using name-allowlist we can clone only the modules that are
         # strictly needed by the application.
@@ -31,6 +31,6 @@ manifest:
       remote: astarte-platform
       repo-path: astarte-device-sdk-zephyr.git
       path: astarte-device-sdk-zephyr
-      revision: v0.7.2
+      revision: 5e49ac978a07b4eb487b23301d4278b7c498d938
       west-commands: scripts/west-commands.yml
       import: true
