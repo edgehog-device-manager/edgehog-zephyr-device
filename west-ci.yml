@@ -11,6 +11,8 @@ manifest:
       url-base: https://github.com/zephyrproject-rtos
     - name: astarte-platform
       url-base: https://github.com/astarte-platform
+    - name: secomind
+      url-base: https://github.com/secomind
 
   projects:
     - name: zephyr
