@@ -14,7 +14,7 @@ This sample shows how to set up and connect an Edgehog device.
 Each Edgehog device requires an Edgehog instance to connect to, which itself relies on an Astarte
 instance.
 If you are using a managed Edgehog instance both components will be provided to you and you can skip
-directly to the [configuring the device](#configuring-the-device) section.
+directly to the **Configuring the device** section.
 
 ### Astarte instance
 
