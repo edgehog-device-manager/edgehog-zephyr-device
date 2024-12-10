@@ -11,6 +11,8 @@ manifest:
       url-base: https://github.com/zephyrproject-rtos
     - name: astarte-platform
       url-base: https://github.com/astarte-platform
+    - name: secomind
+      url-base: https://github.com/secomind
 
   projects:
     - name: zephyr
@@ -31,6 +33,9 @@ manifest:
       remote: astarte-platform
       repo-path: astarte-device-sdk-zephyr.git
       path: astarte-device-sdk-zephyr
-      revision: 5e49ac978a07b4eb487b23301d4278b7c498d938
+      revision: release-0.7
       west-commands: scripts/west-commands.yml
-      import: true
+    - name: zlib-zephyr
+      remote: secomind
+      revision: release-v1.3.1
+      path: modules/zlib
