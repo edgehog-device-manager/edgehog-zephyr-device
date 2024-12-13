@@ -90,59 +90,56 @@ You should use the token just generated with the tenant name `acme-inc`.
 Depending on the type of Astarte/Edgehog instances you are using the configuration parameters for
 this sample will be slightly different.
 
-### Configuration for managed Astarte/Edgehog instances
 
-If you are usign a managed Astarte/Edgehog instance such as [astarte.cloud](https://astarte.cloud/)
+- If you are usign a managed Astarte/Edgehog instance such as [astarte.cloud](https://astarte.cloud/)
 you will be able to fully take advantage of the secure TLS connection of Astarte.
 
-Set the following configuration entries in the `prj.conf` file of this sample.
-```conf
-CONFIG_ASTARTE_DEVICE_SDK_HOSTNAME="<HOSTNAME>"
-CONFIG_ASTARTE_DEVICE_SDK_HTTPS_CA_CERT_TAG=1
-CONFIG_ASTARTE_DEVICE_SDK_MQTTS_CA_CERT_TAG=1
-CONFIG_ASTARTE_DEVICE_SDK_CLIENT_CERT_TAG=2
-CONFIG_ASTARTE_DEVICE_SDK_REALM_NAME="<REALM_NAME>"
+  Set the following configuration entries in the `prj.conf` file of this sample.
+  ```conf
+  CONFIG_ASTARTE_DEVICE_SDK_HOSTNAME="<HOSTNAME>"
+  CONFIG_ASTARTE_DEVICE_SDK_HTTPS_CA_CERT_TAG=1
+  CONFIG_ASTARTE_DEVICE_SDK_MQTTS_CA_CERT_TAG=1
+  CONFIG_ASTARTE_DEVICE_SDK_CLIENT_CERT_TAG=2
+  CONFIG_ASTARTE_DEVICE_SDK_REALM_NAME="<REALM_NAME>"
 
-CONFIG_ASTARTE_DEVICE_ID="<DEVICE_ID>"
-CONFIG_ASTARTE_CREDENTIAL_SECRET="<CREDENTIAL_SECRET>"
-```
-Where `<DEVICE_ID>` is the device ID of the device you would like to use in the sample, `<HOSTNAME>`
-is the hostname for your Astarte instance, `<REALM_NAME>` is the name of your testing realm and
-`<CREDENTIAL_SECRET>` is the credential secret obtained through the manual registration.
+  CONFIG_ASTARTE_DEVICE_ID="<DEVICE_ID>"
+  CONFIG_ASTARTE_CREDENTIAL_SECRET="<CREDENTIAL_SECRET>"
+  ```
+  Where `<DEVICE_ID>` is the device ID of the device you would like to use in the sample, `<HOSTNAME>`
+  is the hostname for your Astarte instance, `<REALM_NAME>` is the name of your testing realm and
+  `<CREDENTIAL_SECRET>` is the credential secret obtained through the manual registration.
 
-In addition, the file `ca_certificates.h` should be modified, placing in the `ca_certificate_root`
-array a valid CA certificate in the PEM format.
+  In addition, the file `ca_certificates.h` should be modified, placing in the `ca_certificate_root`
+  array a valid CA certificate in the PEM format.
 
-### Configuration for local Astarte/Edgehog
+- If you instead configured Astarte and Edgehog on a local machine using the Astarte quick instance
+  guide and the steps above you will need to use unsafe HTTP/MQTT connectivity.
 
-If you instead configured Astarte and Edgehog on a local machine using the Astarte quick instance
-guide and the steps above you will need to use unsafe HTTP/MQTT connectivity.
+  This is clearly a very bad idea in production devices and should be only enabled for testing and
+  development purposes.
 
-This is clearly a very bad idea in production devices and should be only enabled for testing and
-development purposes.
+  The following entries should be modified in the `proj.conf` file.
+  ```conf
+  CONFIG_ASTARTE_DEVICE_SDK_HOSTNAME="<HOSTNAME>"
+  # Replaces CONFIG_ASTARTE_DEVICE_SDK_HTTPS_CA_CERT_TAG
+  CONFIG_ASTARTE_DEVICE_SDK_DEVELOP_USE_NON_TLS_HTTP=y
+  # Replaces CONFIG_ASTARTE_DEVICE_SDK_MQTTS_CA_CERT_TAG
+  CONFIG_ASTARTE_DEVICE_SDK_DEVELOP_USE_NON_TLS_MQTT=y
+  CONFIG_ASTARTE_DEVICE_SDK_CLIENT_CERT_TAG=1
+  CONFIG_ASTARTE_DEVICE_SDK_REALM_NAME="<REALM_NAME>"
 
-The following entries should be modified in the `proj.conf` file.
-```conf
-CONFIG_ASTARTE_DEVICE_SDK_HOSTNAME="<HOSTNAME>"
-# Replaces CONFIG_ASTARTE_DEVICE_SDK_HTTPS_CA_CERT_TAG
-CONFIG_ASTARTE_DEVICE_SDK_DEVELOP_USE_NON_TLS_HTTP=y
-# Replaces CONFIG_ASTARTE_DEVICE_SDK_MQTTS_CA_CERT_TAG
-CONFIG_ASTARTE_DEVICE_SDK_DEVELOP_USE_NON_TLS_MQTT=y
-CONFIG_ASTARTE_DEVICE_SDK_CLIENT_CERT_TAG=1
-CONFIG_ASTARTE_DEVICE_SDK_REALM_NAME="<REALM_NAME>"
+  CONFIG_EDGEHOG_DEVICE_DEVELOP_DISABLE_OR_IGNORE_TLS=y
 
-CONFIG_EDGEHOG_DEVICE_DEVELOP_DISABLE_OR_IGNORE_TLS=y
+  CONFIG_ASTARTE_DEVICE_ID="<DEVICE_ID>"
+  CONFIG_ASTARTE_CREDENTIAL_SECRET="<CREDENTIAL_SECRET>"
+  ```
+  Where `<DEVICE_ID>` is the device ID of the device you would like to use in the sample, `<HOSTNAME>`
+  is the hostname for your Astarte instance, `<REALM_NAME>` is the name of your testing realm and
+  `<CREDENTIAL_SECRET>` is the credential secret obtained through the manual registration.
 
-CONFIG_ASTARTE_DEVICE_ID="<DEVICE_ID>"
-CONFIG_ASTARTE_CREDENTIAL_SECRET="<CREDENTIAL_SECRET>"
-```
-Where `<DEVICE_ID>` is the device ID of the device you would like to use in the sample, `<HOSTNAME>`
-is the hostname for your Astarte instance, `<REALM_NAME>` is the name of your testing realm and
-`<CREDENTIAL_SECRET>` is the credential secret obtained through the manual registration.
-
-You will most likely replace `<HOSTNAME>` and `<REALM_NAME>` with
-`api.astarte.<YOUR IP ADDRESS>.nip.io` and `test` respectively if you followed the Astarte quick
-instance guide.
+  You will most likely replace `<HOSTNAME>` and `<REALM_NAME>` with
+  `api.astarte.<YOUR IP ADDRESS>.nip.io` and `test` respectively if you followed the Astarte quick
+  instance guide.
 
 ## Building the sample
 
