@@ -294,7 +294,7 @@ static void astarte_device_thread_entry_point(void *arg1, void *arg2, void *arg3
 
     LOG_INF("End of sample, Astarte disconnection imminent."); // NOLINT
 
-    ares = astarte_device_disconnect(astarte_device, K_SECONDS(10));
+    ares = astarte_device_disconnect(astarte_device);
     if (ares != ASTARTE_RESULT_OK) {
         LOG_ERR("Astarte device disconnection failure %s.", astarte_result_to_name(ares)); // NOLINT
         goto exit;
