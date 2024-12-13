@@ -4,46 +4,98 @@ Copyright 2024 SECO Mind Srl
 SPDX-License-Identifier: Apache-2.0
 -->
 
-# Edgehog app example
+# Edgehog app sample
 
 This sample shows how to setup and connect an Edgehog device and their features.
 
-## Required configuration
+## Before you begin
 
-The examples need to be configured to work with a testing/demonstration Astarte and Edgehog instance or
-a fully deployed Astarte and Edgehog instance.
-We assume a device with a known device id has been manually registered in the Astarte instance.
-The credential secret obtained through the registration should be added to the configuration.
-The configuration can be added to the `prj.conf` file of this example.
+This sample shows how to set up and connect an Edgehog device.
+Each Edgehog device requires an Edgehog instance to connect to, which itself relies on an Astarte
+instance.
+If you are using a managed Edgehog instance both components will be provided to you and you can skip
+directly to the **Configuring the device** section.
 
-### Configuration for testing or demonstration
+### Astarte instance
 
-This option assumes you are using this example with an Astarte instance similar to the
-one that results from following the
-[Astarte in 5 minutes](https://docs.astarte-platform.org/astarte/latest/010-astarte_in_5_minutes.html)
-and [Edgehog in 5 minutes](https://docs.edgehog.io/snapshot/edgehog_in_5_minutes.html)
-tutorials.
+You will need an Astarte instance to connect with the Edgehog instance.
+The fastest way to set this up is to follow the
+[Astarte quick instance](https://docs.astarte-platform.org/device-sdks/common/astarte_quick_instance.html)
+guide provided with the Astarte documentation.
 
-The following entries should be modified in the `proj.conf` file.
-```conf
-CONFIG_ASTARTE_DEVICE_SDK_HOSTNAME="<HOSTNAME>"
-CONFIG_ASTARTE_DEVICE_SDK_DEVELOP_USE_NON_TLS_HTTP=y
-CONFIG_ASTARTE_DEVICE_SDK_DEVELOP_USE_NON_TLS_MQTT=y
-CONFIG_ASTARTE_DEVICE_SDK_CLIENT_CERT_TAG=1
-CONFIG_ASTARTE_DEVICE_SDK_REALM_NAME="<REALM_NAME>"
+Make sure you do not loose the following information:
+- Your Astarte realm name. The default for the Astarte quick instance is `test`.
+- The location of your Astarte instance. The default for the Astarte quick instance is an `astarte`
+  folder in your home.
+- The Astarte API endpoint. If you followed the Astarte quick instance guide you should have
+  choosen to configure Astarte for an external device. As a consequence this endpoint will be:
+  `api.astarte.<YOUR IP ADDRESS>.nip.io`.
+- A device ID registered using the dashboard and its associated credential secret. If you followed
+  the Astarte quick instance guide you can register a device in the dashboard, navigating to the
+  devices tab, clicking on register a new device and register a device with a random ID using the
+  default settings.
 
-CONFIG_ASTARTE_DEVICE_ID="<DEVICE_ID>"
-CONFIG_ASTARTE_CREDENTIAL_SECRET="<CREDENTIAL_SECRET>"
+### Edgehog instance
+
+Once you have your Astarte instance up and running only a couple steps are required for
+installing and running the Edgehog instance.
+
+Start by cloning the Edgehog repository and navigate into it.
+```sh
+git clone https://github.com/edgehog-device-manager/edgehog -b v0.9.2 && cd edgehog
 ```
-Where `<DEVICE_ID>` is the device ID of the device you would like to use in the sample, `<HOSTNAME>`
-is the hostname for your Astarte instance, `<REALM_NAME>` is the name of your testing realm and
-`<CREDENTIAL_SECRET>` is the credential secret obtained through the manual registration.
 
-### Configuration for fully functional Astarte
+Next you will need to change some of the configuration variables in the `.env` file within the
+cloned repository. Replace the following variables with your own values.
+```sh
+DOCKER_COMPOSE_EDGEHOG_BASE_DOMAIN=edgehog.<YOUR IP ADDRESS>.nip.io
+DOCKER_COMPOSE_ASTARTE_BASE_DOMAIN=astarte.<YOUR IP ADDRESS>.nip.io
+SEEDS_REALM_PRIVATE_KEY_FILE=~/astarte/test_private.pem
+```
+The variables `DOCKER_COMPOSE_EDGEHOG_BASE_DOMAIN` and `DOCKER_COMPOSE_ASTARTE_BASE_DOMAIN` have
+been given values expecting your Astarte API endpoint to be `api.astarte.<YOUR IP ADDRESS>.nip.io`.
+If this was not the case and the Astarte API endpoint was for example `api.astarte.localhost` the
+two variables would be `edgehog.localhost` and `astarte.localhost` respectively.
 
-This option assumes you are using a fully deployed Astarte instance with valid certificates from
-an official certificate authority.
+You can now bring up the docker containers required using docker compose.
+```sh
+docker compose up -d
+```
 
+Next, we will popuplate the Edgehog database.
+```sh
+docker compose exec edgehog-backend bin/edgehog eval Edgehog.Release.seed
+```
+Edgehog will automatically install its interfaces in our Astarte instance in a process called
+reconciliation.
+By design reconciliation happens each couple of minutes, to avoid waiting we can manually trigger
+a reconciliation using the command below.
+```sh
+docker compose exec edgehog-backend bin/edgehog rpc "Edgehog.Tenants.Tenant |> Ash.read! |> Enum.each(&Edgehog.Tenants.reconcile_tenant/1)"
+```
+
+Finally we will generate a login token with a Python script.
+```sh
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r ./tools/requirements.txt
+./tools/gen-edgehog-jwt -k ./backend/priv/repo/seeds/keys/tenant_private.pem -t tenant
+```
+
+Now you can login to your Edgehog tennant in the page `http://edgehog.<YOUR IP ADDRESS>.nip.io`.
+You should use the token just generated with the tenant name `acme-inc`.
+
+## Configuring the device
+
+Depending on the type of Astarte/Edgehog instances you are using the configuration parameters for
+this sample will be slightly different.
+
+### Configuration for managed Astarte/Edgehog instances
+
+If you are usign a managed Astarte/Edgehog instance such as [astarte.cloud](https://astarte.cloud/)
+you will be able to fully take advantage of the secure TLS connection of Astarte.
+
+Set the following configuration entries in the `prj.conf` file of this sample.
 ```conf
 CONFIG_ASTARTE_DEVICE_SDK_HOSTNAME="<HOSTNAME>"
 CONFIG_ASTARTE_DEVICE_SDK_HTTPS_CA_CERT_TAG=1
@@ -61,39 +113,82 @@ is the hostname for your Astarte instance, `<REALM_NAME>` is the name of your te
 In addition, the file `ca_certificates.h` should be modified, placing in the `ca_certificate_root`
 array a valid CA certificate in the PEM format.
 
-### OTA
-[Over-the-Air (OTA) Update](../../doc/ota.md) is a method for delivering firmware updates to remote devices using a network connection.
+### Configuration for local Astarte/Edgehog
 
-This simple example that demonstrates how building a sample using `sysbuild` can automatically include `MCUboot` as the bootloader.
+If you instead configured Astarte and Edgehog on a local machine using the Astarte quick instance
+guide and the steps above you will need to use unsafe HTTP/MQTT connectivity.
+
+This is clearly a very bad idea in production devices and should be only enabled for testing and
+development purposes.
+
+The following entries should be modified in the `proj.conf` file.
+```conf
+CONFIG_ASTARTE_DEVICE_SDK_HOSTNAME="<HOSTNAME>"
+# Replaces CONFIG_ASTARTE_DEVICE_SDK_HTTPS_CA_CERT_TAG
+CONFIG_ASTARTE_DEVICE_SDK_DEVELOP_USE_NON_TLS_HTTP=y
+# Replaces CONFIG_ASTARTE_DEVICE_SDK_MQTTS_CA_CERT_TAG
+CONFIG_ASTARTE_DEVICE_SDK_DEVELOP_USE_NON_TLS_MQTT=y
+CONFIG_ASTARTE_DEVICE_SDK_CLIENT_CERT_TAG=1
+CONFIG_ASTARTE_DEVICE_SDK_REALM_NAME="<REALM_NAME>"
+
+CONFIG_EDGEHOG_DEVICE_DEVELOP_DISABLE_OR_IGNORE_TLS=y
+
+CONFIG_ASTARTE_DEVICE_ID="<DEVICE_ID>"
+CONFIG_ASTARTE_CREDENTIAL_SECRET="<CREDENTIAL_SECRET>"
+```
+Where `<DEVICE_ID>` is the device ID of the device you would like to use in the sample, `<HOSTNAME>`
+is the hostname for your Astarte instance, `<REALM_NAME>` is the name of your testing realm and
+`<CREDENTIAL_SECRET>` is the credential secret obtained through the manual registration.
+
+You will most likely replace `<HOSTNAME>` and `<REALM_NAME>` with
+`api.astarte.<YOUR IP ADDRESS>.nip.io` and `test` respectively if you followed the Astarte quick
+instance guide.
+
+## Building the sample
+
+### Over the air (OTA) updates
+
+A central part of Edgehog is that it provides over the air updates for large device fleets.
+An [Over-the-Air (OTA) Updates](../../doc/ota.md) is a method for delivering firmware updates to
+remote devices using a network connection. This sample will show you how to build and deploy a
+device using `sysbuild` that leverages `MCUboot` capabilities offering out of the box OTA updates.
 
 ### Sysbuild specific settings
-This sample automatically includes MCUboot as bootloader when built using sysbuild.
+
+MCUboot is automatically included in this sample when built using sysbuild.
 
 This is achieved with a sysbuild specific Kconfig configuration, `sysbuild.conf`.
-The `SB_CONFIG_BOOTLOADER_MCUBOOT=y` setting in the sysbuild Kconfig file enables the bootloader when building with sysbuild.
-The `sysbuild/mcuboot.conf` file will be used as an extra fragment that is merged together with the default configuration files used by MCUboot.
+The `SB_CONFIG_BOOTLOADER_MCUBOOT=y` setting in the sysbuild Kconfig file enables the bootloader
+when building with sysbuild.
+The `sysbuild/mcuboot.conf` file will be used as an extra configuration fragment that is merged
+together with the default configuration files used by MCUboot. `sysbuild/mcuboot.conf` adjusts the
+log level in MCUboot, as well as configures MCUboot to prevent downgrades and operate in
+upgrade-only mode.
 
-`sysbuild/mcuboot.conf` adjusts the log level in MCUboot, as well as configures MCUboot to prevent downgrades and operate in upgrade-only mode.
+Use ``--sysbuild`` to select the `sysbuild` build infrastructure with `west build`.
 
-Use ``--sysbuild`` to select the `sysbuild` build infrastructure with `west build` to build multiple domains.
-
-**_Note:_**
-By default, sysbuild use the `app.overlay` from MCUboot folder, so if you want MCUboot to use your board's overlay file, you can pass `mcuboot_DTC_OVERLAY_FILE` parameter to `west build`.
-
+By default, sysbuild use the `app.overlay` from MCUboot folder, so if you want MCUboot to use your
+board's overlay file, you can pass `mcuboot_DTC_OVERLAY_FILE` parameter to `west build`.
+Or you can put your board overlay file in the `sysbuild/boards` directory, and this parameter will
+be automatically added by `sysbuild.cmake` contained in this sample.
+```sh
+west build -b stm32h573i_dk --sysbuild samples/edgehog_app
 ```
-west build -b mimxrt1064_evk --sysbuild samples/edgehog_app -Dmcuboot_DTC_OVERLAY_FILE=${PWD}/samples/edgehog_app/boards/mimxrt1064_evk.overlay
+Or:
+```sh
+west build -b stm32h573i_dk --sysbuild samples/edgehog_app -Dmcuboot_DTC_OVERLAY_FILE=${PWD}/samples/edgehog_app/boards/stm32h573i_dk.overlay
 ```
 
-Or you can put your board overlay file in the `sysbuild/boards` directory, and this parameter was automatically added by `sysbuild.cmake` contained in this sample.
+## Flashing the sample
 
+Flashing this sample can be done easily using the standard command.
+```sh
+west flash
 ```
-west build -b mimxrt1064_evk --sysbuild samples/edgehog_app
-```
 
-### Flash runner for nxp boards
+### Changing runner for nxp boards
 
-The default runner used for nxp boards is `jlink` which requires an external probe.
-To flash the sample on the i.MX RT boards using the on board probe change the runner to linkserver:
+The default runner used for nxp boards is `jlink`. To flash with the on board debug probe use:
 ```sh
 west flash --runner=linkserver
 ```
