@@ -31,12 +31,6 @@ jobs:
       group: clang-format-${{ github.ref }}
       cancel-in-progress: true
     steps:
-      - name: Checkout Astarte SDK individually
-        uses: actions/checkout@v4
-        with:
-          repository: astarte-platform/astarte-device-sdk-zephyr
-          path: astarte-device-sdk-zephyr
-          ssh-key: ${{ secrets.SSH_EDGEHOG_DEVICE_ZEPHYR_PRIV_KEY }}
       - name: Checkout
         uses: actions/checkout@v4
         with:
@@ -47,7 +41,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: 3.11
+          python-version: 3.12
       - name: Setup Zephyr project
         uses: zephyrproject-rtos/action-zephyr-setup@v1
         with:
@@ -66,12 +60,6 @@ jobs:
       group: code-checker-${{ github.ref }}
       cancel-in-progress: true
     steps:
-      - name: Checkout Astarte SDK individually
-        uses: actions/checkout@v4
-        with:
-          repository: astarte-platform/astarte-device-sdk-zephyr
-          path: astarte-device-sdk-zephyr
-          ssh-key: ${{ secrets.SSH_EDGEHOG_DEVICE_ZEPHYR_PRIV_KEY }}
       - name: Checkout
         uses: actions/checkout@v4
         with:
@@ -82,7 +70,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: 3.11
+          python-version: 3.12
       - name: Setup Zephyr project
         uses: zephyrproject-rtos/action-zephyr-setup@v1
         with:
