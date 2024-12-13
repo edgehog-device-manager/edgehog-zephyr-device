@@ -26,7 +26,7 @@ on:
 
 jobs:
   clang-format:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     concurrency:
       group: clang-format-${{ github.ref }}
       cancel-in-progress: true
@@ -55,7 +55,7 @@ jobs:
         run: west format --dry-run
 
   code-checker:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     concurrency:
       group: code-checker-${{ github.ref }}
       cancel-in-progress: true
