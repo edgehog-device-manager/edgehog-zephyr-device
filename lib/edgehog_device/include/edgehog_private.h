@@ -46,19 +46,19 @@ struct edgehog_device_t
     /** @brief The last returned error from Astarte. */
     astarte_result_t astarte_error;
     /** @brief Original connection callback provided by the user, might be NULL. */
-    astarte_device_connection_cbk_t original_connection_cbk;
+    astarte_device_connection_cbk_t user_connection_cbk;
     /** @brief Original disconnection callback provided by the user, might be NULL. */
-    astarte_device_disconnection_cbk_t original_disconnection_cbk;
+    astarte_device_disconnection_cbk_t user_disconnection_cbk;
     /** @brief Original datastream individual callback provided by the user, might be NULL. */
-    astarte_device_datastream_individual_cbk_t original_datastream_individual_cbk;
+    astarte_device_datastream_individual_cbk_t user_datastream_individual_cbk;
     /** @brief Original datastream object callback provided by the user, might be NULL. */
-    astarte_device_datastream_object_cbk_t original_datastream_object_cbk;
+    astarte_device_datastream_object_cbk_t user_datastream_object_cbk;
     /** @brief Original property set callback provided by the user, might be NULL. */
-    astarte_device_property_set_cbk_t original_property_set_cbk;
+    astarte_device_property_set_cbk_t user_property_set_cbk;
     /** @brief Original property unset callback provided by the user, might be NULL. */
-    astarte_device_property_unset_cbk_t original_property_unset_cbk;
+    astarte_device_property_unset_cbk_t user_property_unset_cbk;
     /** @brief Original user data for the callbacks provided by the user, might be NULL. */
-    void *original_cbk_user_data;
+    void *user_cbk_user_data;
     /** @brief UUID representing the Boot Id. */
     char boot_id[UUID_STR_LEN + 1];
     /** @brief OTA thread data used during the OTA Update operation. */

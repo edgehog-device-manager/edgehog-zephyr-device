@@ -53,9 +53,9 @@ static void astarte_connection_cbk(astarte_device_connection_event_t event)
 
     edgehog_device->state = DEVICE_CONNECTED;
 
-    if (edgehog_device->original_connection_cbk) {
-        event.user_data = edgehog_device->original_cbk_user_data;
-        edgehog_device->original_connection_cbk(event);
+    if (edgehog_device->user_connection_cbk) {
+        event.user_data = edgehog_device->user_cbk_user_data;
+        edgehog_device->user_connection_cbk(event);
     }
 }
 
@@ -69,9 +69,9 @@ static void astarte_disconnection_cbk(astarte_device_disconnection_event_t event
         edgehog_device->state = DEVICE_STARTING;
     }
 
-    if (edgehog_device->original_disconnection_cbk) {
-        event.user_data = edgehog_device->original_cbk_user_data;
-        edgehog_device->original_disconnection_cbk(event);
+    if (edgehog_device->user_disconnection_cbk) {
+        event.user_data = edgehog_device->user_cbk_user_data;
+        edgehog_device->user_disconnection_cbk(event);
     }
 }
 
@@ -99,9 +99,9 @@ static void astarte_datastream_individual_cbk(astarte_device_datastream_individu
         return;
     }
 
-    if (edgehog_device->original_datastream_individual_cbk) {
-        event.data_event.user_data = edgehog_device->original_cbk_user_data;
-        edgehog_device->original_datastream_individual_cbk(event);
+    if (edgehog_device->user_datastream_individual_cbk) {
+        event.data_event.user_data = edgehog_device->user_cbk_user_data;
+        edgehog_device->user_datastream_individual_cbk(event);
     }
 }
 
@@ -123,9 +123,9 @@ static void astarte_datastream_object_cbk(astarte_device_datastream_object_event
         return;
     }
 
-    if (edgehog_device->original_datastream_object_cbk) {
-        event.data_event.user_data = edgehog_device->original_cbk_user_data;
-        edgehog_device->original_datastream_object_cbk(event);
+    if (edgehog_device->user_datastream_object_cbk) {
+        event.data_event.user_data = edgehog_device->user_cbk_user_data;
+        edgehog_device->user_datastream_object_cbk(event);
     }
 }
 
@@ -145,15 +145,15 @@ static void astarte_property_set_cbk(astarte_device_property_set_event_t event)
         return;
     }
 
-    if (edgehog_device->original_property_set_cbk) {
-        data_event.user_data = edgehog_device->original_cbk_user_data;
-        edgehog_device->original_property_set_cbk(event);
+    if (edgehog_device->user_property_set_cbk) {
+        data_event.user_data = edgehog_device->user_cbk_user_data;
+        edgehog_device->user_property_set_cbk(event);
     }
 }
 
 static void astarte_property_unset_cbk(astarte_device_data_event_t event)
 {
-    EDGEHOG_LOG_DBG("Astarte property set received");
+    EDGEHOG_LOG_DBG("Astarte property unset received");
 
     edgehog_device_handle_t edgehog_device = (edgehog_device_handle_t) event.user_data;
 
@@ -166,9 +166,9 @@ static void astarte_property_unset_cbk(astarte_device_data_event_t event)
         return;
     }
 
-    if (edgehog_device->original_property_unset_cbk) {
-        event.user_data = edgehog_device->original_cbk_user_data;
-        edgehog_device->original_property_unset_cbk(event);
+    if (edgehog_device->user_property_unset_cbk) {
+        event.user_data = edgehog_device->user_cbk_user_data;
+        edgehog_device->user_property_unset_cbk(event);
     }
 }
 
@@ -198,14 +198,14 @@ edgehog_result_t edgehog_device_new(
 
     // Replace the user defined callbacks with our wrapper callbacks
     astarte_device_config_t *astarte_device_config = &config->astarte_device_config;
-    edgehog_device->original_connection_cbk = astarte_device_config->connection_cbk;
-    edgehog_device->original_disconnection_cbk = astarte_device_config->disconnection_cbk;
-    edgehog_device->original_datastream_individual_cbk
+    edgehog_device->user_connection_cbk = astarte_device_config->connection_cbk;
+    edgehog_device->user_disconnection_cbk = astarte_device_config->disconnection_cbk;
+    edgehog_device->user_datastream_individual_cbk
         = astarte_device_config->datastream_individual_cbk;
-    edgehog_device->original_datastream_object_cbk = astarte_device_config->datastream_object_cbk;
-    edgehog_device->original_property_set_cbk = astarte_device_config->property_set_cbk;
-    edgehog_device->original_property_unset_cbk = astarte_device_config->property_unset_cbk;
-    edgehog_device->original_cbk_user_data = astarte_device_config->cbk_user_data;
+    edgehog_device->user_datastream_object_cbk = astarte_device_config->datastream_object_cbk;
+    edgehog_device->user_property_set_cbk = astarte_device_config->property_set_cbk;
+    edgehog_device->user_property_unset_cbk = astarte_device_config->property_unset_cbk;
+    edgehog_device->user_cbk_user_data = astarte_device_config->cbk_user_data;
 
     astarte_device_config->connection_cbk = astarte_connection_cbk;
     astarte_device_config->disconnection_cbk = astarte_disconnection_cbk;
