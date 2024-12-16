@@ -43,19 +43,21 @@ struct edgehog_device_t
     enum device_states state;
     /** @brief Handle of an Astarte device. */
     astarte_device_handle_t astarte_device;
-    /** @brief Original connection callback provided by the used, might be NULL. */
+    /** @brief The last returned error from Astarte. */
+    astarte_result_t astarte_error;
+    /** @brief Original connection callback provided by the user, might be NULL. */
     astarte_device_connection_cbk_t original_connection_cbk;
-    /** @brief Original disconnection callback provided by the used, might be NULL. */
+    /** @brief Original disconnection callback provided by the user, might be NULL. */
     astarte_device_disconnection_cbk_t original_disconnection_cbk;
-    /** @brief Original datastream individual callback provided by the used, might be NULL. */
+    /** @brief Original datastream individual callback provided by the user, might be NULL. */
     astarte_device_datastream_individual_cbk_t original_datastream_individual_cbk;
-    /** @brief Original datastream object callback provided by the used, might be NULL. */
+    /** @brief Original datastream object callback provided by the user, might be NULL. */
     astarte_device_datastream_object_cbk_t original_datastream_object_cbk;
-    /** @brief Original property set callback provided by the used, might be NULL. */
+    /** @brief Original property set callback provided by the user, might be NULL. */
     astarte_device_property_set_cbk_t original_property_set_cbk;
-    /** @brief Original property unset callback provided by the used, might be NULL. */
+    /** @brief Original property unset callback provided by the user, might be NULL. */
     astarte_device_property_unset_cbk_t original_property_unset_cbk;
-    /** @brief Original user data for the callbacks provided by the used, might be NULL. */
+    /** @brief Original user data for the callbacks provided by the user, might be NULL. */
     void *original_cbk_user_data;
     /** @brief UUID representing the Boot Id. */
     char boot_id[UUID_STR_LEN + 1];

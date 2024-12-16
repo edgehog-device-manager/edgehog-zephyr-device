@@ -147,6 +147,17 @@ edgehog_result_t edgehog_device_stop(edgehog_device_handle_t edgehog_device, k_t
  */
 astarte_device_handle_t edgehog_device_get_astarte_device(edgehog_device_handle_t edgehog_device);
 
+/**
+ * @brief Get the last returned Astarte error.
+ *
+ * @note Should be used when an Edgehog function returns #EDGEHOG_RESULT_ASTARTE_ERROR to fetch the
+ * last returned error from the internal Astarte device.
+ *
+ * @param[inout] edgehog_device A valid Edgehog device handle.
+ * @return The last Astarte error returned by the internal Astarte device.
+ */
+astarte_result_t edgehog_device_get_astarte_error(edgehog_device_handle_t edgehog_device);
+
 #ifdef __cplusplus
 }
 #endif
