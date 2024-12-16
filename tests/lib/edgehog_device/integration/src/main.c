@@ -23,8 +23,19 @@ void z_log_minimal_printk(const char *fmt, ...) {}
 
 ZTEST(edgehog_device, test_edgehog_device_new)
 {
+    // Configuration options for the Astarte device
+    char cred_secr[ASTARTE_PAIRING_CRED_SECR_LEN + 1] = "Placeholder";
+    char device_id[ASTARTE_DEVICE_ID_LEN + 1] = "Placeholder";
+
+    astarte_device_config_t astarte_device_config = { 0 };
+    astarte_device_config.http_timeout_ms = 1000;
+    astarte_device_config.mqtt_connection_timeout_ms = 100;
+    astarte_device_config.mqtt_poll_timeout_ms = 100;
+    memcpy(astarte_device_config.cred_secr, cred_secr, sizeof(cred_secr));
+    memcpy(astarte_device_config.device_id, device_id, sizeof(device_id));
+
     edgehog_device_config_t edgehog_conf = {
-        .astarte_device = NULL,
+        .astarte_device_config = astarte_device_config,
     };
 
     edgehog_device_handle_t edgehog_device = NULL;

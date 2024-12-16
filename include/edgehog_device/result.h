@@ -9,11 +9,11 @@
 
 /**
  * @file result.h
- * @brief Edgehog result types.
  */
 
 /**
  * @defgroup results Results
+ * @brief API for result types.
  * @ingroup edgehog_device
  * @{
  */
@@ -32,8 +32,7 @@ typedef enum
     EDGEHOG_RESULT_INTERNAL_ERROR = 1,
     /** @brief Invalid configuration for the required operation. */
     EDGEHOG_RESULT_INVALID_CONFIGURATION = 2,
-    /** @brief An Astarte error occurred. This is usually propagating from the Astarte device SDK.
-     */
+    /** @brief An Astarte error occurred. This is often propagating from the Astarte device SDK. */
     EDGEHOG_RESULT_ASTARTE_ERROR = 3,
     /** @brief The operation caused an out of memory error. */
     EDGEHOG_RESULT_OUT_OF_MEMORY = 4,
