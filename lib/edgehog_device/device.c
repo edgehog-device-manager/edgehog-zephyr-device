@@ -51,7 +51,7 @@ static void astarte_connection_cbk(astarte_device_connection_event_t event)
 
     edgehog_device_handle_t edgehog_device = (edgehog_device_handle_t) event.user_data;
 
-    edgehog_device->state = DEVICE_CONNECTED;
+    edgehog_device->state = EDGEHOG_DEVICE_CONNECTED;
 
     if (edgehog_device->user_connection_cbk) {
         event.user_data = edgehog_device->user_cbk_user_data;
@@ -65,8 +65,8 @@ static void astarte_disconnection_cbk(astarte_device_disconnection_event_t event
 
     edgehog_device_handle_t edgehog_device = (edgehog_device_handle_t) event.user_data;
 
-    if (edgehog_device->state != DEVICE_STOPPED) {
-        edgehog_device->state = DEVICE_STARTING;
+    if (edgehog_device->state != EDGEHOG_DEVICE_STOPPED) {
+        edgehog_device->state = EDGEHOG_DEVICE_STARTED;
     }
 
     if (edgehog_device->user_disconnection_cbk) {
@@ -251,7 +251,9 @@ edgehog_result_t edgehog_device_new(
         goto failure;
     }
 
-    edgehog_device->state = DEVICE_STOPPED;
+    edgehog_device->state = EDGEHOG_DEVICE_STOPPED;
+    edgehog_device->initial_publish = false;
+    edgehog_device->telemerty_service = false;
 
     *edgehog_handle = edgehog_device;
 
@@ -285,7 +287,7 @@ edgehog_result_t edgehog_device_start(edgehog_device_handle_t edgehog_device)
         EDGEHOG_LOG_ERR("Astarte device connection error: %s", astarte_result_to_name(ares));
         return EDGEHOG_RESULT_ASTARTE_ERROR;
     }
-    edgehog_device->state = DEVICE_STARTING;
+    edgehog_device->state = EDGEHOG_DEVICE_STARTED;
     return EDGEHOG_RESULT_OK;
 }
 
@@ -299,13 +301,19 @@ edgehog_result_t edgehog_device_poll(edgehog_device_handle_t edgehog_device)
     }
 
     edgehog_result_t eres = EDGEHOG_RESULT_OK;
-    if (edgehog_device->state == DEVICE_CONNECTED) {
-        edgehog_initial_publish(edgehog_device);
-        eres = edgehog_telemetry_start(edgehog_device);
-        if (eres != EDGEHOG_RESULT_OK) {
-            EDGEHOG_LOG_ERR("Unable to start Edgehog device");
+    if (edgehog_device->state == EDGEHOG_DEVICE_CONNECTED) {
+        if (!edgehog_device->initial_publish) {
+            edgehog_initial_publish(edgehog_device);
+            edgehog_device->initial_publish = true;
         }
-        edgehog_device->state = DEVICE_RUNNING;
+        if (!edgehog_device->telemerty_service) {
+            eres = edgehog_telemetry_start(edgehog_device);
+            if (eres == EDGEHOG_RESULT_OK) {
+                edgehog_device->telemerty_service = true;
+            } else {
+                EDGEHOG_LOG_ERR("Unable to start Edgehog device");
+            }
+        }
     }
     return eres;
 }

@@ -23,13 +23,11 @@
 enum device_states
 {
     /** @brief The device is not operational. */
-    DEVICE_STOPPED = 0U,
+    EDGEHOG_DEVICE_STOPPED = 0U,
     /** @brief The device is has been started, but does not yet have connectivity. */
-    DEVICE_STARTING,
+    EDGEHOG_DEVICE_STARTED,
     /** @brief The device is has been started, and has been connected to Astarte. */
-    DEVICE_CONNECTED,
-    /** @brief The device is fully operational. */
-    DEVICE_RUNNING,
+    EDGEHOG_DEVICE_CONNECTED,
 };
 
 /**
@@ -41,6 +39,10 @@ struct edgehog_device_t
 {
     /** @brief Edgehog device state. */
     enum device_states state;
+    /** @brief This flag marks if the initial publish has been performed. */
+    bool initial_publish;
+    /** @brief This flag marks if the telemetry service has been started. */
+    bool telemerty_service;
     /** @brief Handle of an Astarte device. */
     astarte_device_handle_t astarte_device;
     /** @brief The last returned error from Astarte. */
