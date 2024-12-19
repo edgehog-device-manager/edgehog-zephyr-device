@@ -41,7 +41,7 @@ installed, this can be done through the
 
 The application demonstrates the use of the
 [Edgehog device for Zephyr](https://github.com/edgehog-device-manager/edgehog-zephyr-device) at
-version **0.6.0**.
+version **0.7.0**.
 
 Every Edgehog device relies internally on the [Astarte](https://docs.astarte-platform.org/) plaftorm
 to enable remote communication. In this application we will rely on the
