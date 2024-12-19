@@ -64,7 +64,8 @@ edgehog_result_t edgehog_battery_status_publish(
         io_edgehog_devicemanager_BatteryStatus.name, path, object_entries,
         ARRAY_SIZE(object_entries), &timestamp_ms);
     if (res != ASTARTE_RESULT_OK) {
-        EDGEHOG_LOG_ERR("Unable to send battery status");
+        edgehog_device->astarte_error = res;
+        EDGEHOG_LOG_ERR("Unable to send battery status, error: %s.", astarte_result_to_name(res));
         return EDGEHOG_RESULT_ASTARTE_ERROR;
     }
 

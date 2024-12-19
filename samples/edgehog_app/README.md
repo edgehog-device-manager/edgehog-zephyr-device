@@ -146,9 +146,10 @@ you will be able to fully take advantage of the secure TLS connection of Astarte
 ### Over the air (OTA) updates
 
 A central part of Edgehog is that it provides over the air updates for large device fleets.
-An [Over-the-Air (OTA) Updates](../../doc/ota.md) is a method for delivering firmware updates to
-remote devices using a network connection. This sample will show you how to build and deploy a
-device using `sysbuild` that leverages `MCUboot` capabilities offering out of the box OTA updates.
+An [Over-the-Air (OTA) Updates](../../doc/Over The Air (OTA) updates.md) is a method for delivering
+firmware updates to remote devices using a network connection. This sample will show you how to
+build and deploy a device using `sysbuild` that leverages `MCUboot` capabilities offering out of the
+box OTA updates.
 
 ### Sysbuild specific settings
 

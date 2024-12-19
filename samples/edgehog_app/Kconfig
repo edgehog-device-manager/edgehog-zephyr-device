@@ -34,18 +34,6 @@ config SAMPLE_DURATION_SECONDS
         Use this setting to change for how long the sample will run.
         The default is four minutes.
 
-config ASTARTE_DEVICE_THREAD_STACK_SIZE
-    int "Astarte device thread stack size (Bytes)"
-    default 16384
-    help
-        Use this setting to change the size of the stack for the thread running the Astarte device.
-
-config ASTARTE_DEVICE_THREAD_PRIORITY
-    int "Astarte device thread priority"
-    default 0
-    help
-        Use this setting to change the priority of the Astarte device thread.
-
 config EDGEHOG_DEVICE_THREAD_STACK_SIZE
     int "Edgehog device thread stack size (Bytes)"
     default 16384
@@ -57,6 +45,18 @@ config EDGEHOG_DEVICE_THREAD_PRIORITY
     default 0
     help
         Use this setting to change the priority of the Astarte device thread.
+
+config ZBUS_THREAD_STACK_SIZE
+    int "Zbus thread stack size (Bytes)"
+    default 16384
+    help
+        Use this setting to change the size of the stack for the thread running the Zbus subscriber.
+
+config ZBUS_THREAD_PRIORITY
+    int "Zbus thread priority"
+    default 0
+    help
+        Use this setting to change the priority of the Zbus subscriber thread.
 
 endmenu
 
