@@ -975,7 +975,7 @@ INPUT                  = @EDGEHOG_DEVICE_BASE@/README.md \
                          @EDGEHOG_DEVICE_BASE@/include/ \
                          @EDGEHOG_DEVICE_BASE@/lib/edgehog_device/include/ \
                          @EDGEHOG_DEVICE_BASE@/lib/edgehog_device/ \
-                         @EDGEHOG_DEVICE_BASE@/samples/edgehog_app/
+                         @EDGEHOG_DEVICE_BASE@/samples/edgehog_app/README.md
 
 # This tag can be used to specify the character encoding of the source files
 # that Doxygen parses. Internally Doxygen uses the UTF-8 encoding. Doxygen uses
