@@ -190,3 +190,21 @@ The default runner used for nxp boards is `jlink`. To flash with the on board de
 ```sh
 west flash --runner=linkserver
 ```
+
+## More in depth
+
+### The Astarte device
+
+Edgehog leverages [Astarte](https://docs.astarte-platform.org/) to connect the Edgehog device with
+the Edgehog cloud instance. This means that each Edgehog device comes with an Astarte device for
+free.
+
+It is important to consider that such Astarte device is managed internally by Edgehog and the user
+should limit its operations to installing new interfaces and transmitting and receiving on them.
+The Edgehog device will manage the connection and instantiate/destroy the device when required.
+
+You can provide your interfaces and callbacks during the creation of the Edgehog device in the
+`astarte_device_config_t` struct exactly as you would do with an ordinary Astarte device. If you
+want to transmit data with the Astarte device you can obtain its handle using the
+`edgehog_device_get_astarte_device` function. It will return an Astarte device handle that can
+then be used to transmit as any other Astarte device.
