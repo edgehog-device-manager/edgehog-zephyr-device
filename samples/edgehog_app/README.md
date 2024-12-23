@@ -6,11 +6,10 @@ SPDX-License-Identifier: Apache-2.0
 
 # Edgehog app sample
 
-This sample shows how to setup and connect an Edgehog device and their features.
+This sample shows how to set up and connect an Edgehog device and its features.
 
 ## Before you begin
 
-This sample shows how to set up and connect an Edgehog device.
 Each Edgehog device requires an Edgehog instance to connect to, which itself relies on an Astarte
 instance.
 If you are using a managed Edgehog instance both components will be provided to you and you can skip
