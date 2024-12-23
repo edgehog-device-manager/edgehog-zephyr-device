@@ -21,13 +21,13 @@ The following information is sent to the remote Edgehog instance:
 - OS info
 - Hardware info
 - System info
-- [OTA update using Mcuboot](doc/ota.md)
+- [OTA update using Mcuboot](doc/Over The Air (OTA) updates.md)
 - Base image
 - Runtime info and Zephyr version
 - Reboot command
 - System status
 - Storage usage
-- [Led Behavior](doc/led.md)
+- [Led Behavior](doc/Led feedback.md)
 - WiFi APs seen by board antenna
 - Battery status API
 - Data Rate Control for telemetry
@@ -52,14 +52,9 @@ Second, a new entry should be added to the projects list:
       repo-path: edgehog-zephyr-device.git
       path: edgehog-zephyr-device
       revision: v0.6.0
+      import: true
 ```
 Remember to run `west update` after performing changes to the manifest file.
-
-In addition, an addition to the `Kconfig` file of the application is necessary.
-```
-rsource "../../edgehog-zephyr-device/Kconfig"
-```
-This will add the configuration options of the example module to the application.
 
 ### Adding the module as a standalone application
 
@@ -75,12 +70,12 @@ As well as cloning this example repository inside such workspace.
 
 ```shell
 # Create a venv and install the west tool
-mkdir ~/zephyr-workspace
-python3 -m venv ~/zephyr-workspace/.venv
-source ~/zephyr-workspace/.venv/bin/activate
+mkdir ~/edgehog-zephyr-workspace && cd ~/edgehog-zephyr-workspace
+python3 -m venv ./.venv
+source ./.venv/bin/activate
 pip install west
 # Clone the example application repo
-git clone https://github.com/edgehog-device-manager/edgehog-zephyr-device.git ~/zephyr-workspace/edgehog-zephyr-device
+git clone https://github.com/edgehog-device-manager/edgehog-zephyr-device.git ./edgehog-zephyr-device
 ```
 
 #### Initializing the workspace
@@ -90,7 +85,6 @@ repository.
 
 ```shell
 # initialize my-workspace for the example-application (main branch)
-cd ~/zephyr-workspace
 west init -l edgehog-zephyr-device
 # update Zephyr modules
 west update
@@ -102,13 +96,13 @@ Perform some final configuration operations.
 
 ```shell
 west zephyr-export
-pip install -r ~/zephyr-workspace/zephyr/scripts/requirements.txt
-pip install -r ~/zephyr-workspace/edgehog-zephyr-device/scripts/requirements.txt
+pip install -r ./zephyr/scripts/requirements.txt
+pip install -r ./edgehog-zephyr-device/scripts/requirements.txt
 ```
 
 #### Building and running a sample application
 
-Follow the [sample specific README](samples/edgehog_app/README.md).
+Follow the [sample specific README](samples/edgehog_app/Sample-application.md).
 
 #### One time configuration
 
@@ -143,7 +137,7 @@ Run `west format --help` to learn about the formatting options.
 ### Static code analysis
 
 [CodeChecker](https://codechecker.readthedocs.io/en/latest/) is the one of the
-[two](https://docs.zephyrproject.org/latest/develop/sca/index.html) natively supported static
+[various](https://docs.zephyrproject.org/latest/develop/sca/index.html) natively supported static
 analysis tools in `west`.
 It can be configured to run different static checkers, such as `clang-tidy` and `cppcheck`.
 

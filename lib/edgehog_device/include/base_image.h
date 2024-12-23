@@ -9,7 +9,7 @@
 
 /**
  * @file base_image.h
- * @brief Base edgehog image information API
+ * @brief Base Edgehog image information API
  */
 
 #include "edgehog_device/device.h"
@@ -19,7 +19,7 @@ extern "C" {
 #endif
 
 /**
- * @brief Publish a base image informations.
+ * @brief Publish the base image information.
  *
  * @param[in] edgehog_device A valid Edgehog device handle.
  */

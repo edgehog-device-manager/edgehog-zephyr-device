@@ -24,7 +24,7 @@ void z_log_minimal_printk(const char *fmt, ...) {}
 ZTEST(edgehog_device, test_edgehog_device_new)
 {
     edgehog_device_config_t edgehog_conf = {
-        .astarte_device = NULL,
+        .astarte_device_config = astarte_device_config,
     };
 
     edgehog_device_handle_t edgehog_device = NULL;
