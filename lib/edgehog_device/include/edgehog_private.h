@@ -41,8 +41,6 @@ struct edgehog_device_t
     enum device_states state;
     /** @brief This flag marks if the initial publish has been performed. */
     bool initial_publish;
-    /** @brief This flag marks if the telemetry service has been started. */
-    bool telemerty_service;
     /** @brief Handle of an Astarte device. */
     astarte_device_handle_t astarte_device;
     /** @brief The last returned error from Astarte. */

@@ -14,6 +14,12 @@
 /**
  * @defgroup telemetry Telemetry
  * @brief API for the telemetry service.
+ * @details
+ * The telemetry service periodically transmit information from the device to Edgehog.
+ * The #edgehog_telemetry_type_t enum defines the types of information that can be transmitted
+ * by this device.
+ * Each telemetry type can be scheduled for transmission independently setting the telemetry
+ * configuration in the #edgehog_device_config_t struct.
  * @ingroup edgehog_device
  * @{
  */

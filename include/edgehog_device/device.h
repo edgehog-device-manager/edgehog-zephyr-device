@@ -57,7 +57,10 @@ typedef struct
      * freeing its resources.
      */
     astarte_device_config_t astarte_device_config;
-    /** @brief The telemetries configured by the user. */
+    /**
+     * @brief The telemetries configured by the user.
+     * @details See #edgehog_telemetry_config_t for more information.
+     */
     edgehog_telemetry_config_t *telemetry_config;
     /** @brief The len of telemetries. */
     size_t telemetry_config_len;
