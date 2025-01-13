@@ -38,7 +38,7 @@
  * @details Each handle is a pointer to an opaque internally allocated data struct containing
  * all the data for the Edgehog device.
  */
-typedef struct edgehog_device_t *edgehog_device_handle_t;
+typedef struct edgehog_device *edgehog_device_handle_t;
 
 /**
  * @brief Edgehog device configuration struct.

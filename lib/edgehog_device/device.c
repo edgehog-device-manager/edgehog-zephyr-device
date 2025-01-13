@@ -197,7 +197,7 @@ edgehog_result_t edgehog_device_new(
     }
 
     // Step 2: Allocate space for the Edgehog device
-    edgehog_device = calloc(1, sizeof(struct edgehog_device_t));
+    edgehog_device = calloc(1, sizeof(struct edgehog_device));
     if (!edgehog_device) {
         EDGEHOG_LOG_ERR("Out of memory %s: %d", __FILE__, __LINE__);
         eres = EDGEHOG_RESULT_OUT_OF_MEMORY;
@@ -258,7 +258,7 @@ edgehog_result_t edgehog_device_new(
     }
 
     // Step 7: Fill in the Edgehog device struct
-    *edgehog_device = (struct edgehog_device_t) {
+    *edgehog_device = (struct edgehog_device) {
         .state = EDGEHOG_DEVICE_STOPPED,
         .initial_publish = false,
         .astarte_device = astarte_device,

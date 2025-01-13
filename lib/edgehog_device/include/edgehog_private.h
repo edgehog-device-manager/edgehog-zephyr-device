@@ -35,7 +35,7 @@ enum device_states
  *
  * @warning Users should not modify the content of this struct directly.
  */
-struct edgehog_device_t
+struct edgehog_device
 {
     /** @brief Edgehog device state. */
     enum device_states state;
