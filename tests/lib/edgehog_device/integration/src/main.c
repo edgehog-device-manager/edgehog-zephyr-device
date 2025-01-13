@@ -23,8 +23,17 @@ void z_log_minimal_printk(const char *fmt, ...) {}
 
 ZTEST(edgehog_device, test_edgehog_device_new)
 {
+    // Configuration options for the Astarte device
+    astarte_device_config_t astarte_device_config = {
+        .http_timeout_ms = 1000,
+        .mqtt_connection_timeout_ms = 100,
+        .mqtt_poll_timeout_ms = 100,
+        .cred_secr = "Placeholder",
+        .device_id = "Placeholder",
+    };
+
     edgehog_device_config_t edgehog_conf = {
-        .astarte_device = NULL,
+        .astarte_device_config = astarte_device_config,
     };
 
     edgehog_device_handle_t edgehog_device = NULL;

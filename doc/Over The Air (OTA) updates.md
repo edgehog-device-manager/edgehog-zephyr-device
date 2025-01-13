@@ -4,7 +4,7 @@ Copyright 2024 SECO Mind Srl
 SPDX-License-Identifier: Apache-2.0
 -->
 
-# OTA
+# Over The Air (OTA) updates
 Over-the-Air (OTA) Update is a method for delivering firmware updates to remote devices using a network connection.
 Although the name implies a wireless connection, updates received over a wired connection (such as Ethernet) are still
 commonly referred to as OTA updates.

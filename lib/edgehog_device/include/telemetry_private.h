@@ -15,10 +15,46 @@
 #include "edgehog_device/device.h"
 #include "edgehog_device/telemetry.h"
 
+#include <zephyr/kernel.h>
+
+/** @brief Data struct for a telemetry entry. */
+typedef struct
+{
+    /** @brief Type of telemetry. */
+    edgehog_telemetry_type_t type;
+    /** @brief Interval of period in seconds. */
+    int64_t period_seconds;
+    /** @brief Enables the telemetry. */
+    bool enable;
+    /** @brief Struct of telemetry timer. */
+    struct k_timer timer;
+} edgehog_telemetry_entry_t;
+
 /**
- * @brief Internal struct for an instance of an Edgehog telemetry.
+ * @brief Data struct for a telemetry instance.
+ *
+ * @details Defines the Telemetry data used by Edgehog telemetry.
+ * The two arrays `configs` and `entries` are separated because following a set-unset cycle
+ * each telemetry entry has to return to the initially configured state.
+ *
  */
-typedef struct edgehog_telemetry_data edgehog_telemetry_t;
+typedef struct
+{
+    /** @brief Base configurations provided by the user. */
+    edgehog_telemetry_config_t *configs;
+    /** @brief Length of base configurations. */
+    size_t configs_len;
+    /** @brief Telemetry entries list. */
+    edgehog_telemetry_entry_t *entries[EDGEHOG_TELEMETRY_LEN];
+    /** @brief Message queue. */
+    struct k_msgq msgq;
+    /** @brief Ring buffer that holds queued messages. */
+    char msgq_buffer[EDGEHOG_TELEMETRY_LEN * sizeof(edgehog_telemetry_type_t)];
+    /** @brief Telemetry service thread, peeks the msgq and transmits eventual messages. */
+    struct k_thread telemetry_service_thread;
+    /** @brief Run state for the telemetry service thread. */
+    atomic_t telemetry_service_thread_state;
+} edgehog_telemetry_t;
 
 #ifdef __cplusplus
 extern "C" {
@@ -85,6 +121,15 @@ edgehog_result_t edgehog_telemetry_config_set_event(
  */
 edgehog_result_t edgehog_telemetry_config_unset_event(
     edgehog_telemetry_t *telemetry, astarte_device_data_event_t *event);
+
+/**
+ * @brief Check if the Edgehog telemetry service is running.
+ *
+ * @param telemetry A valid Edgehog telemetry handle.
+ *
+ * @return true if the telemetry service is running, false otherwise.
+ */
+bool edgehog_telemetry_is_running(edgehog_telemetry_t *telemetry);
 
 #ifdef __cplusplus
 }
