@@ -4,7 +4,7 @@ Copyright 2024 SECO Mind Srl
 SPDX-License-Identifier: Apache-2.0
 -->
 
-# Astarte IoT devices using Zephyr RTOS
+# Edgehog IoT devices using Zephyr RTOS
 
 [![License badge](https://img.shields.io/badge/License-Apache%202.0-red)](https://www.apache.org/licenses/LICENSE-2.0.txt)
 ![Language badge](https://img.shields.io/badge/Language-C-yellow)
