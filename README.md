@@ -51,8 +51,8 @@ Second, a new entry should be added to the projects list:
       remote: edgehog-device-manager
       repo-path: edgehog-zephyr-device.git
       path: edgehog-zephyr-device
-      revision: v0.6.0
-      import: true
+      revision: v0.7.0
+
 ```
 Remember to run `west update` after performing changes to the manifest file.
 
@@ -102,7 +102,7 @@ pip install -r ./edgehog-zephyr-device/scripts/requirements.txt
 
 #### Building and running a sample application
 
-Follow the [sample specific README](samples/edgehog_app/Sample-application.md).
+Follow the [sample specific README](samples/edgehog_app/README.md).
 
 #### One time configuration
 
