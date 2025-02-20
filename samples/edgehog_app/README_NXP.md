@@ -4,7 +4,7 @@ Copyright 2024 SECO Mind Srl
 SPDX-License-Identifier: Apache-2.0
 -->
 
-# Edgehog IoT devices using Zephyr RTOS
+# Clea Edgehog IoT devices using Zephyr RTOS
 
 [![License badge](https://img.shields.io/badge/License-Apache%202.0-red)](https://www.apache.org/licenses/LICENSE-2.0.txt)
 ![Language badge](https://img.shields.io/badge/Language-C-yellow)
@@ -13,7 +13,7 @@ SPDX-License-Identifier: Apache-2.0
 [![Category badge](https://img.shields.io/badge/Category-CLOUD%20CONNECTED%20DEVICES-yellowgreen)](https://mcuxpresso.nxp.com/appcodehub?search=cloud%20connected%20devices)
 [![Toolchain badge](https://img.shields.io/badge/Toolchain-VS%20CODE-orange)](https://github.com/nxp-mcuxpresso/vscode-for-mcux/wiki)
 
-Edgehog is an open source device management platform focused on device fleet management.
+Clea Edgehog is an open source device management platform focused on device fleet management.
 It eases the management of your connected embedded systems, by making all their information
 available remotely. Furthermore, it enables remote updates and system configuration.
 
