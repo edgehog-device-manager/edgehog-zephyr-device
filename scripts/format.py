@@ -14,6 +14,7 @@ python -m black --line-length 100 ./scripts/*.py
 
 import subprocess
 from pathlib import Path
+from colored import stylize, fg
 
 from west.commands import WestCommand  # your extension must subclass this
 
@@ -73,23 +74,18 @@ class WestCommandFormat(WestCommand):
             Extra unknown arguments.
         """
         module_path = Path(self.topdir).joinpath("edgehog-zephyr-device")
-        library_headers = [str(f) for f in Path(module_path).glob("include/edgehog_device/*.h")]
-        library_private_headers = [
-            str(f) for f in Path(module_path).glob("lib/edgehog_device/include/*.h")
+        headers_and_sources = [
+            str(Path(module_path).joinpath(s))
+            for s in (
+                "include/edgehog_device/*.h",
+                "lib/edgehog_device/include/*.h",
+                "lib/edgehog_device/*.c",
+                "samples/**/src/include/*.h",
+                "samples/**/src/*.c",
+                "tests/lib/edgehog_device/**/src/*.c",
+            )
         ]
-        library_sources = [str(f) for f in Path(module_path).glob("lib/edgehog_device/*.c")]
-        samples_headers = [str(f) for f in Path(module_path).glob("samples/**/include/*.h")]
-        samples_sources = [str(f) for f in Path(module_path).glob("samples/**/src/*.c")]
-        tests_headers = [str(f) for f in Path(module_path).glob("tests/**/include/*.h")]
-        tests_sources = [str(f) for f in Path(module_path).glob("tests/**/src/*.c")]
-        cmd = (
-            ["clang-format", "--style=file", "--dry-run -Werror" if args.dry_run else "-i"]
-            + library_headers
-            + library_private_headers
-            + library_sources
-            + samples_headers
-            + samples_sources
-            + tests_headers
-            + tests_sources
-        )
-        subprocess.run(" ".join(cmd), shell=True, cwd=module_path, timeout=60, check=True)
+        for header_or_source in headers_and_sources:
+            cmd = ["clang-format", "--dry-run -Werror" if args.dry_run else "-i", header_or_source]
+            print(stylize(" ".join(cmd), fg("cyan")))
+            subprocess.run(" ".join(cmd), shell=True, cwd=module_path, timeout=60, check=True)
