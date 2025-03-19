@@ -33,6 +33,7 @@ on:
     - 'scripts/docs.py'
     - 'scripts/west-commands.py'
     - 'scripts/requirements.txt'
+    - 'edgehog-zephyr-device/samples/edgehog_app/README.md'
 
 env:
   # The latest CMake available directly with apt is 3.18, but we need >=3.20
