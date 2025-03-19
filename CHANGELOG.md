@@ -9,6 +9,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.1.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [0.8.0] - Unreleased
+### Added
+- The `edgehog_device_poll` function that should be called periodically throughout the lifetime of
+  an Edgehog device.
+- The `edgehog_device_get_astarte_device` function that can be used to fetch a handle to the
+  Astarte device internal to Edgehog. The user can use such device to transmit and receive data on
+  user defined interfaces.
+- The `edgehog_device_get_astarte_error` function that can be used by the user to fetch the last
+  recorded Astarte device error.
+
+### Changed
+- Support for Zephyr 4.1.0.
+- Encapsulated the Astarte device within the Edgehog device. The Edgehog device will not take
+  full ownership of the Astarte device, handling the connectivity status of the Astarte device
+  with the Astarte cloud instance. The Astarte device is still available to the user to transmit
+  and receive data on user defined interfaces.
+- The configuration now accepts an Astarte device configuration struct instead of an already
+  initialized Astarte device.
+
 ## [0.7.0] - 2024-12-19
 ### Added
 - The function `edgehog_device_stop` that allows stopping the Edgehog device. Including the
