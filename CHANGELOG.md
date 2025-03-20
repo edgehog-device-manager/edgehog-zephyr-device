@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   recorded Astarte device error.
 
 ### Changed
+- Update the Astarte device SDK to v0.8.0.
 - Support for Zephyr 4.1.0.
 - Encapsulated the Astarte device within the Edgehog device. The Edgehog device will not take
   full ownership of the Astarte device, handling the connectivity status of the Astarte device

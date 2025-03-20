@@ -406,7 +406,7 @@ edgehog_result_t edgehog_telemetry_config_set_event(
 {
     char *endpoint = NULL;
     edgehog_telemetry_type_t type = EDGEHOG_TELEMETRY_INVALID;
-    edgehog_result_t res = parse_config_event(&event->data_event, &type, &endpoint);
+    edgehog_result_t res = parse_config_event(&event->base_event, &type, &endpoint);
 
     if (res != EDGEHOG_RESULT_OK) {
         return res;
@@ -429,14 +429,14 @@ edgehog_result_t edgehog_telemetry_config_set_event(
         set_telemetry_entry(entry, telemetry->entries);
     }
 
-    astarte_individual_t value = event->individual;
+    astarte_data_t data = event->data;
     if (strcmp(endpoint, "enable") == 0) {
-        if (value.tag == ASTARTE_MAPPING_TYPE_BOOLEAN) {
-            entry->enable = value.data.boolean;
+        if (data.tag == ASTARTE_MAPPING_TYPE_BOOLEAN) {
+            entry->enable = data.data.boolean;
         }
     } else if (strcmp(endpoint, "periodSeconds") == 0) {
-        if (value.tag == ASTARTE_MAPPING_TYPE_LONGINTEGER) {
-            entry->period_seconds = value.data.longinteger;
+        if (data.tag == ASTARTE_MAPPING_TYPE_LONGINTEGER) {
+            entry->period_seconds = data.data.longinteger;
         }
     }
 

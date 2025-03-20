@@ -68,8 +68,7 @@ static void publish_fingerprint(edgehog_device_handle_t edgehog_device)
     }
 
     astarte_result_t res = astarte_device_set_property(edgehog_device->astarte_device,
-        io_edgehog_devicemanager_BaseImage.name, FINGERPRINT_PROP,
-        astarte_individual_from_string(hash));
+        io_edgehog_devicemanager_BaseImage.name, FINGERPRINT_PROP, astarte_data_from_string(hash));
 
     if (res != ASTARTE_RESULT_OK) {
         EDGEHOG_LOG_ERR("Unable to publish " FINGERPRINT_PROP);
@@ -89,7 +88,7 @@ static void publish_name(edgehog_device_handle_t edgehog_device)
 
     astarte_result_t res = astarte_device_set_property(edgehog_device->astarte_device,
         io_edgehog_devicemanager_BaseImage.name, NAME_PROP,
-        astarte_individual_from_string(CONFIG_KERNEL_BIN_NAME));
+        astarte_data_from_string(CONFIG_KERNEL_BIN_NAME));
 
     if (res != ASTARTE_RESULT_OK) {
         EDGEHOG_LOG_ERR("Unable to publish " NAME_PROP);
@@ -109,7 +108,7 @@ static void publish_version(edgehog_device_handle_t edgehog_device)
 
     astarte_result_t res = astarte_device_set_property(edgehog_device->astarte_device,
         io_edgehog_devicemanager_BaseImage.name, VERSION_PROP,
-        astarte_individual_from_string(APP_VERSION_STRING));
+        astarte_data_from_string(APP_VERSION_STRING));
 
     if (res != ASTARTE_RESULT_OK) {
         EDGEHOG_LOG_ERR("Unable to publish " VERSION_PROP);
@@ -129,7 +128,7 @@ static void publish_build_id(edgehog_device_handle_t edgehog_device)
 
     astarte_result_t res = astarte_device_set_property(edgehog_device->astarte_device,
         io_edgehog_devicemanager_BaseImage.name, BUILD_ID_PROP,
-        astarte_individual_from_string(CMAKE_BUILD_DATE_TIME));
+        astarte_data_from_string(CMAKE_BUILD_DATE_TIME));
 
     if (res != ASTARTE_RESULT_OK) {
         EDGEHOG_LOG_ERR("Unable to publish " BUILD_ID_PROP);

@@ -78,11 +78,11 @@ static void astarte_disconnection_cbk(astarte_device_disconnection_event_t event
 static void astarte_datastream_individual_cbk(astarte_device_datastream_individual_event_t event)
 {
     EDGEHOG_LOG_DBG("Astarte datastream individual received");
-    astarte_device_data_event_t data_event = event.data_event;
-    edgehog_device_handle_t edgehog_device = (edgehog_device_handle_t) data_event.user_data;
+    astarte_device_data_event_t base_event = event.base_event;
+    edgehog_device_handle_t edgehog_device = (edgehog_device_handle_t) base_event.user_data;
 
-    if ((strcmp(data_event.interface_name, io_edgehog_devicemanager_Commands.name) == 0)
-        && (strcmp(data_event.path, "/request") == 0)) {
+    if ((strcmp(base_event.interface_name, io_edgehog_devicemanager_Commands.name) == 0)
+        && (strcmp(base_event.path, "/request") == 0)) {
         edgehog_result_t ota_result = edgehog_command_event(&event);
         if (ota_result != EDGEHOG_RESULT_OK) {
             EDGEHOG_LOG_ERR("Unable to handle Command request");
@@ -90,8 +90,8 @@ static void astarte_datastream_individual_cbk(astarte_device_datastream_individu
         return;
     }
 
-    if ((strcmp(data_event.interface_name, io_edgehog_devicemanager_LedBehavior.name) == 0)
-        && (strcmp(data_event.path, "/indicator/behavior") == 0)) {
+    if ((strcmp(base_event.interface_name, io_edgehog_devicemanager_LedBehavior.name) == 0)
+        && (strcmp(base_event.path, "/indicator/behavior") == 0)) {
         edgehog_result_t led_result = edgehog_led_event(edgehog_device, &event);
         if (led_result != EDGEHOG_RESULT_OK) {
             EDGEHOG_LOG_ERR("Unable to handle LED event request");
@@ -100,7 +100,7 @@ static void astarte_datastream_individual_cbk(astarte_device_datastream_individu
     }
 
     if (edgehog_device->user_datastream_individual_cbk) {
-        event.data_event.user_data = edgehog_device->user_cbk_user_data;
+        event.base_event.user_data = edgehog_device->user_cbk_user_data;
         edgehog_device->user_datastream_individual_cbk(event);
     }
 }
@@ -108,12 +108,12 @@ static void astarte_datastream_individual_cbk(astarte_device_datastream_individu
 static void astarte_datastream_object_cbk(astarte_device_datastream_object_event_t event)
 {
     EDGEHOG_LOG_DBG("Astarte datastream object received");
-    astarte_device_data_event_t data_event = event.data_event;
-    edgehog_device_handle_t edgehog_device = (edgehog_device_handle_t) data_event.user_data;
+    astarte_device_data_event_t base_event = event.base_event;
+    edgehog_device_handle_t edgehog_device = (edgehog_device_handle_t) base_event.user_data;
 
-    if (strcmp(data_event.interface_name, io_edgehog_devicemanager_OTARequest.name) == 0) {
-        if (strcmp(data_event.path, "/request") != 0) {
-            EDGEHOG_LOG_ERR("Received OTA request on incorrect common path: '%s'", data_event.path);
+    if (strcmp(base_event.interface_name, io_edgehog_devicemanager_OTARequest.name) == 0) {
+        if (strcmp(base_event.path, "/request") != 0) {
+            EDGEHOG_LOG_ERR("Received OTA request on incorrect common path: '%s'", base_event.path);
             return;
         }
         edgehog_result_t ota_result = edgehog_ota_event(edgehog_device, &event);
@@ -124,7 +124,7 @@ static void astarte_datastream_object_cbk(astarte_device_datastream_object_event
     }
 
     if (edgehog_device->user_datastream_object_cbk) {
-        event.data_event.user_data = edgehog_device->user_cbk_user_data;
+        event.base_event.user_data = edgehog_device->user_cbk_user_data;
         edgehog_device->user_datastream_object_cbk(event);
     }
 }
@@ -133,10 +133,10 @@ static void astarte_property_set_cbk(astarte_device_property_set_event_t event)
 {
     EDGEHOG_LOG_DBG("Astarte property set received");
 
-    astarte_device_data_event_t data_event = event.data_event;
-    edgehog_device_handle_t edgehog_device = (edgehog_device_handle_t) data_event.user_data;
+    astarte_device_data_event_t base_event = event.base_event;
+    edgehog_device_handle_t edgehog_device = (edgehog_device_handle_t) base_event.user_data;
 
-    if (strcmp(data_event.interface_name, io_edgehog_devicemanager_config_Telemetry.name) == 0) {
+    if (strcmp(base_event.interface_name, io_edgehog_devicemanager_config_Telemetry.name) == 0) {
         edgehog_result_t eres
             = edgehog_telemetry_config_set_event(edgehog_device->telemetry, &event);
         if (eres != EDGEHOG_RESULT_OK) {
@@ -146,7 +146,7 @@ static void astarte_property_set_cbk(astarte_device_property_set_event_t event)
     }
 
     if (edgehog_device->user_property_set_cbk) {
-        data_event.user_data = edgehog_device->user_cbk_user_data;
+        base_event.user_data = edgehog_device->user_cbk_user_data;
         edgehog_device->user_property_set_cbk(event);
     }
 }
@@ -343,7 +343,7 @@ edgehog_result_t edgehog_device_stop(edgehog_device_handle_t edgehog_device, k_t
         EDGEHOG_LOG_ERR("Unable to stop the Edgehog device within the timeout");
         return eres;
     }
-    astarte_result_t ares = astarte_device_disconnect(edgehog_device->astarte_device);
+    astarte_result_t ares = astarte_device_disconnect(edgehog_device->astarte_device, timeout);
     if (ares != ASTARTE_RESULT_OK) {
         edgehog_device->astarte_error = ares;
         EDGEHOG_LOG_ERR("Astarte device disconnection failure %s.", astarte_result_to_name(ares));

@@ -132,7 +132,8 @@ edgehog_result_t edgehog_device_poll(edgehog_device_handle_t edgehog_device);
  * for some additional time after the function returned.
  *
  * @param[inout] edgehog_device A valid Edgehog device handle.
- * @param[in] timeout A timeout to use for stopping the telemetry services.
+ * @param[in] timeout A timeout to use for stopping the telemetry services and disconnecting the
+ * Astarte device.
  * @return #EDGEHOG_RESULT_OK if successful, #EDGEHOG_RESULT_TELEMETRY_STOP_TIMEOUT if the timeout
  * has expired before the telemetry service stopped, otherwise an error code.
  */

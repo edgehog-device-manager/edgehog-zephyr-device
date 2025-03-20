@@ -65,18 +65,16 @@ void publish_system_status(edgehog_device_handle_t edgehog_device)
     }
 
     astarte_object_entry_t object_entries[] = {
-        { .path = "availMemoryBytes",
-            .individual = astarte_individual_from_longinteger(avail_memory) },
-        { .path = "bootId", .individual = astarte_individual_from_string(edgehog_device->boot_id) },
-        { .path = "taskCount", .individual = astarte_individual_from_integer(thread_info.count) },
-        { .path = "uptimeMillis",
-            .individual = astarte_individual_from_longinteger(k_uptime_get()) },
+        { .path = "availMemoryBytes", .data = astarte_data_from_longinteger(avail_memory) },
+        { .path = "bootId", .data = astarte_data_from_string(edgehog_device->boot_id) },
+        { .path = "taskCount", .data = astarte_data_from_integer(thread_info.count) },
+        { .path = "uptimeMillis", .data = astarte_data_from_longinteger(k_uptime_get()) },
     };
 
     int64_t timestamp_ms = 0;
     system_time_current_ms(&timestamp_ms);
 
-    astarte_result_t res = astarte_device_stream_aggregated(edgehog_device->astarte_device,
+    astarte_result_t res = astarte_device_send_object(edgehog_device->astarte_device,
         io_edgehog_devicemanager_SystemStatus.name, "/systemStatus", object_entries,
         ARRAY_SIZE(object_entries), &timestamp_ms);
     if (res != ASTARTE_RESULT_OK) {
