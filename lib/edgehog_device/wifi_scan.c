@@ -128,16 +128,16 @@ static void handle_wifi_scan_result(astarte_device_handle_t astarte_device,
         = connected_ap_mac != NULL && strcmp(connected_ap_mac, mac_string_buf) == 0;
 
     astarte_object_entry_t object_entries[] = {
-        { .path = "channel", .individual = astarte_individual_from_integer(scan_result->channel) },
-        { .path = "essid", .individual = astarte_individual_from_string(scan_result->ssid) },
-        { .path = "macAddress", .individual = astarte_individual_from_string(mac_string_buf) },
-        { .path = "rssi", .individual = astarte_individual_from_integer(scan_result->rssi) },
+        { .path = "channel", .individual = astarte_data_from_integer(scan_result->channel) },
+        { .path = "essid", .individual = astarte_data_from_string(scan_result->ssid) },
+        { .path = "macAddress", .individual = astarte_data_from_string(mac_string_buf) },
+        { .path = "rssi", .individual = astarte_data_from_integer(scan_result->rssi) },
         { .path = "connected", .individual = astarte_individual_from_boolean(ap_is_connected) },
     };
 
-    astarte_result_t res = astarte_device_stream_aggregated(astarte_device,
-        io_edgehog_devicemanager_WiFiScanResults.name, "/ap", object_entries,
-        ARRAY_SIZE(object_entries), &timestamp_ms);
+    astarte_result_t res
+        = astarte_device_send_object(astarte_device, io_edgehog_devicemanager_WiFiScanResults.name,
+            "/ap", object_entries, ARRAY_SIZE(object_entries), &timestamp_ms);
     if (res != ASTARTE_RESULT_OK) {
         EDGEHOG_LOG_ERR("Unable to send WiFiScanResults"); // NOLINT
     }

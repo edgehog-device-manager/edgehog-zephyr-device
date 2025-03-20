@@ -56,7 +56,7 @@ static edgehog_result_t edgehog_led_setup(const struct gpio_dt_spec *edgehog_led
  * @param[out] blink_entry k_thread_entry_t struct used to store the blink entry function.
  * @return EDGEHOG_RESULT_OK if publish has been successful, an error code otherwise.
  */
-static edgehog_result_t get_blink_entry(astarte_individual_t value, k_thread_entry_t *blink_entry);
+static edgehog_result_t get_blink_entry(astarte_data_t value, k_thread_entry_t *blink_entry);
 
 /************************************************
  *       Callbacks declaration/definition       *
@@ -219,7 +219,7 @@ fail:
 
 #if DT_NODE_HAS_STATUS(EDGEHOG_LED_NODE, okay)
 
-static edgehog_result_t get_blink_entry(astarte_individual_t value, k_thread_entry_t *blink_entry)
+static edgehog_result_t get_blink_entry(astarte_data_t value, k_thread_entry_t *blink_entry)
 {
     edgehog_result_t edgehog_result = EDGEHOG_RESULT_OK;
 

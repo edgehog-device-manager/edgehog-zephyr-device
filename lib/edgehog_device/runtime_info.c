@@ -40,7 +40,7 @@ void publish_runtime_info(edgehog_device_handle_t edgehog_device)
 {
     astarte_result_t res = astarte_device_set_property(edgehog_device->astarte_device,
         io_edgehog_devicemanager_RuntimeInfo.name, RUNTIME_NAME_PROP,
-        astarte_individual_from_string(RUNTIME_NAME));
+        astarte_data_from_string(RUNTIME_NAME));
     if (res != ASTARTE_RESULT_OK) {
         EDGEHOG_LOG_ERR("Unable to publish runtime name");
         return;
@@ -48,7 +48,7 @@ void publish_runtime_info(edgehog_device_handle_t edgehog_device)
 
     res = astarte_device_set_property(edgehog_device->astarte_device,
         io_edgehog_devicemanager_RuntimeInfo.name, RUNTIME_URL_PROP,
-        astarte_individual_from_string(RUNTIME_URL));
+        astarte_data_from_string(RUNTIME_URL));
     if (res != ASTARTE_RESULT_OK) {
         EDGEHOG_LOG_ERR("Unable to publish runtime url");
         return;
@@ -67,7 +67,7 @@ void publish_runtime_info(edgehog_device_handle_t edgehog_device)
 
     res = astarte_device_set_property(edgehog_device->astarte_device,
         io_edgehog_devicemanager_RuntimeInfo.name, RUNTIME_VERSION_PROP,
-        astarte_individual_from_string(runtime_version));
+        astarte_data_from_string(runtime_version));
 
     if (res != ASTARTE_RESULT_OK) {
         EDGEHOG_LOG_ERR("Unable to publish runtime version");
@@ -89,7 +89,7 @@ void publish_runtime_info(edgehog_device_handle_t edgehog_device)
 
     res = astarte_device_set_property(edgehog_device->astarte_device,
         io_edgehog_devicemanager_RuntimeInfo.name, RUNTIME_ENV_PROP,
-        astarte_individual_from_string(environment));
+        astarte_data_from_string(environment));
 
     if (res != ASTARTE_RESULT_OK) {
         EDGEHOG_LOG_ERR("Unable to publish runtime environment");

@@ -33,7 +33,7 @@ EDGEHOG_LOG_MODULE_REGISTER(os_info, CONFIG_EDGEHOG_DEVICE_OS_INFO_LOG_LEVEL);
 void publish_os_info(edgehog_device_handle_t edgehog_device)
 {
     astarte_result_t res = astarte_device_set_property(edgehog_device->astarte_device,
-        io_edgehog_devicemanager_OSInfo.name, "/osName", astarte_individual_from_string("Zephyr"));
+        io_edgehog_devicemanager_OSInfo.name, "/osName", astarte_data_from_string("Zephyr"));
 
     if (res != ASTARTE_RESULT_OK) {
         EDGEHOG_LOG_ERR("Unable to publish osName");
@@ -55,8 +55,7 @@ void publish_os_info(edgehog_device_handle_t edgehog_device)
     }
 
     res = astarte_device_set_property(edgehog_device->astarte_device,
-        io_edgehog_devicemanager_OSInfo.name, "/osVersion",
-        astarte_individual_from_string(os_version));
+        io_edgehog_devicemanager_OSInfo.name, "/osVersion", astarte_data_from_string(os_version));
 
     if (res != ASTARTE_RESULT_OK) {
         EDGEHOG_LOG_ERR("Unable to publish osVersion");

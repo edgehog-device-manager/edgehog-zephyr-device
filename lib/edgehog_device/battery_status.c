@@ -40,12 +40,12 @@ edgehog_result_t edgehog_battery_status_publish(
     }
 
     const char *battery_state = edgehog_battery_to_code(battery_status->battery_state);
-    astarte_object_entry_t object_entries[] = { { .path = "levelPercentage",
-                                                    .individual = astarte_individual_from_double(
-                                                        battery_status->level_percentage) },
-        { .path = "levelAbsoluteError",
-            .individual = astarte_individual_from_double(battery_status->level_absolute_error) },
-        { .path = "status", .individual = astarte_individual_from_string(battery_state) } };
+    astarte_object_entry_t object_entries[]
+        = { { .path = "levelPercentage",
+                .data = astarte_data_from_double(battery_status->level_percentage) },
+              { .path = "levelAbsoluteError",
+                  .data = astarte_data_from_double(battery_status->level_absolute_error) },
+              { .path = "status", .data = astarte_data_from_string(battery_state) } };
 
     int64_t timestamp_ms = 0;
     system_time_current_ms(&timestamp_ms);
@@ -60,7 +60,7 @@ edgehog_result_t edgehog_battery_status_publish(
         return EDGEHOG_RESULT_INTERNAL_ERROR;
     }
 
-    astarte_result_t res = astarte_device_stream_aggregated(edgehog_device->astarte_device,
+    astarte_result_t res = astarte_device_send_object(edgehog_device->astarte_device,
         io_edgehog_devicemanager_BatteryStatus.name, path, object_entries,
         ARRAY_SIZE(object_entries), &timestamp_ms);
     if (res != ASTARTE_RESULT_OK) {
