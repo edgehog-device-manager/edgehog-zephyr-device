@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-codechecker
+codechecker==6.24.4
 colored
 clang-tidy==18.1.1
 astarte-device-sdk
