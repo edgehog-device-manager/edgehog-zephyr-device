@@ -36,9 +36,6 @@ on:
     - 'edgehog-zephyr-device/samples/edgehog_app/README.md'
 
 env:
-  # The latest CMake available directly with apt is 3.18, but we need >=3.20
-  # so we fetch that through pip.
-  CMAKE_VERSION: 3.20.5
   DOXYGEN_VERSION: 1.12.0
 
 jobs:
@@ -76,7 +73,7 @@ jobs:
 
     - name: Install python packages
       run: |
-        pip install cmake==${CMAKE_VERSION}
+        pip install cmake
         pip install coverxygen
 
     - name: Checkout Astarte SDK individually
