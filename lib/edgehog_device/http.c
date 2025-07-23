@@ -11,6 +11,7 @@
 #include <zephyr/net/http/parser.h>
 #include <zephyr/net/http/status.h>
 #include <zephyr/net/socket.h>
+#include <zephyr/version.h>
 
 #if !defined(CONFIG_EDGEHOG_DEVICE_DEVELOP_DISABLE_OR_IGNORE_TLS)
 #include <zephyr/net/tls_credentials.h>
@@ -54,12 +55,19 @@ static int create_and_connect_socket(const char *host, const char *port);
  *       Callbacks definition/declaration       *
  ***********************************************/
 
+#if (KERNEL_VERSION_MAJOR >= 4) && (KERNEL_VERSION_MINOR >= 2)
+static int http_download_cb(
+    struct http_response *rsp, enum http_final_call final_data, void *user_data)
+#else
 static void http_download_cb(
     struct http_response *rsp, enum http_final_call final_data, void *user_data)
+#endif
 {
+    int res = 0;
     if (!user_data) {
         EDGEHOG_LOG_ERR("Unable to read user data context");
-        return;
+        res = -1;
+        goto exit;
     }
 
     http_download_t *http_download = (http_download_t *) user_data;
@@ -68,12 +76,14 @@ static void http_download_cb(
         EDGEHOG_LOG_ERR("Unable to handle ota request, http status code %d -> %s",
             rsp->http_status_code, rsp->http_status);
         http_download->edegehog_result = EDGEHOG_RESULT_NETWORK_ERROR;
-        return;
+        res = -1;
+        goto exit;
     }
 
     if (!rsp->body_found) {
         EDGEHOG_LOG_ERR("Unable to parse body, It is empty");
-        return;
+        res = -1;
+        goto exit;
     }
 
     http_download_chunk_t http_download_chunk = { 0 };
@@ -84,6 +94,13 @@ static void http_download_cb(
 
     http_download->edegehog_result = http_download->download_cbk(
         http_download->sock_id, &http_download_chunk, http_download->user_data);
+
+exit:
+#if (KERNEL_VERSION_MAJOR >= 4) && (KERNEL_VERSION_MINOR >= 2)
+    return res;
+#else
+    (void) res;
+#endif
 }
 
 /************************************************
