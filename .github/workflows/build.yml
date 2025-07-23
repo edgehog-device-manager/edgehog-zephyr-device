@@ -31,6 +31,7 @@ jobs:
       matrix:
         sample-variant:
           - name: "edgehog.default"
+          - name: "edgehog.wifi"
     concurrency:
       group: build-${{ matrix.sample-variant.name }}-${{ github.ref }}
       cancel-in-progress: true
@@ -55,6 +56,11 @@ jobs:
           app-path: edgehog-zephyr-device
           toolchains: arm-zephyr-eabi
 
+      - name: Fetch binary blobs
+        working-directory: edgehog-zephyr-device
+        if: matrix.sample-variant.name == 'edgehog.wifi'
+        run: |
+          west blobs -a fetch hal_nxp
 
       - name: Build edgehog_app sample
         working-directory: edgehog-zephyr-device
