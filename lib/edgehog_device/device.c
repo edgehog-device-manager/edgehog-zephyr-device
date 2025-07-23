@@ -368,11 +368,11 @@ void edgehog_device_publish_telemetry(edgehog_device_handle_t device, edgehog_te
         case EDGEHOG_TELEMETRY_HW_INFO:
             publish_hardware_info(device);
             break;
-#ifdef CONFIG_WIFI
-        case EDGEHOG_TELEMETRY_WIFI_SCAN:
-            edgehog_wifi_scan_start(device->astarte_device);
-            break;
-#endif
+            // #ifdef CONFIG_WIFI
+            //         case EDGEHOG_TELEMETRY_WIFI_SCAN:
+            //             edgehog_wifi_scan_start(device->astarte_device);
+            //             break;
+            // #endif
         case EDGEHOG_TELEMETRY_SYSTEM_STATUS:
             publish_system_status(device);
             break;
@@ -404,9 +404,9 @@ static edgehog_result_t add_interfaces(astarte_device_handle_t astarte_device)
 #if DT_NODE_HAS_STATUS(EDGEHOG_LED_NODE, okay)
         &io_edgehog_devicemanager_LedBehavior,
 #endif
-#ifdef CONFIG_WIFI
-        &io_edgehog_devicemanager_WiFiScanResults,
-#endif
+        // #ifdef CONFIG_WIFI
+        //         &io_edgehog_devicemanager_WiFiScanResults,
+        // #endif
         &io_edgehog_devicemanager_config_Telemetry,
     };
 
@@ -432,7 +432,7 @@ static void edgehog_initial_publish(edgehog_device_handle_t edgehog_device)
     publish_runtime_info(edgehog_device);
     publish_system_status(edgehog_device);
     publish_storage_usage(edgehog_device);
-#ifdef CONFIG_WIFI
-    edgehog_wifi_scan_start(edgehog_device->astarte_device);
-#endif
+    // #ifdef CONFIG_WIFI
+    //     edgehog_wifi_scan_start(edgehog_device->astarte_device);
+    // #endif
 }
