@@ -46,7 +46,8 @@ LOG_MODULE_REGISTER(edgehog_app, CONFIG_APP_LOG_LEVEL); // NOLINT
 #define MQTT_FIRST_POLL_TIMEOUT_MS (3 * MSEC_PER_SEC)
 #define MQTT_POLL_TIMEOUT_MS 200
 
-#define TELEMETRY_PERIOD_S 5
+#define TELEMETRY_SYSTEM_STATUS_PERIOD_S 5
+#define TELEMETRY_WIFI_SCAN_PERIOD_S 30
 
 // NOLINTBEGIN(cppcoreguidelines-avoid-non-const-global-variables)
 enum device_tread_flags
@@ -229,14 +230,20 @@ static void edgehog_device_thread_entry_point(void *arg1, void *arg2, void *arg3
 
     edgehog_result_t eres = EDGEHOG_RESULT_OK;
 
-    edgehog_telemetry_config_t telemetry_config = {
-        .type = EDGEHOG_TELEMETRY_SYSTEM_STATUS,
-        .period_seconds = TELEMETRY_PERIOD_S,
-    };
+    edgehog_telemetry_config_t telemetry_config[]
+        = { {
+                .type = EDGEHOG_TELEMETRY_SYSTEM_STATUS,
+                .period_seconds = TELEMETRY_SYSTEM_STATUS_PERIOD_S,
+            },
+              {
+                  .type = EDGEHOG_TELEMETRY_WIFI_SCAN,
+                  .period_seconds = TELEMETRY_WIFI_SCAN_PERIOD_S,
+              } };
+
     edgehog_device_config_t edgehog_conf = {
         .astarte_device_config = astarte_device_config,
-        .telemetry_config = &telemetry_config,
-        .telemetry_config_len = 1,
+        .telemetry_config = telemetry_config,
+        .telemetry_config_len = ARRAY_SIZE(telemetry_config),
     };
     eres = edgehog_device_new(&edgehog_conf, &edgehog_device);
     if (eres != EDGEHOG_RESULT_OK) {
