@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#ifndef EDGEHOG_DEVICE_WIFI_SCAN_H
-#define EDGEHOG_DEVICE_WIFI_SCAN_H
+#ifndef WIFI_SCAN_H
+#define WIFI_SCAN_H
 
 // #ifdef CONFIG_WIFI
 
@@ -66,4 +66,4 @@
 
 // #endif
 
-#endif // EDGEHOG_DEVICE_WIFI_SCAN_H
+#endif // WIFI_SCAN_H

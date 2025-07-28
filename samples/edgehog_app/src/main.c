@@ -25,7 +25,6 @@ LOG_MODULE_REGISTER(edgehog_app, CONFIG_APP_LOG_LEVEL); // NOLINT
 #endif
 #include <edgehog_device/device.h>
 #include <edgehog_device/telemetry.h>
-#include <edgehog_device/wifi_scan.h>
 
 #if defined(CONFIG_WIFI)
 #include "wifi.h"

@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include "edgehog_device/wifi_scan.h"
+#include "wifi_scan.h"
 
 #include "generated_interfaces.h"
 

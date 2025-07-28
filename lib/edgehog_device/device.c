@@ -9,7 +9,6 @@
 #include "base_image.h"
 #include "command.h"
 #include "edgehog_device/result.h"
-#include "edgehog_device/wifi_scan.h"
 #include "edgehog_private.h"
 #include "generated_interfaces.h"
 #include "hardware_info.h"
@@ -22,6 +21,7 @@
 #include "system_info.h"
 #include "system_status.h"
 #include "uuid.h"
+#include "wifi_scan.h"
 
 #include <stdlib.h>
 
