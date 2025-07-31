@@ -20,7 +20,10 @@
 
 #include "edgehog_private.h"
 #include "generated_interfaces.h"
+#include "hardware_info.h"
 #include "settings.h"
+#include "storage_usage.h"
+#include "system_status.h"
 
 #include <stdlib.h>
 
@@ -212,6 +215,17 @@ static edgehog_result_t telemetry_schedule_entry(
  */
 static edgehog_result_t telemetry_unschedule_entry(edgehog_telemetry_entry_t *entry);
 
+/**
+ * @brief Publish a telemetry.
+ *
+ * @details This function publishes a telemetry based on @p type parameter.
+ *
+ * @param device A valid edgehog device handle.
+ * @param type The type of telemetry to publish.
+ *
+ */
+static void publish_telemetry(edgehog_device_handle_t device, edgehog_telemetry_type_t type);
+
 /************************************************
  *       Callbacks declaration/definition       *
  ***********************************************/
@@ -321,7 +335,7 @@ static void telemetry_service_thread_entry_point(void *device_ptr, void *queue_p
     while (atomic_test_bit(
         &device->telemetry->telemetry_service_thread_state, TELEMETRY_SERVICE_THREAD_RUNNING_BIT)) {
         if (k_msgq_get(msgq, &type, K_MSEC(TELEMETRY_SERVICE_MSGQ_GET_TIMEOUT)) == 0) {
-            edgehog_device_publish_telemetry(device, type);
+            publish_telemetry(device, type);
         }
     }
 }
@@ -794,4 +808,26 @@ static edgehog_result_t telemetry_unschedule_entry(edgehog_telemetry_entry_t *en
     }
 
     return EDGEHOG_RESULT_OK;
+}
+
+static void publish_telemetry(edgehog_device_handle_t device, edgehog_telemetry_type_t type)
+{
+    switch (type) {
+        case EDGEHOG_TELEMETRY_HW_INFO:
+            publish_hardware_info(device);
+            break;
+#ifdef CONFIG_WIFI
+        case EDGEHOG_TELEMETRY_WIFI_SCAN:
+            edgehog_wifi_scan_start(device);
+            break;
+#endif
+        case EDGEHOG_TELEMETRY_SYSTEM_STATUS:
+            publish_system_status(device);
+            break;
+        case EDGEHOG_TELEMETRY_STORAGE_USAGE:
+            publish_storage_usage(device);
+            break;
+        default:
+            return;
+    }
 }
