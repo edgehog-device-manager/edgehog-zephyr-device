@@ -17,6 +17,10 @@
 #include "telemetry_private.h"
 #include "uuid.h"
 
+#ifdef CONFIG_WIFI
+#include "wifi_scan.h"
+#endif
+
 #include <astarte_device_sdk/device.h>
 
 /** @brief Possible states for the Edgehog device. */
@@ -67,6 +71,10 @@ struct edgehog_device
     led_thread_t led_thread;
     /** @brief Telemetry data. */
     edgehog_telemetry_t *telemetry;
+#ifdef CONFIG_WIFI
+    /** @brief WiFi scan data struct. */
+    struct wifi_scan wifi_scan_data;
+#endif
 };
 
 /**

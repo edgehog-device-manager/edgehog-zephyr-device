@@ -1,0 +1,13 @@
+/*
+ * (C) Copyright 2025, SECO Mind Srl
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+#include "../../boards/frdm_rw612.overlay"
+
+/ {
+	chosen {
+		zephyr,code-partition = &boot_partition;
+	};
+};

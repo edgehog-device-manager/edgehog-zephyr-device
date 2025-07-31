@@ -140,6 +140,24 @@ you will be able to fully take advantage of the secure TLS connection of Astarte
   `api.astarte.<YOUR IP ADDRESS>.nip.io` and `test` respectively if you followed the Astarte quick
   instance guide.
 
+### Transport layer choice
+
+Depending on which board you use different transport layer may be available to you. This sample
+supports configurations for Ethernet and WiFi.
+Ethernet will be built by default for all boards. While to use WiFi you should specify an extra
+configuration file when building `-DEXTRA_CONF_FILE="prj-wifi.conf"`.
+Additionally the SSID and password for the WiFi AP should be added to the configuration:
+```conf
+CONFIG_WIFI_SSID=
+CONFIG_WIFI_PASSWORD=
+```
+
+Depending on the board manufacturer you might need to download some blobs for the WiFi to function.
+For example for NXP boards:
+```shell
+west blobs fetch hal_nxp
+```
+
 ## Building the sample
 
 ### Over the air (OTA) updates

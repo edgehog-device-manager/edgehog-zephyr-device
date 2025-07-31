@@ -15,6 +15,20 @@ rsource "../../Kconfig"
 
 menu "Sample application"
 
+config WIFI_SSID
+    string "WiFi SSID"
+	depends on WIFI
+    default ""
+	help
+	  WiFi access point SSID.
+
+config WIFI_PASSWORD
+    string "WiFi password"
+	depends on WIFI
+    default ""
+    help
+        WiFi access point password.
+
 config ASTARTE_DEVICE_ID
 	string "Astarte device ID"
     default ""

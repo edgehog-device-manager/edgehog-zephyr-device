@@ -9,7 +9,6 @@
 #include "base_image.h"
 #include "command.h"
 #include "edgehog_device/result.h"
-#include "edgehog_device/wifi_scan.h"
 #include "edgehog_private.h"
 #include "generated_interfaces.h"
 #include "hardware_info.h"
@@ -22,6 +21,7 @@
 #include "system_info.h"
 #include "system_status.h"
 #include "uuid.h"
+#include "wifi_scan.h"
 
 #include <stdlib.h>
 
@@ -275,6 +275,11 @@ edgehog_result_t edgehog_device_new(
     memcpy(edgehog_device->boot_id, boot_id, UUID_STR_LEN + 1);
     *edgehog_handle = edgehog_device;
 
+    // Step 8: Initialize the WiFi scan driver
+#ifdef CONFIG_WIFI
+    edgehog_wifi_scan_init(edgehog_device);
+#endif
+
     return eres;
 
 failure:
@@ -343,6 +348,13 @@ edgehog_result_t edgehog_device_stop(edgehog_device_handle_t edgehog_device, k_t
         EDGEHOG_LOG_ERR("Unable to stop the Edgehog device within the timeout");
         return eres;
     }
+#ifdef CONFIG_WIFI
+    eres = edgehog_wifi_scan_destroy(edgehog_device, timeout);
+    if (eres != EDGEHOG_RESULT_OK) {
+        EDGEHOG_LOG_ERR("Unable to stop the Edgehog device within the timeout");
+        return eres;
+    }
+#endif
     astarte_result_t ares = astarte_device_disconnect(edgehog_device->astarte_device, timeout);
     if (ares != ASTARTE_RESULT_OK) {
         edgehog_device->astarte_error = ares;
@@ -370,7 +382,7 @@ void edgehog_device_publish_telemetry(edgehog_device_handle_t device, edgehog_te
             break;
 #ifdef CONFIG_WIFI
         case EDGEHOG_TELEMETRY_WIFI_SCAN:
-            edgehog_wifi_scan_start(device->astarte_device);
+            edgehog_wifi_scan_start(device);
             break;
 #endif
         case EDGEHOG_TELEMETRY_SYSTEM_STATUS:
@@ -433,6 +445,6 @@ static void edgehog_initial_publish(edgehog_device_handle_t edgehog_device)
     publish_system_status(edgehog_device);
     publish_storage_usage(edgehog_device);
 #ifdef CONFIG_WIFI
-    edgehog_wifi_scan_start(edgehog_device->astarte_device);
+    edgehog_wifi_scan_start(edgehog_device);
 #endif
 }

@@ -17,15 +17,14 @@ manifest:
   projects:
     - name: zephyr
       remote: zephyrproject-rtos
-      revision: v4.1.0
+      revision: v4.2.0
       import:
         # By using name-allowlist we can clone only the modules that are
         # strictly needed by the application.
         name-allowlist:
-          - cmsis
-          - hal_espressif
-          - hal_stm32
+          - cmsis_6
           - hal_nxp
+          - hal_stm32
           - mbedtls
           - picolibc
           - mcuboot
@@ -33,7 +32,7 @@ manifest:
       remote: astarte-platform
       repo-path: astarte-device-sdk-zephyr.git
       path: astarte-device-sdk-zephyr
-      revision: release-0.8
+      revision: release-0.9
       west-commands: scripts/west-commands.yml
     - name: zlib-zephyr
       remote: secomind

@@ -27,21 +27,19 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        sample-variant:
+          - name: "edgehog.default"
+          - name: "edgehog.wifi"
     concurrency:
-      group: build-${{ github.ref }}
+      group: build-${{ matrix.sample-variant.name }}-${{ github.ref }}
       cancel-in-progress: true
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
           path: edgehog-zephyr-device
-
-      - name: Checkout Astarte SDK individually
-        uses: actions/checkout@v4
-        with:
-          repository: astarte-platform/astarte-device-sdk-zephyr
-          path: astarte-device-sdk-zephyr
-          ssh-key: ${{ secrets.SSH_EDGEHOG_DEVICE_ZEPHYR_PRIV_KEY }}
 
       - name: Set CI manifest as defaults
         working-directory: edgehog-zephyr-device
@@ -50,18 +48,21 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: 3.11
+          python-version: 3.12
 
       - name: Setup Zephyr project
         uses: zephyrproject-rtos/action-zephyr-setup@v1
         with:
           app-path: edgehog-zephyr-device
-          toolchains: xtensa-espressif_esp32_zephyr-elf:arm-zephyr-eabi:x86_64-zephyr-elf
-      - name: Fetch binaries for Espressif
-        working-directory: astarte-device-sdk-zephyr
-        run: west blobs fetch hal_espressif
+          toolchains: arm-zephyr-eabi
+
+      - name: Fetch binary blobs
+        working-directory: edgehog-zephyr-device
+        if: matrix.sample-variant.name == 'edgehog.wifi'
+        run: |
+          west blobs -a fetch hal_nxp
 
       - name: Build edgehog_app sample
         working-directory: edgehog-zephyr-device
         run: |
-          west twister -T samples/edgehog_app -v --inline-logs --integration
+          west twister -T samples/edgehog_app --test ${{ matrix.sample-variant.name }} -v --inline-logs --integration

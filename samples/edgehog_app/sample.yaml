@@ -5,13 +5,19 @@
 # the Zephyr testing tool. In this file, multiple combinations can be specified,
 # so that you can easily test all of them locally or in CI.
 sample:
-  description: Sample edgehog_app for using the library
-  name: edgehog_app
+  description: Edgehog application sample
+  name: edgehog-sample
 tests:
-  edgehog_app.default:
+  edgehog.default:
     build_only: true
+    sysbuild: true
     integration_platforms:
       - mimxrt1064_evk
       - mimxrt1060_evk@B/mimxrt1062/qspi
       - stm32h573i_dk
-      - native_sim
+  edgehog.wifi:
+    build_only: true
+    sysbuild: true
+    extra_args: EXTRA_CONF_FILE="prj-wifi.conf"
+    integration_platforms:
+      - frdm_rw612
