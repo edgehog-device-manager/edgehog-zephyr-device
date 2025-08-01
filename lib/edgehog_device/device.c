@@ -374,28 +374,6 @@ astarte_result_t edgehog_device_get_astarte_error(edgehog_device_handle_t edgeho
     return edgehog_device->astarte_error;
 }
 
-void edgehog_device_publish_telemetry(edgehog_device_handle_t device, edgehog_telemetry_type_t type)
-{
-    switch (type) {
-        case EDGEHOG_TELEMETRY_HW_INFO:
-            publish_hardware_info(device);
-            break;
-#ifdef CONFIG_WIFI
-        case EDGEHOG_TELEMETRY_WIFI_SCAN:
-            edgehog_wifi_scan_start(device);
-            break;
-#endif
-        case EDGEHOG_TELEMETRY_SYSTEM_STATUS:
-            publish_system_status(device);
-            break;
-        case EDGEHOG_TELEMETRY_STORAGE_USAGE:
-            publish_storage_usage(device);
-            break;
-        default:
-            return;
-    }
-}
-
 /************************************************
  * Static functions definition
  ***********************************************/

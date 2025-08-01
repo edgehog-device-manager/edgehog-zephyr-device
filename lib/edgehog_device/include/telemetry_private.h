@@ -17,18 +17,7 @@
 
 #include <zephyr/kernel.h>
 
-/** @brief Data struct for a telemetry entry. */
-typedef struct
-{
-    /** @brief Type of telemetry. */
-    edgehog_telemetry_type_t type;
-    /** @brief Interval of period in seconds. */
-    int64_t period_seconds;
-    /** @brief Enables the telemetry. */
-    bool enable;
-    /** @brief Struct of telemetry timer. */
-    struct k_timer timer;
-} edgehog_telemetry_entry_t;
+#include "telemetry_entry.h"
 
 /**
  * @brief Data struct for a telemetry instance.
@@ -51,9 +40,9 @@ typedef struct
     /** @brief Ring buffer that holds queued messages. */
     char msgq_buffer[EDGEHOG_TELEMETRY_LEN * sizeof(edgehog_telemetry_type_t)];
     /** @brief Telemetry service thread, peeks the msgq and transmits eventual messages. */
-    struct k_thread telemetry_service_thread;
+    struct k_thread thread;
     /** @brief Run state for the telemetry service thread. */
-    atomic_t telemetry_service_thread_state;
+    atomic_t thread_state;
 } edgehog_telemetry_t;
 
 #ifdef __cplusplus
