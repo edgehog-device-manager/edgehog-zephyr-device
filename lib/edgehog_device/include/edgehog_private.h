@@ -77,16 +77,4 @@ struct edgehog_device
 #endif
 };
 
-/**
- * @brief Publish a telemetry.
- *
- * @details This function publishes a telemetry based on @p type parameter.
- *
- * @param device A valid edgehog device handle.
- * @param type The type of telemetry to publish.
- *
- */
-void edgehog_device_publish_telemetry(
-    edgehog_device_handle_t device, edgehog_telemetry_type_t type);
-
 #endif // EDGEHOG_PRIVATE_H
