@@ -35,20 +35,20 @@ jobs:
       cancel-in-progress: true
     steps:
       - name: Checkout Astarte SDK
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           repository: astarte-platform/astarte-device-sdk-zephyr
           path: astarte-device-sdk-zephyr
           ssh-key: ${{ secrets.SSH_EDGEHOG_DEVICE_ZEPHYR_PRIV_KEY }}
       - name: Checkout Edgehog device
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           path: edgehog-zephyr-device
       - name: Set CI manifest as defaults (edgehog)
         working-directory: edgehog-zephyr-device
         run: mv west-ci.yml west.yml
       - name: Checkout Edgehog interfaces
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           repository: edgehog-device-manager/edgehog-astarte-interfaces
           ref: ${{ env.EDGEHOG_INTERFACES_REF }}
