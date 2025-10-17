@@ -17,7 +17,7 @@ manifest:
   projects:
     - name: zephyr
       remote: zephyrproject-rtos
-      revision: v4.2.0
+      revision: v4.2.1
       import: true
     - name: astarte-device-sdk-zephyr
       remote: astarte-platform
