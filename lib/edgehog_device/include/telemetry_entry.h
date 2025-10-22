@@ -30,6 +30,7 @@ typedef struct
     struct k_timer timer;
 } edgehog_telemetry_entry_t;
 
+/** @brief Telemetry period used by default for new entries. */
 #define TELEMETRY_UPDATE_DEFAULT 0
 
 #ifdef __cplusplus
@@ -65,8 +66,6 @@ edgehog_result_t telemetry_entries_load_from_settings(edgehog_telemetry_entry_t 
  * @param[in] configs Array of configurations provided by the user.
  * @param[in] configs_len The length of the @p configs array.
  * @param[inout] entries Array of entries extracted from config.
- *
- * @return EDGEHOG_RESULT_OK if successful, an edgehog_result_t otherwise.
  */
 void telemetry_entries_load_from_config(
     edgehog_telemetry_config_t *configs, size_t configs_len, edgehog_telemetry_entry_t **entries);
