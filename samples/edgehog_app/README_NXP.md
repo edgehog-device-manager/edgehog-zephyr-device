@@ -41,7 +41,7 @@ installed, this can be done through the
 
 The application demonstrates the use of the
 [Edgehog device for Zephyr](https://github.com/edgehog-device-manager/edgehog-zephyr-device) at
-version **0.7.0** in conjunction with [Zephyr RTOS](https://github.com/zephyrproject-rtos/zephyr) at
+version **0.8.0** in conjunction with [Zephyr RTOS](https://github.com/zephyrproject-rtos/zephyr) at
 version **4.1.0**.
 
 Every Edgehog device relies internally on the [Astarte](https://docs.astarte-platform.org/) platform
