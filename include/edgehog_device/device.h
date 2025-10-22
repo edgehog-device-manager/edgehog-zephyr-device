@@ -28,7 +28,7 @@
 /** @brief Major version number */
 #define EDGEHOG_DEVICE_MAJOR 0
 /** @brief Minor version number */
-#define EDGEHOG_DEVICE_MINOR 7
+#define EDGEHOG_DEVICE_MINOR 8
 /** @brief Patch version number */
 #define EDGEHOG_DEVICE_PATCH 0
 

@@ -51,7 +51,7 @@ Second, a new entry should be added to the projects list:
       remote: edgehog-device-manager
       repo-path: edgehog-zephyr-device.git
       path: edgehog-zephyr-device
-      revision: v0.7.0
+      revision: v0.8.0
       import: true
 ```
 Remember to run `west update` after performing changes to the manifest file.
@@ -80,7 +80,7 @@ The second step is to initialize the west workspace, using the Edgehog library r
 manifest repository.
 
 ```shell
-west init -m git@github.com:edgehog-device-manager/edgehog-zephyr-device --mr master
+west init -m git@github.com:edgehog-device-manager/edgehog-zephyr-device --mr v0.8.0
 west update
 ```
 
