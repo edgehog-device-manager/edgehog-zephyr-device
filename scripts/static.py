@@ -18,8 +18,9 @@ import subprocess
 import sys
 from linecache import getline
 from pathlib import Path
+from colored import stylize, fg
 
-from colored import fore, stylize
+from colored import fore
 from west import log  # use this for user output
 from west.commands import WestCommand  # your extension must subclass this
 
@@ -74,8 +75,20 @@ class WestCommandStatic(WestCommand):
         parser = parser_adder.add_parser(self.name, help=self.help, description=self.description)
 
         # Add some options using the standard argparse module API.
-        parser.add_argument("-p", "--pristine", help="west build pristine flag", default="auto")
-        parser.add_argument("-s", "--sample", help="name of the sample analyze", default="edgehog_app")
+        default_pristine = "auto"
+        parser.add_argument(
+            "-p",
+            "--pristine",
+            help=f"west build pristine flag. Default: '{default_pristine}'.",
+            default=default_pristine,
+        )
+        default_sample = "edgehog_app"
+        parser.add_argument(
+            "-s",
+            "--sample",
+            help=f"sample to analyze. Default: '{default_sample}'.",
+            default=default_sample,
+        )
         parser.add_argument("-e", "--export", help="an additional (optional) export type")
 
         return parser  # gets stored as self.parser
@@ -113,6 +126,7 @@ class WestCommandStatic(WestCommand):
             f'-DCODECHECKER_EXPORT={",".join(codechecker_exports)}',
             f'-DCODECHECKER_ANALYZE_OPTS="{";".join(codechecker_analyze_opts)}"',
         ]
+        print(stylize(" ".join(cmd), fg("cyan")))
         subprocess.run(" ".join(cmd), shell=True, cwd=module_path, check=True)
 
         has_reports = False
