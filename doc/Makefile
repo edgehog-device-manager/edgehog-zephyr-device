@@ -27,4 +27,4 @@ configure:
 		-DEDGEHOG_DEVICE_EXTENDED_DOCS=${EDGEHOG_DEVICE_EXTENDED_DOCS}
 
 clean:
-	rm -rf ${BUILDDIR}
+	cmake --build ${BUILDDIR} --target clean
