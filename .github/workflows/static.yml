@@ -91,6 +91,11 @@ jobs:
       - name: Install Python dependencies
         working-directory: edgehog-zephyr-device
         run: pip install -r $PWD/scripts/requirements.txt
+      - name: Change code checker version
+        working-directory: astarte-device-sdk-zephyr
+        run: |
+          pip uninstall codechecker -y
+          pip install codechecker==6.24.4
       - name: Run static analisys
         working-directory: edgehog-zephyr-device
         run: west static --sample edgehog_app
