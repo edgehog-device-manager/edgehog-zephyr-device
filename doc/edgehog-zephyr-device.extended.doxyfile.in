@@ -969,13 +969,13 @@ WARN_LOGFILE           =
 # spaces. See also FILE_PATTERNS and EXTENSION_MAPPING
 # Note: If this tag is empty the current directory is searched.
 
-INPUT                  = @EDGEHOG_DEVICE_BASE@/README.md \
-                         @EDGEHOG_DEVICE_BASE@/doc \
-                         @EDGEHOG_DEVICE_BASE@/doc/_doxygen/groups.dox \
-                         @EDGEHOG_DEVICE_BASE@/include/ \
-                         @EDGEHOG_DEVICE_BASE@/lib/edgehog_device/include/ \
-                         @EDGEHOG_DEVICE_BASE@/lib/edgehog_device/ \
-                         @EDGEHOG_DEVICE_BASE@/samples/edgehog_app/Sample-application.md
+INPUT                  = @LIBRARY_PATH@/README.md \
+                         @LIBRARY_PATH@/doc \
+                         @LIBRARY_PATH@/doc/_doxygen/groups.dox \
+                         @LIBRARY_PATH@/include/ \
+                         @LIBRARY_PATH@/lib/edgehog_device/include/ \
+                         @LIBRARY_PATH@/lib/edgehog_device/ \
+                         @LIBRARY_PATH@/samples/edgehog_app/Sample-application.md
 
 # This tag can be used to specify the character encoding of the source files
 # that Doxygen parses. Internally Doxygen uses the UTF-8 encoding. Doxygen uses
@@ -1143,7 +1143,7 @@ FILTER_SOURCE_PATTERNS =
 # (index.html). This can be useful if you have a project on for instance GitHub
 # and want to reuse the introduction page also for the Doxygen output.
 
-USE_MDFILE_AS_MAINPAGE = @EDGEHOG_DEVICE_BASE@/README.md
+USE_MDFILE_AS_MAINPAGE = @LIBRARY_PATH@/README.md
 
 # The Fortran standard specifies that for fixed formatted Fortran code all
 # characters from position 72 are to be considered as comment. A common
@@ -1343,7 +1343,7 @@ HTML_FILE_EXTENSION    = .html
 # of the possible markers and block names see the documentation.
 # This tag requires that the tag GENERATE_HTML is set to YES.
 
-HTML_HEADER            = @EDGEHOG_DEVICE_BASE@/doc/_doxygen/header.html
+HTML_HEADER            = @LIBRARY_PATH@/doc/_doxygen/header.html
 
 # The HTML_FOOTER tag can be used to specify a user-defined HTML footer for each
 # generated HTML page. If the tag is left blank Doxygen will generate a standard
@@ -1383,10 +1383,10 @@ HTML_STYLESHEET        =
 # documentation.
 # This tag requires that the tag GENERATE_HTML is set to YES.
 
-HTML_EXTRA_STYLESHEET  = @EDGEHOG_DEVICE_BASE@/doc/_doxygen/doxygen-awesome.css \
-                         @EDGEHOG_DEVICE_BASE@/doc/_doxygen/doxygen-awesome-sidebar-only.css \
-                         @EDGEHOG_DEVICE_BASE@/doc/_doxygen/doxygen-awesome-sidebar-only-darkmode-toggle.css \
-                         @EDGEHOG_DEVICE_BASE@/doc/_doxygen/doxygen-awesome-edgehog.css
+HTML_EXTRA_STYLESHEET  = @LIBRARY_PATH@/doc/_doxygen/doxygen-awesome.css \
+                         @LIBRARY_PATH@/doc/_doxygen/doxygen-awesome-sidebar-only.css \
+                         @LIBRARY_PATH@/doc/_doxygen/doxygen-awesome-sidebar-only-darkmode-toggle.css \
+                         @LIBRARY_PATH@/doc/_doxygen/doxygen-awesome-edgehog.css
 
 # The HTML_EXTRA_FILES tag can be used to specify one or more extra images or
 # other source files which should be copied to the HTML output directory. Note
@@ -1396,10 +1396,10 @@ HTML_EXTRA_STYLESHEET  = @EDGEHOG_DEVICE_BASE@/doc/_doxygen/doxygen-awesome.css 
 # files will be copied as-is; there are no commands or markers available.
 # This tag requires that the tag GENERATE_HTML is set to YES.
 
-HTML_EXTRA_FILES       = @EDGEHOG_DEVICE_BASE@/doc/_doxygen/doxygen-awesome-darkmode-toggle.js \
-                         @EDGEHOG_DEVICE_BASE@/doc/_doxygen/doxygen-awesome-fragment-copy-button.js \
-                         @EDGEHOG_DEVICE_BASE@/doc/_doxygen/doxygen-awesome-paragraph-link.js \
-                         @EDGEHOG_DEVICE_BASE@/doc/_doxygen/doxygen-awesome-interactive-toc.js
+HTML_EXTRA_FILES       = @LIBRARY_PATH@/doc/_doxygen/doxygen-awesome-darkmode-toggle.js \
+                         @LIBRARY_PATH@/doc/_doxygen/doxygen-awesome-fragment-copy-button.js \
+                         @LIBRARY_PATH@/doc/_doxygen/doxygen-awesome-paragraph-link.js \
+                         @LIBRARY_PATH@/doc/_doxygen/doxygen-awesome-interactive-toc.js
 
 # The HTML_COLORSTYLE tag can be used to specify if the generated HTML output
 # should be rendered with a dark or light theme.

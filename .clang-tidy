@@ -3,7 +3,6 @@
 # SPDX-License-Identifier: CC0-1.0
 
 ---
-HeaderFilterRegex: '.*'
 Checks: >
   -abseil-*,
   -altera-*,
@@ -34,7 +33,8 @@ Checks: >
   -clang-analyzer-security.insecureAPI.DeprecatedOrUnsafeBufferHandling,
   -cppcoreguidelines-macro-to-enum,
   -modernize-macro-to-enum,
-  -misc-include-cleaner
+  -misc-include-cleaner,
+  -misc-header-include-cycle
 
 # NOTES:
 # Most of the options for the checker readability-function-size have been disabled due to the

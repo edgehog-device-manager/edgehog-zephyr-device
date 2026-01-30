@@ -103,7 +103,7 @@ jobs:
           DOC_TAG="development"
         fi
 
-        DOC_TAG=${DOC_TAG} EDGEHOG_DEVICE_BASE="$PWD" make -C doc doxygen
+        DOC_TAG=${DOC_TAG} LIBRARY_PATH="$PWD" make -C doc doxygen
 
     - name: Upload HTML documentation
       uses: actions/upload-artifact@v6
@@ -121,4 +121,4 @@ jobs:
           DOC_TAG="development"
         fi
 
-        DOC_TAG=${DOC_TAG} EDGEHOG_DEVICE_BASE="$PWD" EDGEHOG_DEVICE_EXTENDED_DOCS="yes" make -C doc doxygen
+        DOC_TAG=${DOC_TAG} LIBRARY_PATH="$PWD" EXTENDED_DOCS="yes" make -C doc doxygen

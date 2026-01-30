@@ -9,7 +9,7 @@ set(MIN_WEST_VERSION 1.0.0)
 
 set(Edgehog_Device_VERSION 0.9.0)
 
-message(STATUS "Zephyr base: ${EDGEHOG_DEVICE_BASE}")
+message(STATUS "Zephyr base: ${LIBRARY_PATH}")
 message(STATUS "Documentation tag: ${DOC_TAG}")
 
 #-------------------------------------------------------------------------------
@@ -41,7 +41,7 @@ endif()
 
 set(DOXY_OUT ${CMAKE_CURRENT_BINARY_DIR}/doxygen)
 
-if("${EDGEHOG_DEVICE_EXTENDED_DOCS}" STREQUAL "yes")
+if("${EXTENDED_DOCS}" STREQUAL "yes")
 message(STATUS "Generating extended documentation.")
 set(DOXYFILE_IN ${CMAKE_CURRENT_LIST_DIR}/edgehog-zephyr-device.extended.doxyfile.in)
 else()
