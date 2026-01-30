@@ -2,6 +2,9 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
+# This file contains all the west extension commands private to this project.
+# It should only be included in the `west.yml` manifest of the Astarte device
+
 west-commands:
   - file: scripts/docs.py
     commands:
