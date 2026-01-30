@@ -3,8 +3,6 @@
 # SPDX-License-Identifier: Apache-2.0
 
 manifest:
-  self:
-    west-commands: scripts/private-west-commands.yml
 
   remotes:
     - name: zephyrproject-rtos
@@ -23,8 +21,8 @@ manifest:
       remote: astarte-platform
       repo-path: astarte-device-sdk-zephyr.git
       path: astarte-device-sdk-zephyr
-      revision: release-0.9
-      west-commands: scripts/west-commands.yml
+      revision: master
+      west-commands: scripts/private-west-commands.yml
     - name: zlib-zephyr
       remote: secomind
       revision: release-v1.3.1
