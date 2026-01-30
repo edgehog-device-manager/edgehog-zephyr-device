@@ -4,7 +4,7 @@
 
 manifest:
   self:
-    west-commands: scripts/west-commands.yml
+    west-commands: scripts/private-west-commands.yml
 
   remotes:
     - name: zephyrproject-rtos

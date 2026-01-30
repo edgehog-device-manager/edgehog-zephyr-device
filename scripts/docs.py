@@ -81,19 +81,21 @@ class WestCommandDocs(WestCommand):
         """
         module_path = Path(self.topdir).joinpath("edgehog-zephyr-device")
         if args.clean:
-            log.inf(stylize("make -C doc clean", fore("cyan")))
-            subprocess.run(
-                "make -C doc clean",
-                shell=True,
-                cwd=module_path,
-                timeout=60,
-                check=True,
-                env=dict(
-                    os.environ,
-                    EDGEHOG_DEVICE_BASE=f"{module_path}",
-                    EDGEHOG_DEVICE_EXTENDED_DOCS="yes" if args.extended else "no",
-                ),
-            )
+            build_path = os.path.join(module_path, "doc", "_build")
+            if os.path.exists(build_path):
+                log.inf(stylize("make -C doc clean", fore("cyan")))
+                subprocess.run(
+                    "make -C doc clean",
+                    shell=True,
+                    cwd=module_path,
+                    timeout=60,
+                    check=True,
+                    env=dict(
+                        os.environ,
+                        EDGEHOG_DEVICE_BASE=f"{module_path}",
+                        EDGEHOG_DEVICE_EXTENDED_DOCS="yes" if args.extended else "no",
+                    ),
+                )
         log.inf(stylize("make -C doc doxygen", fore("cyan")))
         subprocess.run(
             "make -C doc doxygen",
