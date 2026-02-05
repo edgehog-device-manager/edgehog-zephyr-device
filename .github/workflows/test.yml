@@ -1,30 +1,22 @@
-#
-# This file is part of Edgehog.
-#
-# Copyright 2024 SECO Mind Srl
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#    http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
+# (C) Copyright 2026, SECO Mind Srl
 #
 # SPDX-License-Identifier: Apache-2.0
-#
 
 name: Unit tests
 
 on:
-  push:
-  pull_request:
-  schedule:
-    - cron: "0 0 * * *"
+  workflow_call:
+    inputs:
+      PROJECT_MANIFEST_FOLDER:
+        required: true
+        type: string
+      LIBRARY_NAME:
+        required: true
+        type: string
+
+env:
+  PROJECT_MANIFEST_FOLDER: ${{ inputs.PROJECT_MANIFEST_FOLDER }}
+  LIBRARY_NAME: ${{ inputs.LIBRARY_NAME }}
 
 jobs:
   build:
@@ -36,31 +28,21 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
         with:
-          path: edgehog-zephyr-device
-
-      - name: Checkout Astarte SDK individually
-        uses: actions/checkout@v6
-        with:
-          repository: astarte-platform/astarte-device-sdk-zephyr
-          path: astarte-device-sdk-zephyr
-          ssh-key: ${{ secrets.SSH_EDGEHOG_DEVICE_ZEPHYR_PRIV_KEY }}
-
+          path: ${{ env.PROJECT_MANIFEST_FOLDER }}
       - name: Set CI manifest as defaults
-        working-directory: edgehog-zephyr-device
-        run: mv west-ci.yml west.yml
-
+        working-directory: ${{ env.PROJECT_MANIFEST_FOLDER }}
+        run: mv west-ci-4.2.yml west.yml
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
-          python-version: 3.11
-
+          python-version: 3.12
       - name: Setup Zephyr project
         uses: zephyrproject-rtos/action-zephyr-setup@v1
         with:
-          app-path: edgehog-zephyr-device
-          toolchains: xtensa-espressif_esp32_zephyr-elf:arm-zephyr-eabi:x86_64-zephyr-elf
-
+          app-path: ${{ env.PROJECT_MANIFEST_FOLDER }}
+          toolchains: arm-zephyr-eabi:x86_64-zephyr-elf
       - name: Run integration tests
-        working-directory: edgehog-zephyr-device
+        working-directory: ${{ env.PROJECT_MANIFEST_FOLDER }}
         run: |
-          west twister --force-color --ninja -v --inline-logs --filter runnable --integration -T tests/lib
+          west twister --disable-warnings-as-errors -v --inline-logs --filter runnable --integration -T tests/lib/${{ env.LIBRARY_NAME }}/unit
+          west twister -v --inline-logs --filter runnable --integration -T tests/lib/${{ env.LIBRARY_NAME }}/integration

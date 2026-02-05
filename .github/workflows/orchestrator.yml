@@ -1,0 +1,49 @@
+# (C) Copyright 2026, SECO Mind Srl
+#
+# SPDX-License-Identifier: Apache-2.0
+
+name: CI orchestrator
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  run-unit-tests:
+    name: Run unit tests
+    uses: ./.github/workflows/test.yml
+    with:
+      PROJECT_MANIFEST_FOLDER: "edgehog-zephyr-device"
+      LIBRARY_NAME: "edgehog_device"
+
+  run-static-analysis:
+    name: Run static analysis
+    uses: ./.github/workflows/static.yml
+    with:
+      PROJECT_MANIFEST_FOLDER: "edgehog-zephyr-device"
+      SAMPLE_NAME: "edgehog_app"
+
+  run-reuse-compliance:
+    name: Run REUSE compliance check
+    uses: ./.github/workflows/reuse-lint.yml
+
+  run-interface-check:
+    name: Run Interface check
+    uses: ./.github/workflows/interface-generation.yml
+
+  run-build:
+    name: Run build
+    uses: ./.github/workflows/build.yml
+    with:
+      PROJECT_MANIFEST_FOLDER: "edgehog-zephyr-device"
+      SAMPLE_NAME: "edgehog_app"
+
+  run-doc-check:
+    name: Run documentation check
+    if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'pull_request'
+    uses: ./.github/workflows/doc-check.yml
+    with:
+      PROJECT_MANIFEST_FOLDER: "edgehog-zephyr-device"
+      MACRO_PROJECT_BASE: "LIBRARY_PATH"
+      MACRO_PROJECT_EXTENDED_DOCS: "EXTENDED_DOCS"

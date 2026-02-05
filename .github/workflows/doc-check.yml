@@ -1,0 +1,93 @@
+# (C) Copyright 2026, SECO Mind Srl
+#
+# SPDX-License-Identifier: Apache-2.0
+
+name: Documentation checks
+
+on:
+  workflow_call:
+    inputs:
+      DOXYGEN_VERSION:
+        required: false
+        type: string
+        default: '1.12.0'
+      PROJECT_MANIFEST_FOLDER:
+        required: true
+        type: string
+      MACRO_PROJECT_BASE:
+        required: true
+        type: string
+      MACRO_PROJECT_EXTENDED_DOCS:
+        required: true
+        type: string
+
+env:
+  DOXYGEN_VERSION: ${{ inputs.DOXYGEN_VERSION }}
+  PROJECT_MANIFEST_FOLDER: ${{ inputs.PROJECT_MANIFEST_FOLDER }}
+  MACRO_PROJECT_BASE: ${{ inputs.MACRO_PROJECT_BASE }}
+  MACRO_PROJECT_EXTENDED_DOCS: ${{ inputs.MACRO_PROJECT_EXTENDED_DOCS }}
+
+jobs:
+  check-docs:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    concurrency:
+      group: check-docs-${{ github.ref }}
+      cancel-in-progress: true
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v6
+      with:
+        path: ${{ env.PROJECT_MANIFEST_FOLDER }}
+    - name: Install ubuntu packages
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y ninja-build graphviz
+    - name: Install doxygen
+      working-directory: ${{ env.PROJECT_MANIFEST_FOLDER }}
+      shell: bash
+      run: |
+        wget --no-verbose "https://github.com/doxygen/doxygen/releases/download/Release_${DOXYGEN_VERSION//./_}/doxygen-${DOXYGEN_VERSION}.linux.bin.tar.gz"
+        tar xf doxygen-${DOXYGEN_VERSION}.linux.bin.tar.gz
+        echo "${PWD}/doxygen-${DOXYGEN_VERSION}/bin" >> $GITHUB_PATH
+    - name: Set up Python
+      uses: actions/setup-python@v6
+      with:
+        python-version: 3.12
+    - name: Install python packages
+      run: |
+        pip install cmake
+        pip install coverxygen
+    - name: Set CI manifest as defaults
+      working-directory: ${{ env.PROJECT_MANIFEST_FOLDER }}
+      run: mv west-ci-4.2.yml west.yml
+    - name: Setup Zephyr project
+      uses: zephyrproject-rtos/action-zephyr-setup@v1
+      with:
+        app-path: ${{ env.PROJECT_MANIFEST_FOLDER }}
+        toolchains: x86_64-zephyr-elf
+    - name: Build documentation
+      working-directory: ${{ env.PROJECT_MANIFEST_FOLDER }}
+      shell: bash
+      run: |
+        if [[ "$GITHUB_REF" =~ "refs/tags/v" ]]; then
+          DOC_TAG="release"
+        else
+          DOC_TAG="development"
+        fi
+        DOC_TAG=${DOC_TAG} ${{ env.MACRO_PROJECT_BASE }}="$PWD" make -C doc doxygen
+    - name: Upload HTML documentation
+      uses: actions/upload-artifact@v6
+      with:
+        name: docs_html
+        path: ${{ env.PROJECT_MANIFEST_FOLDER }}/doc/_build/doxygen/html
+    - name: Build extended documentation
+      working-directory: ${{ env.PROJECT_MANIFEST_FOLDER }}
+      shell: bash
+      run: |
+        if [[ "$GITHUB_REF" =~ "refs/tags/v" ]]; then
+          DOC_TAG="release"
+        else
+          DOC_TAG="development"
+        fi
+        DOC_TAG=${DOC_TAG} ${{ env.MACRO_PROJECT_BASE }}="$PWD" ${{ env.MACRO_PROJECT_EXTENDED_DOCS }}="yes" make -C doc doxygen

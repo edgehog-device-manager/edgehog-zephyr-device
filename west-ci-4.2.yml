@@ -33,7 +33,7 @@ manifest:
       repo-path: astarte-device-sdk-zephyr.git
       path: astarte-device-sdk-zephyr
       revision: master
-      west-commands: scripts/west-commands.yml
+      west-commands: scripts/private-west-commands.yml
     - name: zlib-zephyr
       remote: secomind
       revision: release-v1.3.1
