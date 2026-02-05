@@ -8,7 +8,7 @@ manifest:
     - name: zephyrproject-rtos
       url-base: https://github.com/zephyrproject-rtos
     - name: astarte-platform
-      url-base: https://github.com/sorru94
+      url-base: https://github.com/astarte-platform
     - name: secomind
       url-base: https://github.com/secomind
 
@@ -21,7 +21,7 @@ manifest:
       remote: astarte-platform
       repo-path: astarte-device-sdk-zephyr.git
       path: astarte-device-sdk-zephyr
-      revision: use-scripts-templates
+      revision: master
       west-commands: scripts/private-west-commands.yml
     - name: zlib-zephyr
       remote: secomind
