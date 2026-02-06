@@ -1,28 +1,22 @@
-#
-# This file is part of Edgehog.
-#
-# Copyright 2024 SECO Mind Srl
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#    http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
+# (C) Copyright 2026, SECO Mind Srl
 #
 # SPDX-License-Identifier: Apache-2.0
-#
 
 name: Static
 
 on:
-  push:
-  pull_request:
+  workflow_call:
+    inputs:
+      PROJECT_MANIFEST_FOLDER:
+        required: true
+        type: string
+      SAMPLE_NAME:
+        required: true
+        type: string
+
+env:
+  PROJECT_MANIFEST_FOLDER: ${{ inputs.PROJECT_MANIFEST_FOLDER }}
+  SAMPLE_NAME: ${{ inputs.SAMPLE_NAME }}
 
 jobs:
   clang-format:
@@ -31,71 +25,59 @@ jobs:
       group: clang-format-${{ github.ref }}
       cancel-in-progress: true
     steps:
-      - name: Checkout Astarte SDK individually
-        uses: actions/checkout@v6
-        with:
-          repository: astarte-platform/astarte-device-sdk-zephyr
-          path: astarte-device-sdk-zephyr
-          ssh-key: ${{ secrets.SSH_EDGEHOG_DEVICE_ZEPHYR_PRIV_KEY }}
       - name: Checkout
         uses: actions/checkout@v6
         with:
-          path: edgehog-zephyr-device
+          path: ${{ env.PROJECT_MANIFEST_FOLDER }}
       - name: Set CI manifest as defaults
-        working-directory: edgehog-zephyr-device
-        run: mv west-ci.yml west.yml
+        working-directory: ${{ env.PROJECT_MANIFEST_FOLDER }}
+        run: mv west-ci-4.2.yml west.yml
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
-          python-version: 3.11
+          python-version: 3.12
       - name: Setup Zephyr project
         uses: zephyrproject-rtos/action-zephyr-setup@v1
         with:
-          app-path: edgehog-zephyr-device
+          app-path: ${{ env.PROJECT_MANIFEST_FOLDER }}
           toolchains: x86_64-zephyr-elf
       - name: Install Python dependencies
-        working-directory: edgehog-zephyr-device
+        working-directory: ${{ env.PROJECT_MANIFEST_FOLDER }}
         run: pip install -r $PWD/scripts/requirements.txt
       - name: Check format
-        working-directory: edgehog-zephyr-device
+        working-directory: ${{ env.PROJECT_MANIFEST_FOLDER }}
         run: west format --dry-run
-
   code-checker:
     runs-on: ubuntu-latest
     concurrency:
       group: code-checker-${{ github.ref }}
       cancel-in-progress: true
     steps:
-      - name: Checkout Astarte SDK individually
-        uses: actions/checkout@v6
-        with:
-          repository: astarte-platform/astarte-device-sdk-zephyr
-          path: astarte-device-sdk-zephyr
-          ssh-key: ${{ secrets.SSH_EDGEHOG_DEVICE_ZEPHYR_PRIV_KEY }}
       - name: Checkout
         uses: actions/checkout@v6
         with:
-          path: edgehog-zephyr-device
+          path: ${{ env.PROJECT_MANIFEST_FOLDER }}
       - name: Set CI manifest as defaults
-        working-directory: edgehog-zephyr-device
-        run: mv west-ci.yml west.yml
+        working-directory: ${{ env.PROJECT_MANIFEST_FOLDER }}
+        run: mv west-ci-4.2.yml west.yml
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
-          python-version: 3.11
+          python-version: 3.12
       - name: Setup Zephyr project
         uses: zephyrproject-rtos/action-zephyr-setup@v1
         with:
-          app-path: edgehog-zephyr-device
+          app-path: ${{ env.PROJECT_MANIFEST_FOLDER }}
           toolchains: x86_64-zephyr-elf
       - name: Install Python dependencies
-        working-directory: edgehog-zephyr-device
+        working-directory: ${{ env.PROJECT_MANIFEST_FOLDER }}
         run: pip install -r $PWD/scripts/requirements.txt
-      - name: Change code checker version
-        working-directory: astarte-device-sdk-zephyr
+      - name: Install codechecker through pipx
+        working-directory: ${{ env.PROJECT_MANIFEST_FOLDER }}
         run: |
-          pip uninstall codechecker -y
-          pip install codechecker==6.24.4
-      - name: Run static analisys
-        working-directory: edgehog-zephyr-device
-        run: west static --sample edgehog_app
+          sudo apt install pipx
+          pipx ensurepath
+          pipx install codechecker
+      - name: Run clang-tidy
+        working-directory: ${{ env.PROJECT_MANIFEST_FOLDER }}
+        run: west static --sample ${{ env.SAMPLE_NAME }}

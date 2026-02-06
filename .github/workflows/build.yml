@@ -1,28 +1,22 @@
-#
-# This file is part of Edgehog.
-#
-# Copyright 2024 SECO Mind Srl
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#    http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
+# (C) Copyright 2026, SECO Mind Srl
 #
 # SPDX-License-Identifier: Apache-2.0
-#
 
 name: Build
 
 on:
-  push:
-  pull_request:
+  workflow_call:
+    inputs:
+      PROJECT_MANIFEST_FOLDER:
+        required: true
+        type: string
+      SAMPLE_NAME:
+        required: true
+        type: string
+
+env:
+  PROJECT_MANIFEST_FOLDER: ${{ inputs.PROJECT_MANIFEST_FOLDER }}
+  SAMPLE_NAME: ${{ inputs.SAMPLE_NAME }}
 
 jobs:
   build:
@@ -30,8 +24,10 @@ jobs:
     strategy:
       matrix:
         sample-variant:
-          - name: "edgehog.default"
-          - name: "edgehog.wifi"
+          - name: "sample.default"
+            zephyr-version: "4.2"
+          - name: "sample.wifi"
+            zephyr-version: "4.2"
     concurrency:
       group: build-${{ matrix.sample-variant.name }}-${{ github.ref }}
       cancel-in-progress: true
@@ -39,30 +35,26 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
         with:
-          path: edgehog-zephyr-device
-
+          path: ${{ env.PROJECT_MANIFEST_FOLDER }}
       - name: Set CI manifest as defaults
-        working-directory: edgehog-zephyr-device
-        run: mv west-ci.yml west.yml
-
+        working-directory: ${{ env.PROJECT_MANIFEST_FOLDER }}
+        run: mv west-ci-${{ matrix.sample-variant.zephyr-version }}.yml west.yml
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
           python-version: 3.12
-
       - name: Setup Zephyr project
         uses: zephyrproject-rtos/action-zephyr-setup@v1
         with:
-          app-path: edgehog-zephyr-device
+          app-path: ${{ env.PROJECT_MANIFEST_FOLDER }}
           toolchains: arm-zephyr-eabi
-
       - name: Fetch binary blobs
-        working-directory: edgehog-zephyr-device
-        if: matrix.sample-variant.name == 'edgehog.wifi'
+        working-directory: ${{ env.PROJECT_MANIFEST_FOLDER }}
+        if: matrix.sample-variant.name == 'sample.wifi'
         run: |
+          west --version
           west blobs -a fetch hal_nxp
-
-      - name: Build edgehog_app sample
-        working-directory: edgehog-zephyr-device
+      - name: Build sample
+        working-directory: ${{ env.PROJECT_MANIFEST_FOLDER }}
         run: |
-          west twister -T samples/edgehog_app --test ${{ matrix.sample-variant.name }} -v --inline-logs --integration
+          west twister -T samples/${{ env.SAMPLE_NAME }} --test ${{ matrix.sample-variant.name }} -v --inline-logs --integration
