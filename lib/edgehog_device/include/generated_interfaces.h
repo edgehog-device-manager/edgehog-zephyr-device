@@ -17,19 +17,33 @@
 
 // Interface names should resemble as closely as possible their respective .json file names.
 // NOLINTBEGIN(readability-identifier-naming)
+/** @brief Automatically generated interface declaration. */
 extern const astarte_interface_t io_edgehog_devicemanager_BaseImage;
+/** @brief Automatically generated interface declaration. */
 extern const astarte_interface_t io_edgehog_devicemanager_BatteryStatus;
+/** @brief Automatically generated interface declaration. */
 extern const astarte_interface_t io_edgehog_devicemanager_Commands;
+/** @brief Automatically generated interface declaration. */
 extern const astarte_interface_t io_edgehog_devicemanager_HardwareInfo;
+/** @brief Automatically generated interface declaration. */
 extern const astarte_interface_t io_edgehog_devicemanager_LedBehavior;
+/** @brief Automatically generated interface declaration. */
 extern const astarte_interface_t io_edgehog_devicemanager_OSInfo;
+/** @brief Automatically generated interface declaration. */
 extern const astarte_interface_t io_edgehog_devicemanager_OTAEvent;
+/** @brief Automatically generated interface declaration. */
 extern const astarte_interface_t io_edgehog_devicemanager_OTARequest;
+/** @brief Automatically generated interface declaration. */
 extern const astarte_interface_t io_edgehog_devicemanager_RuntimeInfo;
+/** @brief Automatically generated interface declaration. */
 extern const astarte_interface_t io_edgehog_devicemanager_StorageUsage;
+/** @brief Automatically generated interface declaration. */
 extern const astarte_interface_t io_edgehog_devicemanager_SystemInfo;
+/** @brief Automatically generated interface declaration. */
 extern const astarte_interface_t io_edgehog_devicemanager_SystemStatus;
+/** @brief Automatically generated interface declaration. */
 extern const astarte_interface_t io_edgehog_devicemanager_WiFiScanResults;
+/** @brief Automatically generated interface declaration. */
 extern const astarte_interface_t io_edgehog_devicemanager_config_Telemetry;
 // NOLINTEND(readability-identifier-naming)
 

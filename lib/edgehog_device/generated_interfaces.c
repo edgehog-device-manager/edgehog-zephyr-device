@@ -10,6 +10,7 @@
 // Interface names should resemble as closely as possible their respective .json file names.
 // NOLINTBEGIN(readability-identifier-naming)
 
+/** @brief Automatically generated mapping definition. */
 static const astarte_mapping_t io_edgehog_devicemanager_BaseImage_mappings[4] = {
 
     {
@@ -42,6 +43,7 @@ static const astarte_mapping_t io_edgehog_devicemanager_BaseImage_mappings[4] = 
     },
 };
 
+/** @brief Automatically generated interface definition. */
 const astarte_interface_t io_edgehog_devicemanager_BaseImage = {
     .name = "io.edgehog.devicemanager.BaseImage",
     .major_version = 0,
@@ -53,6 +55,7 @@ const astarte_interface_t io_edgehog_devicemanager_BaseImage = {
     .mappings_length = 4U,
 };
 
+/** @brief Automatically generated mapping definition. */
 static const astarte_mapping_t io_edgehog_devicemanager_BatteryStatus_mappings[3] = {
 
     {
@@ -78,6 +81,7 @@ static const astarte_mapping_t io_edgehog_devicemanager_BatteryStatus_mappings[3
     },
 };
 
+/** @brief Automatically generated interface definition. */
 const astarte_interface_t io_edgehog_devicemanager_BatteryStatus = {
     .name = "io.edgehog.devicemanager.BatteryStatus",
     .major_version = 0,
@@ -89,6 +93,7 @@ const astarte_interface_t io_edgehog_devicemanager_BatteryStatus = {
     .mappings_length = 3U,
 };
 
+/** @brief Automatically generated mapping definition. */
 static const astarte_mapping_t io_edgehog_devicemanager_Commands_mappings[1] = {
 
     {
@@ -100,6 +105,7 @@ static const astarte_mapping_t io_edgehog_devicemanager_Commands_mappings[1] = {
     },
 };
 
+/** @brief Automatically generated interface definition. */
 const astarte_interface_t io_edgehog_devicemanager_Commands = {
     .name = "io.edgehog.devicemanager.Commands",
     .major_version = 0,
@@ -111,6 +117,7 @@ const astarte_interface_t io_edgehog_devicemanager_Commands = {
     .mappings_length = 1U,
 };
 
+/** @brief Automatically generated mapping definition. */
 static const astarte_mapping_t io_edgehog_devicemanager_HardwareInfo_mappings[5] = {
 
     {
@@ -150,6 +157,7 @@ static const astarte_mapping_t io_edgehog_devicemanager_HardwareInfo_mappings[5]
     },
 };
 
+/** @brief Automatically generated interface definition. */
 const astarte_interface_t io_edgehog_devicemanager_HardwareInfo = {
     .name = "io.edgehog.devicemanager.HardwareInfo",
     .major_version = 0,
@@ -161,6 +169,7 @@ const astarte_interface_t io_edgehog_devicemanager_HardwareInfo = {
     .mappings_length = 5U,
 };
 
+/** @brief Automatically generated mapping definition. */
 static const astarte_mapping_t io_edgehog_devicemanager_LedBehavior_mappings[1] = {
 
     {
@@ -172,6 +181,7 @@ static const astarte_mapping_t io_edgehog_devicemanager_LedBehavior_mappings[1] 
     },
 };
 
+/** @brief Automatically generated interface definition. */
 const astarte_interface_t io_edgehog_devicemanager_LedBehavior = {
     .name = "io.edgehog.devicemanager.LedBehavior",
     .major_version = 0,
@@ -183,6 +193,7 @@ const astarte_interface_t io_edgehog_devicemanager_LedBehavior = {
     .mappings_length = 1U,
 };
 
+/** @brief Automatically generated mapping definition. */
 static const astarte_mapping_t io_edgehog_devicemanager_OSInfo_mappings[2] = {
 
     {
@@ -201,6 +212,7 @@ static const astarte_mapping_t io_edgehog_devicemanager_OSInfo_mappings[2] = {
     },
 };
 
+/** @brief Automatically generated interface definition. */
 const astarte_interface_t io_edgehog_devicemanager_OSInfo = {
     .name = "io.edgehog.devicemanager.OSInfo",
     .major_version = 0,
@@ -212,6 +224,7 @@ const astarte_interface_t io_edgehog_devicemanager_OSInfo = {
     .mappings_length = 2U,
 };
 
+/** @brief Automatically generated mapping definition. */
 static const astarte_mapping_t io_edgehog_devicemanager_OTAEvent_mappings[5] = {
 
     {
@@ -251,6 +264,7 @@ static const astarte_mapping_t io_edgehog_devicemanager_OTAEvent_mappings[5] = {
     },
 };
 
+/** @brief Automatically generated interface definition. */
 const astarte_interface_t io_edgehog_devicemanager_OTAEvent = {
     .name = "io.edgehog.devicemanager.OTAEvent",
     .major_version = 0,
@@ -262,6 +276,7 @@ const astarte_interface_t io_edgehog_devicemanager_OTAEvent = {
     .mappings_length = 5U,
 };
 
+/** @brief Automatically generated mapping definition. */
 static const astarte_mapping_t io_edgehog_devicemanager_OTARequest_mappings[3] = {
 
     {
@@ -287,6 +302,7 @@ static const astarte_mapping_t io_edgehog_devicemanager_OTARequest_mappings[3] =
     },
 };
 
+/** @brief Automatically generated interface definition. */
 const astarte_interface_t io_edgehog_devicemanager_OTARequest = {
     .name = "io.edgehog.devicemanager.OTARequest",
     .major_version = 1,
@@ -298,6 +314,7 @@ const astarte_interface_t io_edgehog_devicemanager_OTARequest = {
     .mappings_length = 3U,
 };
 
+/** @brief Automatically generated mapping definition. */
 static const astarte_mapping_t io_edgehog_devicemanager_RuntimeInfo_mappings[4] = {
 
     {
@@ -330,6 +347,7 @@ static const astarte_mapping_t io_edgehog_devicemanager_RuntimeInfo_mappings[4] 
     },
 };
 
+/** @brief Automatically generated interface definition. */
 const astarte_interface_t io_edgehog_devicemanager_RuntimeInfo = {
     .name = "io.edgehog.devicemanager.RuntimeInfo",
     .major_version = 0,
@@ -341,6 +359,7 @@ const astarte_interface_t io_edgehog_devicemanager_RuntimeInfo = {
     .mappings_length = 4U,
 };
 
+/** @brief Automatically generated mapping definition. */
 static const astarte_mapping_t io_edgehog_devicemanager_StorageUsage_mappings[2] = {
 
     {
@@ -359,6 +378,7 @@ static const astarte_mapping_t io_edgehog_devicemanager_StorageUsage_mappings[2]
     },
 };
 
+/** @brief Automatically generated interface definition. */
 const astarte_interface_t io_edgehog_devicemanager_StorageUsage = {
     .name = "io.edgehog.devicemanager.StorageUsage",
     .major_version = 0,
@@ -370,6 +390,7 @@ const astarte_interface_t io_edgehog_devicemanager_StorageUsage = {
     .mappings_length = 2U,
 };
 
+/** @brief Automatically generated mapping definition. */
 static const astarte_mapping_t io_edgehog_devicemanager_SystemInfo_mappings[2] = {
 
     {
@@ -388,6 +409,7 @@ static const astarte_mapping_t io_edgehog_devicemanager_SystemInfo_mappings[2] =
     },
 };
 
+/** @brief Automatically generated interface definition. */
 const astarte_interface_t io_edgehog_devicemanager_SystemInfo = {
     .name = "io.edgehog.devicemanager.SystemInfo",
     .major_version = 0,
@@ -399,6 +421,7 @@ const astarte_interface_t io_edgehog_devicemanager_SystemInfo = {
     .mappings_length = 2U,
 };
 
+/** @brief Automatically generated mapping definition. */
 static const astarte_mapping_t io_edgehog_devicemanager_SystemStatus_mappings[4] = {
 
     {
@@ -431,6 +454,7 @@ static const astarte_mapping_t io_edgehog_devicemanager_SystemStatus_mappings[4]
     },
 };
 
+/** @brief Automatically generated interface definition. */
 const astarte_interface_t io_edgehog_devicemanager_SystemStatus = {
     .name = "io.edgehog.devicemanager.SystemStatus",
     .major_version = 0,
@@ -442,6 +466,7 @@ const astarte_interface_t io_edgehog_devicemanager_SystemStatus = {
     .mappings_length = 4U,
 };
 
+/** @brief Automatically generated mapping definition. */
 static const astarte_mapping_t io_edgehog_devicemanager_WiFiScanResults_mappings[5] = {
 
     {
@@ -481,6 +506,7 @@ static const astarte_mapping_t io_edgehog_devicemanager_WiFiScanResults_mappings
     },
 };
 
+/** @brief Automatically generated interface definition. */
 const astarte_interface_t io_edgehog_devicemanager_WiFiScanResults = {
     .name = "io.edgehog.devicemanager.WiFiScanResults",
     .major_version = 0,
@@ -492,6 +518,7 @@ const astarte_interface_t io_edgehog_devicemanager_WiFiScanResults = {
     .mappings_length = 5U,
 };
 
+/** @brief Automatically generated mapping definition. */
 static const astarte_mapping_t io_edgehog_devicemanager_config_Telemetry_mappings[2] = {
 
     {
@@ -510,6 +537,7 @@ static const astarte_mapping_t io_edgehog_devicemanager_config_Telemetry_mapping
     },
 };
 
+/** @brief Automatically generated interface definition. */
 const astarte_interface_t io_edgehog_devicemanager_config_Telemetry = {
     .name = "io.edgehog.devicemanager.config.Telemetry",
     .major_version = 0,

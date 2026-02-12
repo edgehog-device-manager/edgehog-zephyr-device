@@ -21,13 +21,13 @@ The following information is sent to the remote Edgehog instance:
 - OS info
 - Hardware info
 - System info
-- [OTA update using Mcuboot](doc/Over The Air (OTA) updates.md)
+- [OTA update using Mcuboot](doc/architecture/Over The Air (OTA) updates.md)
 - Base image
 - Runtime info and Zephyr version
 - Reboot command
 - System status
 - Storage usage
-- [Led Behavior](doc/Led feedback.md)
+- [Led Behavior](doc/architecture/Led feedback.md)
 - WiFi APs seen by board antenna
 - Battery status API
 - Data Rate Control for telemetry
@@ -96,7 +96,7 @@ west packages pip --install -- -r ./edgehog-zephyr-device/scripts/requirements.t
 
 #### Building and running a sample application
 
-Follow the [sample specific README](samples/edgehog_app/Sample-application.md).
+Follow the sample specific README.
 
 #### One time configuration
 

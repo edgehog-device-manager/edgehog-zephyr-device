@@ -163,7 +163,7 @@ west blobs fetch hal_nxp
 ### Over the air (OTA) updates
 
 A central part of Edgehog is that it provides over the air updates for large device fleets.
-An [Over-the-Air (OTA) Updates](../../doc/Over The Air (OTA) updates.md) is a method for delivering
+An [Over-the-Air (OTA) Updates](../../doc/architecture/Over The Air (OTA) updates.md) is a method for delivering
 firmware updates to remote devices using a network connection. This sample will show you how to
 build and deploy a device using `sysbuild` that leverages `MCUboot` capabilities offering out of the
 box OTA updates.

@@ -54,10 +54,6 @@ jobs:
       uses: actions/setup-python@v6
       with:
         python-version: 3.12
-    - name: Install python packages
-      run: |
-        pip install cmake
-        pip install coverxygen
     - name: Set CI manifest as defaults
       working-directory: ${{ env.PROJECT_MANIFEST_FOLDER }}
       run: mv west-ci-reference.yml west.yml
@@ -66,16 +62,12 @@ jobs:
       with:
         app-path: ${{ env.PROJECT_MANIFEST_FOLDER }}
         toolchains: x86_64-zephyr-elf
+    - name: Install Python dependencies
+      working-directory: ${{ env.PROJECT_MANIFEST_FOLDER }}
+      run: pip install -r $PWD/scripts/requirements.txt
     - name: Build documentation
       working-directory: ${{ env.PROJECT_MANIFEST_FOLDER }}
-      shell: bash
-      run: |
-        if [[ "$GITHUB_REF" =~ "refs/tags/v" ]]; then
-          DOC_TAG="release"
-        else
-          DOC_TAG="development"
-        fi
-        DOC_TAG=${DOC_TAG} ${{ env.MACRO_PROJECT_BASE }}="$PWD" make -C doc doxygen
+      run: west docs
     - name: Upload HTML documentation
       uses: actions/upload-artifact@v6
       with:
@@ -83,11 +75,4 @@ jobs:
         path: ${{ env.PROJECT_MANIFEST_FOLDER }}/doc/_build/doxygen/html
     - name: Build extended documentation
       working-directory: ${{ env.PROJECT_MANIFEST_FOLDER }}
-      shell: bash
-      run: |
-        if [[ "$GITHUB_REF" =~ "refs/tags/v" ]]; then
-          DOC_TAG="release"
-        else
-          DOC_TAG="development"
-        fi
-        DOC_TAG=${DOC_TAG} ${{ env.MACRO_PROJECT_BASE }}="$PWD" ${{ env.MACRO_PROJECT_EXTENDED_DOCS }}="yes" make -C doc doxygen
+      run: west docs -c -e
