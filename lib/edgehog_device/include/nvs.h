@@ -17,6 +17,9 @@
 
 #include <zephyr/fs/nvs.h>
 
+
+#if defined (CONFIG_SETTINGS_NVS)
+
 #ifdef CONFIG_EDGEHOG_DEVICE_USE_EDGEHOG_PARTITION
 /** @brief The devicetree partition name for the NVS. */
 #define NVS_PARTITION edgehog_partition
@@ -67,5 +70,7 @@ edgehog_result_t edgehog_nvs_get_free_space(size_t *free_space);
 #ifdef __cplusplus
 }
 #endif
+
+#endif // defined (CONFIG_SETTINGS_NVS)
 
 #endif // NVS_H
