@@ -21,33 +21,33 @@ EDGEHOG_LOG_MODULE_REGISTER(storage_usage, CONFIG_EDGEHOG_DEVICE_STORAGE_USAGE_L
 
 void publish_storage_usage(edgehog_device_handle_t edgehog_device)
 {
-#if defined (CONFIG_SETTINGS_NVS)
-    const char* path = "/" NVS_PARTITION_LABEL;
+#if defined(CONFIG_SETTINGS_NVS)
+    const char *path = "/" NVS_PARTITION_LABEL;
     size_t total_space = NVS_PARTITION_SIZE;
     size_t free_space = 0;
     if (edgehog_nvs_get_free_space(&free_space) != EDGEHOG_RESULT_OK) {
         return;
     }
-#elif defined (CONFIG_SETTINGS_FILE)
+#elif defined(CONFIG_SETTINGS_FILE)
     struct fs_file_t f;
     fs_file_t_init(&f);
     if (fs_open(&f, CONFIG_SETTINGS_FILE_PATH, 0) != 0) {
         return;
     }
-    const char* path = f.mp->mnt_point;
+    const char *path = f.mp->mnt_point;
     fs_close(&f);
 
     struct fs_statvfs s;
-	if (fs_statvfs(path, &s) != 0) {
+    if (fs_statvfs(path, &s) != 0) {
         return;
-	}
-    size_t total_space = (size_t)s.f_frsize * s.f_blocks;
-    size_t free_space = (size_t)s.f_frsize * s.f_bfree;
+    }
+    size_t total_space = (size_t) s.f_frsize * s.f_blocks;
+    size_t free_space = (size_t) s.f_frsize * s.f_bfree;
 #endif
 
     astarte_object_entry_t object_entries[]
         = { { .path = "totalBytes", .data = astarte_data_from_longinteger(total_space) },
-                { .path = "freeBytes", .data = astarte_data_from_longinteger(free_space) } };
+              { .path = "freeBytes", .data = astarte_data_from_longinteger(free_space) } };
 
     int64_t timestamp_ms = 0;
     system_time_current_ms(&timestamp_ms);
