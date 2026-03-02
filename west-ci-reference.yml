@@ -30,11 +30,5 @@ manifest:
           - mcuboot
     - name: astarte-device-sdk-zephyr
       remote: astarte-platform
-      repo-path: astarte-device-sdk-zephyr.git
-      path: astarte-device-sdk-zephyr
       revision: master
-      west-commands: scripts/private-west-commands.yml
-    - name: zlib-zephyr
-      remote: secomind
-      revision: release-v1.3.1
-      path: modules/zlib
+      import: true
