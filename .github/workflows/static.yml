@@ -46,7 +46,7 @@ jobs:
         run: pip install -r $PWD/scripts/requirements.txt
       - name: Check format
         working-directory: ${{ env.PROJECT_MANIFEST_FOLDER }}
-        run: west format --dry-run
+        run: west astarte-format --dry-run
   code-checker:
     runs-on: ubuntu-latest
     concurrency:
@@ -80,4 +80,4 @@ jobs:
           pipx install codechecker
       - name: Run clang-tidy
         working-directory: ${{ env.PROJECT_MANIFEST_FOLDER }}
-        run: west static --sample ${{ env.SAMPLE_NAME }}
+        run: west astarte-static --sample ${{ env.SAMPLE_NAME }}

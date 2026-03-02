@@ -126,7 +126,7 @@ west twister -c -v --inline-logs -p unit_testing -T ./edgehog-zephyr-device/test
 The code in this module is formatted using `clang-format`.
 An extension command for `west` has been created to facilitate formatting, `clang-format`
 should be installed before running this command.
-Run `west format --help` to learn about the formatting options.
+Run `west astarte-format --help` to learn about the formatting options.
 
 ### Static code analysis
 
@@ -150,7 +150,7 @@ Where `$LLVM_VERSION` is LLVM version to install.
 
 An extension command for `west` has been created to facilitate running static analysis with
 `clang-tidy`.
-Run `west static --help` to read what this command performs.
+Run `west astarte-static --help` to read what this command performs.
 
 Note that this extension is only available when using this repository as a stand-alone project.
 
@@ -161,7 +161,7 @@ The dependencies for generating the doxygen documentation are:
 - `graphviz`
 
 An extension command for `west` has been created to facilitate generating the documentation.
-Run `west docs --help` for more information on how to generate the documentation.
+Run `west astarte-docs --help` for more information on how to generate the documentation.
 
 ## VS Code integration
 

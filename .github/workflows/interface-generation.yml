@@ -63,7 +63,7 @@ jobs:
             ../edgehog-zephyr-device/interfaces
       - name: Generate interface reference code
         working-directory: edgehog-zephyr-device
-        run: west generate-interfaces interfaces
+        run: west astarte-interfaces interfaces
       - name: Check interfaces difference
         working-directory: edgehog-zephyr-device
         run: |

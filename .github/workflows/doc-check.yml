@@ -67,7 +67,7 @@ jobs:
       run: pip install -r $PWD/scripts/requirements.txt
     - name: Build documentation
       working-directory: ${{ env.PROJECT_MANIFEST_FOLDER }}
-      run: west docs
+      run: west astarte-docs
     - name: Upload HTML documentation
       uses: actions/upload-artifact@v6
       with:
@@ -75,4 +75,4 @@ jobs:
         path: ${{ env.PROJECT_MANIFEST_FOLDER }}/doc/_build/doxygen/html
     - name: Build extended documentation
       working-directory: ${{ env.PROJECT_MANIFEST_FOLDER }}
-      run: west docs -c -e
+      run: west astarte-docs -c -e
