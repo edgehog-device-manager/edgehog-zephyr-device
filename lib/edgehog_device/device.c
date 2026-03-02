@@ -258,7 +258,7 @@ edgehog_result_t edgehog_device_new(
     }
 
     // Step 7: Fill in the Edgehog device struct
-    *edgehog_device = (struct edgehog_device) {
+    *edgehog_device = (struct edgehog_device){
         .state = EDGEHOG_DEVICE_STOPPED,
         .initial_publish = false,
         .astarte_device = astarte_device,
