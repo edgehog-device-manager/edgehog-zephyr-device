@@ -257,7 +257,15 @@ edgehog_result_t edgehog_device_new(
         goto failure;
     }
 
-    // Step 7: Fill in the Edgehog device struct
+    // Step 7: Initialize the file transfer for the Edgehog device
+    // TODO: use the `config` struct to populate the file transfer
+    edgehog_file_transfer_t *file_transfer = edgehog_file_transfer_new();
+    if (!file_transfer) {
+        EDGEHOG_LOG_ERR("Unable to create edgehog file transfer");
+        goto failure;
+    }
+
+    // Step 8: Fill in the Edgehog device struct
     *edgehog_device = (struct edgehog_device){
         .state = EDGEHOG_DEVICE_STOPPED,
         .initial_publish = false,
@@ -271,6 +279,7 @@ edgehog_result_t edgehog_device_new(
         .user_property_unset_cbk = user_property_unset_cbk,
         .user_cbk_user_data = user_cbk_user_data,
         .telemetry = telemetry,
+        .file_transfer = file_transfer,
     };
     memcpy(edgehog_device->boot_id, boot_id, UUID_STR_LEN + 1);
     *edgehog_handle = edgehog_device;
@@ -299,6 +308,7 @@ void edgehog_device_destroy(edgehog_device_handle_t edgehog_device)
         EDGEHOG_LOG_ERR("Astarte device destroy error: %s", astarte_result_to_name(ares));
     }
     edgehog_telemetry_destroy(edgehog_device->telemetry);
+    edgehog_file_transfer_destroy(edgehog_device->file_transfer);
     free(edgehog_device);
 }
 
@@ -337,6 +347,14 @@ edgehog_result_t edgehog_device_poll(edgehog_device_handle_t edgehog_device)
                 EDGEHOG_LOG_ERR("Unable to start Edgehog telemetry service");
             }
         }
+
+        edgehog_file_transfer_t *file_transfer = edgehog_device->file_transfer;
+        if (!edgehog_file_transfer_is_running(file_transfer)) {
+            eres = edgehog_file_transfer_start(edgehog_device);
+            if (eres != EDGEHOG_RESULT_OK) {
+                EDGEHOG_LOG_ERR("Unable to start Edgehog telemetry service");
+            }
+        }
     }
     return eres;
 }
@@ -344,6 +362,11 @@ edgehog_result_t edgehog_device_poll(edgehog_device_handle_t edgehog_device)
 edgehog_result_t edgehog_device_stop(edgehog_device_handle_t edgehog_device, k_timeout_t timeout)
 {
     edgehog_result_t eres = edgehog_telemetry_stop(edgehog_device->telemetry, timeout);
+    if (eres != EDGEHOG_RESULT_OK) {
+        EDGEHOG_LOG_ERR("Unable to stop the Edgehog device within the timeout");
+        return eres;
+    }
+    eres = edgehog_file_transfer_stop(edgehog_device->file_transfer, timeout);
     if (eres != EDGEHOG_RESULT_OK) {
         EDGEHOG_LOG_ERR("Unable to stop the Edgehog device within the timeout");
         return eres;
