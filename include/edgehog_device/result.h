@@ -98,7 +98,10 @@ typedef enum
     EDGEHOG_RESULT_INVALID_PARAM = 34,
     /** @brief HTTP request was aborted. */
     EDGEHOG_RESULT_HTTP_REQUEST_ABORTED = 35,
-
+    /** @brief Unable to schedule a File transfer instance. */
+    EDGEHOG_RESULT_FILE_TRANSFER_START_FAIL = 36,
+    /** @brief A timeout occurred while stopping the file transfer timer. */
+    EDGEHOG_RESULT_FILE_TRANSFER_STOP_TIMEOUT = 37,
 } edgehog_result_t;
 
 /**
