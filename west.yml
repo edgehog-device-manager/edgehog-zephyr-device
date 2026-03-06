@@ -19,5 +19,5 @@ manifest:
       import: true
     - name: astarte-device-sdk-zephyr
       remote: astarte-platform
-      revision: master
+      revision: 1dac71e79e549050b0e08f388a54c4d7e2542f04
       import: true
