@@ -4,10 +4,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include <time.h>
+
 #include <zephyr/kernel.h>
 #include <zephyr/net/net_mgmt.h>
 #include <zephyr/net/sntp.h>
-#include <zephyr/posix/time.h>
+#include <zephyr/sys/clock.h>
 
 #include <zephyr/logging/log.h>
 LOG_MODULE_REGISTER(edgehog_app, CONFIG_APP_LOG_LEVEL); // NOLINT
@@ -204,7 +206,7 @@ static void system_time_init()
         tspec.tv_nsec = ((uint64_t) now.fraction * (1000lu * 1000lu * 1000lu)) >> 32;
         // NOLINTEND(bugprone-narrowing-conversions, hicpp-signed-bitwise,
         // readability-magic-numbers)
-        clock_settime(CLOCK_REALTIME, &tspec);
+        sys_clock_settime(CLOCK_REALTIME, &tspec);
     }
 #endif
 }
