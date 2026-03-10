@@ -44,7 +44,7 @@ static void file_transfer_service_thread_entry_point(
     while (atomic_test_bit(
         &device->file_transfer->thread_state, FILE_TRANSFER_SERVICE_THREAD_RUNNING_BIT)) {
         if (k_msgq_get(msgq, &msg_rcv, K_FOREVER) == 0) {
-            EDGEHOG_LOG_DBG("FT - received: %d\n", msg_rcv);
+            EDGEHOG_LOG_DBG("FT - received: %d", msg_rcv);
         }
     }
 
@@ -94,6 +94,14 @@ edgehog_result_t edgehog_file_transfer_start(edgehog_device_handle_t device)
 
     if (!thread_id) {
         EDGEHOG_LOG_ERR("Unable to start file transfer message thread");
+        atomic_clear_bit(&ft->thread_state, FILE_TRANSFER_SERVICE_THREAD_RUNNING_BIT);
+        return EDGEHOG_RESULT_FILE_TRANSFER_START_FAIL;
+    }
+
+    // assign a name to the thread for debugging purposes
+    int ret = k_thread_name_set(thread_id, "file_transfer");
+    if (ret != 0) {
+        EDGEHOG_LOG_ERR("Failed to set thread name, error %d", ret);
         atomic_clear_bit(&ft->thread_state, FILE_TRANSFER_SERVICE_THREAD_RUNNING_BIT);
         return EDGEHOG_RESULT_FILE_TRANSFER_START_FAIL;
     }
