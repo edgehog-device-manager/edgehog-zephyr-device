@@ -31,7 +31,8 @@ edgehog_file_transfer_t *edgehog_file_transfer_new();
 
 edgehog_result_t edgehog_file_transfer_start(edgehog_device_handle_t device);
 
-edgehog_result_t edgehog_file_transfer_stop(edgehog_file_transfer_t *file_transfer, k_timeout_t timeout);
+edgehog_result_t edgehog_file_transfer_stop(
+    edgehog_file_transfer_t *file_transfer, k_timeout_t timeout);
 
 void edgehog_file_transfer_destroy(edgehog_file_transfer_t *ft);
 
