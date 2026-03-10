@@ -12,6 +12,7 @@
 #include <astarte_device_sdk/device.h>
 
 #include "log.h"
+
 EDGEHOG_LOG_MODULE_REGISTER(file_transfer, CONFIG_EDGEHOG_DEVICE_FILE_TRANSFER_LOG_LEVEL);
 
 /************************************************
@@ -29,8 +30,10 @@ K_THREAD_STACK_DEFINE(file_transfer_service_stack_area, FILE_TRANSFER_SERVICE_TH
 // entry point for the thread handling the file transfer operations
 // TODO: at the moment only astarte event reception is performed
 //      implement also download (Astarte -> Device) and upload (Device -> Astarte) operations
-static void file_transfer_service_thread_entry_point(void *device_ptr, void *queue_ptr, void *unused)
+static void file_transfer_service_thread_entry_point(
+    void *device_ptr, void *queue_ptr, void *unused)
 {
+    EDGEHOG_LOG_DBG("FILE TRANSFER ENTRY POINT");
     ARG_UNUSED(unused);
 
     edgehog_device_handle_t device = (edgehog_device_handle_t) device_ptr;
@@ -38,11 +41,14 @@ static void file_transfer_service_thread_entry_point(void *device_ptr, void *que
 
     int32_t msg_rcv = -1;
 
-    while (atomic_test_bit(&device->file_transfer->thread_state, FILE_TRANSFER_SERVICE_THREAD_RUNNING_BIT)) {
+    while (atomic_test_bit(
+        &device->file_transfer->thread_state, FILE_TRANSFER_SERVICE_THREAD_RUNNING_BIT)) {
         if (k_msgq_get(msgq, &msg_rcv, K_FOREVER) == 0) {
-            printk("FT - received: %d", msg_rcv);
+            EDGEHOG_LOG_DBG("FT - received: %d\n", msg_rcv);
         }
     }
+
+    EDGEHOG_LOG_DBG("CLOSING FILE TRANSFER THREAD");
 }
 
 /**
@@ -51,7 +57,8 @@ static void file_transfer_service_thread_entry_point(void *device_ptr, void *que
  * // TODO: add config params to populate the file transfer
  * @return A pointer to Edgehog telemetry or a NULL if an error occurred.
  */
-edgehog_file_transfer_t *edgehog_file_transfer_new() {
+edgehog_file_transfer_t *edgehog_file_transfer_new()
+{
     // Allocate space for the file transfer internal struct
     edgehog_file_transfer_t *ft = calloc(1, sizeof(edgehog_file_transfer_t));
     if (!ft) {
@@ -81,8 +88,9 @@ edgehog_result_t edgehog_file_transfer_start(edgehog_device_handle_t device)
     k_msgq_init(&ft->msgq, ft->msgq_buffer, sizeof(int32_t), EDGEHOG_FILE_TRANSFER_LEN);
 
     k_tid_t thread_id = k_thread_create(&ft->thread, file_transfer_service_stack_area,
-        FILE_TRANSFER_SERVICE_THREAD_STACK_SIZE, file_transfer_service_thread_entry_point, (void *) device,
-        (void *) &ft->msgq, NULL, FILE_TRANSFER_SERVICE_THREAD_PRIORITY, 0, K_NO_WAIT);
+        FILE_TRANSFER_SERVICE_THREAD_STACK_SIZE, file_transfer_service_thread_entry_point,
+        (void *) device, (void *) &ft->msgq, NULL, FILE_TRANSFER_SERVICE_THREAD_PRIORITY, 0,
+        K_NO_WAIT);
 
     if (!thread_id) {
         EDGEHOG_LOG_ERR("Unable to start file transfer message thread");
@@ -90,17 +98,17 @@ edgehog_result_t edgehog_file_transfer_start(edgehog_device_handle_t device)
         return EDGEHOG_RESULT_FILE_TRANSFER_START_FAIL;
     }
 
-    // for (int i = 0; i < EDGEHOG_FILE_TRANSFER_LEN; i++) {
-    //     int32_t *entry = ft->entries[i];
-    //     if (entry && entry->enable) {
-    //         schedule_entry(telemetry, entry);
-    //     }
-    // }
+    // TODO: This is only done for simulation. Remove after having checked correctness.
+    for (int32_t i = 1; i <= 10; i++) {
+        k_msgq_put(&ft->msgq, &i, K_NO_WAIT);
+        k_sleep(K_MSEC(1000));
+    }
 
     return EDGEHOG_RESULT_OK;
 }
 
-edgehog_result_t edgehog_file_transfer_stop(edgehog_file_transfer_t *file_transfer, k_timeout_t timeout)
+edgehog_result_t edgehog_file_transfer_stop(
+    edgehog_file_transfer_t *file_transfer, k_timeout_t timeout)
 {
     // Request the thread to self exit
     atomic_clear_bit(&file_transfer->thread_state, FILE_TRANSFER_SERVICE_THREAD_RUNNING_BIT);
@@ -116,8 +124,9 @@ edgehog_result_t edgehog_file_transfer_stop(edgehog_file_transfer_t *file_transf
     }
 }
 
-void edgehog_file_transfer_destroy(edgehog_file_transfer_t *ft) {
-    // TODO: implement file transfer deallocations
+void edgehog_file_transfer_destroy(edgehog_file_transfer_t *ft)
+{
+    k_msgq_cleanup(&ft->msgq);
     free(ft);
 }
 
