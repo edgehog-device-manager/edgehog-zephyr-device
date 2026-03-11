@@ -106,7 +106,18 @@ edgehog_result_t edgehog_file_transfer_start(edgehog_device_handle_t device)
         return EDGEHOG_RESULT_FILE_TRANSFER_START_FAIL;
     }
 
-    // TODO: This is only done for simulation. Remove after having checked correctness.
+    return EDGEHOG_RESULT_OK;
+}
+
+edgehog_result_t edgehog_file_transfer_event(
+    edgehog_device_handle_t device, astarte_device_datastream_object_event_t *object_event)
+{
+    // TODO: should we check if the FT thread and other structs have been initialized?
+
+    // TODO: This is only done for simulation. Handle reception of Astarte FT event with correct
+    // data.
+    edgehog_file_transfer_t *ft = device->file_transfer;
+
     for (int32_t i = 1; i <= 10; i++) {
         k_msgq_put(&ft->msgq, &i, K_NO_WAIT);
         k_sleep(K_MSEC(1000));
