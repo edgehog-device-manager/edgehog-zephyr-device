@@ -31,6 +31,21 @@ edgehog_file_transfer_t *edgehog_file_transfer_new();
 
 edgehog_result_t edgehog_file_transfer_start(edgehog_device_handle_t device);
 
+/**
+ * @brief receive Edgehog device File Transfer (Server to Device) event.
+ *
+ * @details This function receives an FT event request from Astarte and forward it to the
+ * thread handling it through a message queue.
+ *
+ * @param edgehog_dev A valid Edgehog device handle.
+ * @param object_event A valid Astarte datastream object event.
+ *
+ * @return EDGEHOG_RESULT_OK if the FT event is handled successfully, an edgehog_result_t
+ * otherwise.
+ */
+edgehog_result_t edgehog_file_transfer_event(
+    edgehog_device_handle_t device, astarte_device_datastream_object_event_t *object_event);
+
 edgehog_result_t edgehog_file_transfer_stop(
     edgehog_file_transfer_t *file_transfer, k_timeout_t timeout);
 
