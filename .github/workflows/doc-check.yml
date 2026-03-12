@@ -69,7 +69,7 @@ jobs:
       working-directory: ${{ env.PROJECT_MANIFEST_FOLDER }}
       run: west astarte-docs
     - name: Upload HTML documentation
-      uses: actions/upload-artifact@v6
+      uses: actions/upload-artifact@v7
       with:
         name: docs_html
         path: ${{ env.PROJECT_MANIFEST_FOLDER }}/doc/_build/doxygen/html
