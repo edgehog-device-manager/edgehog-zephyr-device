@@ -29,20 +29,20 @@ void publish_storage_usage(edgehog_device_handle_t edgehog_device)
         return;
     }
 #elif defined(CONFIG_SETTINGS_FILE)
-    struct fs_file_t f;
-    fs_file_t_init(&f);
-    if (fs_open(&f, CONFIG_SETTINGS_FILE_PATH, 0) != 0) {
+    struct fs_file_t file;
+    fs_file_t_init(&file);
+    if (fs_open(&file, CONFIG_SETTINGS_FILE_PATH, 0) != 0) {
         return;
     }
-    const char *path = f.mp->mnt_point;
-    fs_close(&f);
+    const char *path = file.mp->mnt_point;
+    fs_close(&file);
 
-    struct fs_statvfs s;
-    if (fs_statvfs(path, &s) != 0) {
+    struct fs_statvfs stats;
+    if (fs_statvfs(path, &stats) != 0) {
         return;
     }
-    size_t total_space = (size_t) s.f_frsize * s.f_blocks;
-    size_t free_space = (size_t) s.f_frsize * s.f_bfree;
+    size_t total_space = (size_t) stats.f_frsize * stats.f_blocks;
+    size_t free_space = (size_t) stats.f_frsize * stats.f_bfree;
 #endif
 
     astarte_object_entry_t object_entries[]
