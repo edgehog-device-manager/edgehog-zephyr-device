@@ -2177,6 +2177,7 @@ static const astarte_mapping_t
             .explicit_timestamp = false,
             .allow_unset = false,
         },
+        // TODO: it is missing "destinationType" mapping endpoint, check again interface generation
         {
             .endpoint = "/request/destination",
             .type = ASTARTE_MAPPING_TYPE_STRING,

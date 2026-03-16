@@ -102,6 +102,10 @@ typedef enum
     EDGEHOG_RESULT_FILE_TRANSFER_START_FAIL = 36,
     /** @brief A timeout occurred while stopping the file transfer timer. */
     EDGEHOG_RESULT_FILE_TRANSFER_STOP_TIMEOUT = 37,
+    /** @brief Invalid File transfer request received. */
+    EDGEHOG_RESULT_FILE_TRANSFER_INVALID_REQUEST = 38,
+    /** @brief Unable to send File transfer data through message queue. */
+    EDGEHOG_RESULT_FILE_TRANSFER_QUEUE_ERROR = 39,
 } edgehog_result_t;
 
 /**
