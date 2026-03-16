@@ -10,7 +10,7 @@
 #include <zephyr/fs/nvs.h>
 #include <zephyr/storage/flash_map.h>
 
-#if defined (CONFIG_SETTINGS_NVS)
+#if defined(CONFIG_SETTINGS_NVS)
 
 #include "log.h"
 EDGEHOG_LOG_MODULE_REGISTER(edgehog_nvs, CONFIG_EDGEHOG_DEVICE_NVS_LOG_LEVEL);

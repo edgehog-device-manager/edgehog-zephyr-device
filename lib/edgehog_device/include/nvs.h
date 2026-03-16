@@ -17,8 +17,7 @@
 
 #include <zephyr/fs/nvs.h>
 
-
-#if defined (CONFIG_SETTINGS_NVS)
+#if defined(CONFIG_SETTINGS_NVS)
 
 #ifdef CONFIG_EDGEHOG_DEVICE_USE_EDGEHOG_PARTITION
 /** @brief The devicetree partition name for the NVS. */
