@@ -10,6 +10,8 @@
 #include <zephyr/fs/nvs.h>
 #include <zephyr/storage/flash_map.h>
 
+#if defined (CONFIG_SETTINGS_NVS)
+
 #include "log.h"
 EDGEHOG_LOG_MODULE_REGISTER(edgehog_nvs, CONFIG_EDGEHOG_DEVICE_NVS_LOG_LEVEL);
 
@@ -69,3 +71,5 @@ edgehog_result_t edgehog_nvs_get_free_space(size_t *const free_space)
     *free_space = (size_t) free_space_res;
     return EDGEHOG_RESULT_OK;
 }
+
+#endif // defined (CONFIG_SETTINGS_NVS)
