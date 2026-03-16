@@ -14,13 +14,23 @@
 
 typedef struct
 {
+    char *id;
+    char *url;
+    char *http_header_key;
+    char *http_header_value;
+    int64_t file_size_bytes;
+    bool progress;
+} ft_server_to_device_data_t;
+
+typedef struct
+{
     /** @brief File transfer entries list. */
-    int32_t *entries[EDGEHOG_FILE_TRANSFER_LEN];
+    ft_server_to_device_data_t *entries[EDGEHOG_FILE_TRANSFER_LEN];
     /** @brief Message queue. */
     struct k_msgq msgq;
     /** @brief Ring buffer that holds queued messages. */
     // TODO: at the moment we are only sending int32 values for testing
-    char msgq_buffer[EDGEHOG_FILE_TRANSFER_LEN * sizeof(int32_t)];
+    char msgq_buffer[EDGEHOG_FILE_TRANSFER_LEN * sizeof(ft_server_to_device_data_t)];
     /** @brief Telemetry service thread, peeks the msgq and transmits eventual messages. */
     struct k_thread thread;
     /** @brief Run state for the telemetry service thread. */

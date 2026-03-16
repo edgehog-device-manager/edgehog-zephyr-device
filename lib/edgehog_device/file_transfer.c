@@ -8,6 +8,7 @@
 #include "system_status.h"
 
 #include <stdlib.h>
+#include <string.h>
 
 #include <astarte_device_sdk/device.h>
 
@@ -39,17 +40,39 @@ static void file_transfer_service_thread_entry_point(
     edgehog_device_handle_t device = (edgehog_device_handle_t) device_ptr;
     struct k_msgq *msgq = (struct k_msgq *) queue_ptr;
 
-    int32_t msg_rcv = -1;
+    ft_server_to_device_data_t msg_rcv = { 0 };
 
     while (atomic_test_bit(
         &device->file_transfer->thread_state, FILE_TRANSFER_SERVICE_THREAD_RUNNING_BIT)) {
         if (k_msgq_get(msgq, &msg_rcv, K_FOREVER) == 0) {
-            EDGEHOG_LOG_DBG("FT - received: %d", msg_rcv);
+            EDGEHOG_LOG_DBG("FT - received id:                  %s", msg_rcv.id);
+            EDGEHOG_LOG_DBG("FT - received url:                 %s", msg_rcv.url);
+            EDGEHOG_LOG_DBG("FT - received http_header_key:     %s", msg_rcv.http_header_key);
+            EDGEHOG_LOG_DBG("FT - received http_header_value:   %s", msg_rcv.http_header_value);
+            EDGEHOG_LOG_DBG("FT - received file_size_bytes:     %lld", msg_rcv.file_size_bytes);
+            EDGEHOG_LOG_DBG("FT - received progress:            %d", msg_rcv.progress);
+
+            free(msg_rcv.id);
+            free(msg_rcv.url);
+            free(msg_rcv.http_header_key);
+            free(msg_rcv.http_header_value);
+            memset(&msg_rcv, 0, sizeof(msg_rcv));
         }
     }
 
     EDGEHOG_LOG_DBG("CLOSING FILE TRANSFER THREAD");
 }
+
+/************************************************
+ *         Static functions declarations        *
+ ***********************************************/
+
+// Equivalent of POSIX strdup() funciton
+static char *duplicate_string(const char *src);
+
+/************************************************
+ *         Global functions definitions         *
+ ***********************************************/
 
 /**
  * @brief Create an Edgehog file transfer service.
@@ -85,7 +108,8 @@ edgehog_result_t edgehog_file_transfer_start(edgehog_device_handle_t device)
         return EDGEHOG_RESULT_FILE_TRANSFER_START_FAIL;
     }
 
-    k_msgq_init(&ft->msgq, ft->msgq_buffer, sizeof(int32_t), EDGEHOG_FILE_TRANSFER_LEN);
+    k_msgq_init(
+        &ft->msgq, ft->msgq_buffer, sizeof(ft_server_to_device_data_t), EDGEHOG_FILE_TRANSFER_LEN);
 
     k_tid_t thread_id = k_thread_create(&ft->thread, file_transfer_service_stack_area,
         FILE_TRANSFER_SERVICE_THREAD_STACK_SIZE, file_transfer_service_thread_entry_point,
@@ -114,16 +138,104 @@ edgehog_result_t edgehog_file_transfer_event(
 {
     // TODO: should we check if the FT thread and other structs have been initialized?
 
-    // TODO: This is only done for simulation. Handle reception of Astarte FT event with correct
-    // data.
-    edgehog_file_transfer_t *ft = device->file_transfer;
-
-    for (int32_t i = 1; i <= 10; i++) {
-        k_msgq_put(&ft->msgq, &i, K_NO_WAIT);
-        k_sleep(K_MSEC(1000));
+    if (!object_event) {
+        EDGEHOG_LOG_ERR("Unable to handle event, object event undefined");
+        return EDGEHOG_RESULT_OTA_INVALID_REQUEST;
     }
 
-    return EDGEHOG_RESULT_OK;
+    astarte_object_entry_t *rx_values = object_event->entries;
+    size_t rx_values_length = object_event->entries_len;
+
+    // If the file is to be stored, this MUST be unique to the file (e.g. hash of the content). For
+    // a file that needs to be streamed, it can be unique for the single request (e.g. uuid)."
+    char *ft_id = NULL;
+    // The URL to get the file from
+    char *ft_url = NULL;
+    // Keys for the HTTP headers, must be in the order of the values
+    char *ft_http_header_key = NULL;
+    // Values for the HTTP headers, must be in the order of the keys
+    char *ft_http_header_value = NULL;
+    // // Optional enum string for the file compression with default value empty, other values are:
+    // ['tar.gz']" char *compression = NULL; Total file size (if multiple files) uncompressed in
+    // bytes. It's used to reserve this space on the device."
+    int64_t ft_file_size_bytes = -1;
+    // Flag to enable the progress reporting of the download
+    bool ft_progress = false;
+    // // Must be in the form sha256:deadbeaf, and should be used only if supported by the device."
+    // char *digest = NULL;
+    // // Optional file name of the file to download, default is empty"
+    // char *file_name = NULL;
+    // // Optional ttl for how long to keep the file for, if 0 is forever"
+    // int64_t ttl_seconds = -1;
+    // // Optional unix mode for the file, set to default if 0. All files are immutable, so setting
+    // it to writable has no effect." int64_t file_mode = -1;
+    // // Optional unix uid of the user owning the file, set to default if -1."
+    // int64_t user_id = -1;
+    // // Optional unix gid of the group owning the file, set to default if -1."
+    // int64_t group_id = -1;
+    // // String enum specifying the destination type, with allowed values: [storage, streaming,
+    // filesystem]."
+    // // The value depends on the selected destination type: for 'storage' and 'streaming' it's an
+    // empty string, and for 'filesystem' is a path to a file on the device." char *destination =
+    // NULL;
+
+    for (size_t i = 0; i < rx_values_length; i++) {
+        const char *path = rx_values[i].path;
+        astarte_data_t rx_value = rx_values[i].data;
+
+        if (strcmp(path, "id") == 0) {
+            ft_id = duplicate_string((char *) rx_value.data.string);
+            EDGEHOG_LOG_INF("id: %s", ft_id ? ft_id : "NULL");
+        } else if (strcmp(path, "url") == 0) {
+            ft_url = duplicate_string((char *) rx_value.data.string);
+            EDGEHOG_LOG_INF("url: %s", ft_url ? ft_url : "NULL");
+        } else if (strcmp(path, "httpHeaderKey") == 0) {
+            ft_http_header_key = duplicate_string((char *) rx_value.data.string);
+            EDGEHOG_LOG_INF("httpHeaderKey: %s", ft_http_header_key ? ft_http_header_key : "NULL");
+        } else if (strcmp(path, "httpHeaderValue") == 0) {
+            ft_http_header_value = duplicate_string((char *) rx_value.data.string);
+            EDGEHOG_LOG_INF(
+                "httpHeaderValue: %s", ft_http_header_value ? ft_http_header_value : "NULL");
+        } else if (strcmp(path, "fileSizeBytes") == 0) {
+            ft_file_size_bytes = rx_value.data.longinteger;
+            EDGEHOG_LOG_INF("fileSizeBytes: %lld", ft_file_size_bytes);
+        } else if (strcmp(path, "progress") == 0) {
+            ft_progress = rx_value.data.boolean;
+            EDGEHOG_LOG_INF("progress: %d", ft_progress);
+        }
+    }
+
+    if (!ft_id || !ft_url || !ft_http_header_key || !ft_http_header_value || !ft_file_size_bytes
+        || !ft_progress) {
+        EDGEHOG_LOG_ERR("Unable to extract data from request");
+        return EDGEHOG_RESULT_FILE_TRANSFER_INVALID_REQUEST;
+    }
+
+    ft_server_to_device_data_t data = {
+        .id = ft_id,
+        .url = ft_url,
+        .http_header_key = ft_http_header_key,
+        .http_header_value = ft_http_header_value,
+        .file_size_bytes = ft_file_size_bytes,
+        .progress = ft_progress,
+    };
+
+    edgehog_result_t res = EDGEHOG_RESULT_OK;
+
+    edgehog_file_transfer_t *ft = device->file_transfer;
+
+    if (k_msgq_put(&ft->msgq, &data, K_NO_WAIT) != 0) {
+        EDGEHOG_LOG_ERR("Unable to send file transfer data to the task handling it");
+        // if message is not sent free the resources allocad onto the heap
+        free(ft_id);
+        free(ft_url);
+        free(ft_http_header_key);
+        free(ft_http_header_value);
+        memset(&data, 0, sizeof(data));
+        res = EDGEHOG_RESULT_FILE_TRANSFER_QUEUE_ERROR;
+    }
+
+    return res;
 }
 
 edgehog_result_t edgehog_file_transfer_stop(
@@ -155,4 +267,25 @@ bool edgehog_file_transfer_is_running(edgehog_file_transfer_t *file_transfer)
         return false;
     }
     return atomic_test_bit(&file_transfer->thread_state, FILE_TRANSFER_SERVICE_THREAD_RUNNING_BIT);
+}
+
+/************************************************
+ *         Static functions definitions         *
+ ***********************************************/
+
+static char *duplicate_string(const char *src)
+{
+    if (src == NULL) {
+        return NULL;
+    }
+
+    // length including the null terminator
+    size_t len = strlen(src) + 1;
+    char *dest = malloc(len);
+
+    if (dest != NULL) {
+        memcpy(dest, src, len);
+    }
+
+    return dest;
 }

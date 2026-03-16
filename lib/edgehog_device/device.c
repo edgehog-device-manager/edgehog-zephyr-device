@@ -138,8 +138,8 @@ static void astarte_datastream_object_cbk(astarte_device_datastream_object_event
         //  internally the device should create FT object containing the info sent from Astarte,
         //  send a FT request on the queue of FT events so that the thread in charge of handling it
         //  will process it.
-        edgehog_result_t ota_result = edgehog_file_transfer_event(edgehog_device, &event);
-        if (ota_result != EDGEHOG_RESULT_OK) {
+        edgehog_result_t ft_result = edgehog_file_transfer_event(edgehog_device, &event);
+        if (ft_result != EDGEHOG_RESULT_OK) {
             EDGEHOG_LOG_ERR("Unable to handle OTA update request");
         }
         return;
