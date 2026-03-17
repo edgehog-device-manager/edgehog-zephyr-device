@@ -444,6 +444,7 @@ static edgehog_result_t add_interfaces(astarte_device_handle_t astarte_device)
 #endif
         &io_edgehog_devicemanager_config_Telemetry,
         &io_edgehog_devicemanager_fileTransfer_posix_ServerToDevice,
+        &io_edgehog_devicemanager_fileTransfer_Response,
     };
 
     for (int i = 0; i < ARRAY_SIZE(interfaces); i++) {
