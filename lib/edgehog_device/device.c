@@ -126,7 +126,7 @@ static void astarte_datastream_object_cbk(astarte_device_datastream_object_event
     if (strcmp(base_event.interface_name,
             io_edgehog_devicemanager_fileTransfer_posix_ServerToDevice.name)
         == 0) {
-        EDGEHOG_LOG_INF("Received File Transfer event");
+        EDGEHOG_LOG_INF("Received File Transfer server to device event");
 
         if (strcmp(base_event.path, "/request") != 0) {
             EDGEHOG_LOG_ERR(
@@ -134,11 +134,24 @@ static void astarte_datastream_object_cbk(astarte_device_datastream_object_event
             return;
         }
 
-        // TODO: handle the file transfer event.
-        //  internally the device should create FT object containing the info sent from Astarte,
-        //  send a FT request on the queue of FT events so that the thread in charge of handling it
-        //  will process it.
-        edgehog_result_t ft_result = edgehog_file_transfer_event(edgehog_device, &event);
+        edgehog_result_t ft_result = edgehog_ft_server_to_device_event(edgehog_device, &event);
+        if (ft_result != EDGEHOG_RESULT_OK) {
+            EDGEHOG_LOG_ERR("Unable to handle OTA update request");
+        }
+        return;
+    }
+
+    if (strcmp(base_event.interface_name, io_edgehog_devicemanager_fileTransfer_DeviceToServer.name)
+        == 0) {
+        EDGEHOG_LOG_INF("Received File Transfer device to server event");
+
+        if (strcmp(base_event.path, "/request") != 0) {
+            EDGEHOG_LOG_ERR(
+                "Received File Transfer request on incorrect common path: '%s'", base_event.path);
+            return;
+        }
+
+        edgehog_result_t ft_result = edgehog_ft_device_to_server_event(edgehog_device, &event);
         if (ft_result != EDGEHOG_RESULT_OK) {
             EDGEHOG_LOG_ERR("Unable to handle OTA update request");
         }
@@ -445,6 +458,7 @@ static edgehog_result_t add_interfaces(astarte_device_handle_t astarte_device)
         &io_edgehog_devicemanager_config_Telemetry,
         &io_edgehog_devicemanager_fileTransfer_posix_ServerToDevice,
         &io_edgehog_devicemanager_fileTransfer_Response,
+        &io_edgehog_devicemanager_fileTransfer_DeviceToServer,
     };
 
     for (int i = 0; i < ARRAY_SIZE(interfaces); i++) {
