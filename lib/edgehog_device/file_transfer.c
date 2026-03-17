@@ -20,7 +20,7 @@ EDGEHOG_LOG_MODULE_REGISTER(file_transfer, CONFIG_EDGEHOG_DEVICE_FILE_TRANSFER_L
  *        Defines, constants and typedef        *
  ***********************************************/
 
-#define FILE_TRANSFER_SERVICE_THREAD_STACK_SIZE 2048
+#define FILE_TRANSFER_SERVICE_THREAD_STACK_SIZE 8192
 #define FILE_TRANSFER_SERVICE_THREAD_PRIORITY 5
 #define FILE_TRANSFER_SERVICE_THREAD_RUNNING_BIT (1)
 #define FILE_TRANSFER_SERVICE_MSGQ_GET_TIMEOUT 100
@@ -37,13 +37,13 @@ static void file_transfer_service_thread_entry_point(
     EDGEHOG_LOG_DBG("FILE TRANSFER ENTRY POINT");
     ARG_UNUSED(unused);
 
-    edgehog_device_handle_t device = (edgehog_device_handle_t) device_ptr;
+    edgehog_device_handle_t edgehog_device = (edgehog_device_handle_t) device_ptr;
     struct k_msgq *msgq = (struct k_msgq *) queue_ptr;
 
     ft_server_to_device_data_t msg_rcv = { 0 };
 
     while (atomic_test_bit(
-        &device->file_transfer->thread_state, FILE_TRANSFER_SERVICE_THREAD_RUNNING_BIT)) {
+        &edgehog_device->file_transfer->thread_state, FILE_TRANSFER_SERVICE_THREAD_RUNNING_BIT)) {
         if (k_msgq_get(msgq, &msg_rcv, K_FOREVER) == 0) {
             EDGEHOG_LOG_DBG("FT - received id:                  %s", msg_rcv.id);
             EDGEHOG_LOG_DBG("FT - received url:                 %s", msg_rcv.url);
@@ -52,6 +52,25 @@ static void file_transfer_service_thread_entry_point(
             EDGEHOG_LOG_DBG("FT - received file_size_bytes:     %lld", msg_rcv.file_size_bytes);
             EDGEHOG_LOG_DBG("FT - received progress:            %d", msg_rcv.progress);
 
+            // TODO: handle file transfer request (http req to download file)
+
+            // Communicatre to Astarte a Response to the FT request
+            astarte_object_entry_t object_entries[] = {
+                { .path = "id", .data = astarte_data_from_string(msg_rcv.id) },
+                { .path = "type", .data = astarte_data_from_string("server_to_device") },
+                // TODO: put here the correct posix return code after finished processing the file transfer request
+                { .path = "code", .data = astarte_data_from_longinteger(0) },
+                { .path = "message", .data = astarte_data_from_string("") },
+            };
+
+            astarte_result_t res
+                = astarte_device_send_object(edgehog_device->astarte_device, io_edgehog_devicemanager_fileTransfer_Response.name,
+                    "/request", object_entries, ARRAY_SIZE(object_entries), NULL);
+            if (res != ASTARTE_RESULT_OK) {
+                EDGEHOG_LOG_ERR("Unable to send File transfer response"); // NOLINT
+            }
+
+            // free resoources
             free(msg_rcv.id);
             free(msg_rcv.url);
             free(msg_rcv.http_header_key);
@@ -136,8 +155,6 @@ edgehog_result_t edgehog_file_transfer_start(edgehog_device_handle_t device)
 edgehog_result_t edgehog_file_transfer_event(
     edgehog_device_handle_t device, astarte_device_datastream_object_event_t *object_event)
 {
-    // TODO: should we check if the FT thread and other structs have been initialized?
-
     if (!object_event) {
         EDGEHOG_LOG_ERR("Unable to handle event, object event undefined");
         return EDGEHOG_RESULT_OTA_INVALID_REQUEST;
@@ -155,29 +172,11 @@ edgehog_result_t edgehog_file_transfer_event(
     char *ft_http_header_key = NULL;
     // Values for the HTTP headers, must be in the order of the keys
     char *ft_http_header_value = NULL;
-    // // Optional enum string for the file compression with default value empty, other values are:
-    // ['tar.gz']" char *compression = NULL; Total file size (if multiple files) uncompressed in
-    // bytes. It's used to reserve this space on the device."
+    // Total file size (if multiple files) uncompressed in bytes.
+    // It's used to reserve this space on the device.
     int64_t ft_file_size_bytes = -1;
     // Flag to enable the progress reporting of the download
     bool ft_progress = false;
-    // // Must be in the form sha256:deadbeaf, and should be used only if supported by the device."
-    // char *digest = NULL;
-    // // Optional file name of the file to download, default is empty"
-    // char *file_name = NULL;
-    // // Optional ttl for how long to keep the file for, if 0 is forever"
-    // int64_t ttl_seconds = -1;
-    // // Optional unix mode for the file, set to default if 0. All files are immutable, so setting
-    // it to writable has no effect." int64_t file_mode = -1;
-    // // Optional unix uid of the user owning the file, set to default if -1."
-    // int64_t user_id = -1;
-    // // Optional unix gid of the group owning the file, set to default if -1."
-    // int64_t group_id = -1;
-    // // String enum specifying the destination type, with allowed values: [storage, streaming,
-    // filesystem]."
-    // // The value depends on the selected destination type: for 'storage' and 'streaming' it's an
-    // empty string, and for 'filesystem' is a path to a file on the device." char *destination =
-    // NULL;
 
     for (size_t i = 0; i < rx_values_length; i++) {
         const char *path = rx_values[i].path;

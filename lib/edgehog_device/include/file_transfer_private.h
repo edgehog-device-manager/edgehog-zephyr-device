@@ -20,6 +20,7 @@ typedef struct
     char *http_header_value;
     int64_t file_size_bytes;
     bool progress;
+    // TODO: add other fields from the io.edgehog.devicemanager.fileTransfer.posix.ServerToDevice interface
 } ft_server_to_device_data_t;
 
 typedef struct
