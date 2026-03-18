@@ -37,24 +37,20 @@ typedef struct
  * @typedef http_download_payload_cbk_t
  * @brief Callback used when chunk of download is received from the server.
  *
- * @param sock_id Socket id of the connection.
+ * @param abort_flag Pointer to the abort flag.
  * @param download_chunk Download chunk information.
  * @param user_data User specified data specified in *http_download_t* struct.
  *
  * @return EDGEHOG_RESULT_OK if successful, otherwise an error code.
  */
 typedef edgehog_result_t (*http_download_payload_cbk_t)(
-    int sock_id, http_download_chunk_t *download_chunk, void *user_data);
+    bool *abort_flag, http_download_chunk_t *download_chunk, void *user_data);
 
 /** @brief Data struct for a Http download instance. */
 typedef struct
 {
     /** @brief Callback for a chunk download event. */
     http_download_payload_cbk_t download_cbk;
-    /** @brief Socket id of the connection. */
-    int sock_id;
-    /** @brief Edgehog result of download_cbk execution*/
-    edgehog_result_t edegehog_result;
     /** @brief User data passed to http_download_cb callback function. */
     void *user_data;
 } http_download_t;
@@ -79,10 +75,9 @@ edgehog_result_t edgehog_http_download(const char *url, const char **header_fiel
 /**
  * @brief Abort a specific dowload file request.
  *
- * @param[in] sock_id Socket id of the connection.
- * chunk.
+ * @param[in] abort_flag Pointer to the abort flag.
  */
-void edgehog_http_download_abort(int sock_id);
+void edgehog_http_download_abort(bool *abort_flag);
 
 #ifdef __cplusplus
 }

@@ -7,9 +7,6 @@
 #ifndef ETH_H
 #define ETH_H
 
-#include <stdbool.h>
-#include <stddef.h>
-
 /**
  * @brief Blocking function to connect the device to internet.
  *
@@ -24,6 +21,6 @@ int eth_connect(void);
  *
  * @note This function will block when connectivity is not present.
  */
-void eth_poll(void);
+int eth_poll(void);
 
 #endif /* ETH_H */

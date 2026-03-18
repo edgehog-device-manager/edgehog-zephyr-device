@@ -146,12 +146,14 @@ int main(void)
 #if (!defined(CONFIG_ASTARTE_DEVICE_SDK_DEVELOP_USE_NON_TLS_HTTP)                                  \
     || !defined(CONFIG_ASTARTE_DEVICE_SDK_DEVELOP_USE_NON_TLS_MQTT))
     tls_credential_add(CONFIG_ASTARTE_DEVICE_SDK_HTTPS_CA_CERT_TAG, TLS_CREDENTIAL_CA_CERTIFICATE,
-        ca_certificate_root, sizeof(ca_certificate_root));
+        astarte_ca_certificate_root, sizeof(astarte_ca_certificate_root));
 #endif
     // Add TLS certificate for Edgehog if required
-#if !defined(CONFIG_EDGEHOG_DEVICE_DEVELOP_DISABLE_OR_IGNORE_TLS)
-    tls_credential_add(CONFIG_EDGEHOG_DEVICE_CA_CERT_OTA_TAG, TLS_CREDENTIAL_CA_CERTIFICATE,
-        ota_ca_certificate_root, sizeof(ota_ca_certificate_root));
+#if !defined(CONFIG_EDGEHOG_DEVICE_DEVELOP_USE_NON_TLS_HTTP)
+    tls_credential_add(CONFIG_EDGEHOG_DEVICE_OTA_HTTPS_CA_CERT_TAG, TLS_CREDENTIAL_CA_CERTIFICATE,
+        edgehog_ota_ca_certificate_root, sizeof(edgehog_ota_ca_certificate_root));
+    tls_credential_add(CONFIG_EDGEHOG_DEVICE_FT_HTTPS_CA_CERT_TAG, TLS_CREDENTIAL_CA_CERTIFICATE,
+        edgehog_ft_ca_certificate_root, sizeof(edgehog_ft_ca_certificate_root));
 #endif
 
     // Initalize the system time
@@ -167,7 +169,9 @@ int main(void)
     while (!K_TIMEOUT_EQ(sys_timepoint_timeout(finish_timepoint), K_NO_WAIT)) {
         k_timepoint_t timepoint = sys_timepoint_calc(K_MSEC(MAIN_THREAD_PERIOD_MS));
 #if !defined(CONFIG_WIFI)
-        eth_poll();
+        if (eth_poll() != 0) {
+            LOG_ERR("Failed polling Ethernet."); // NOLINT
+        }
 #endif
         k_sleep(sys_timepoint_timeout(timepoint));
     }

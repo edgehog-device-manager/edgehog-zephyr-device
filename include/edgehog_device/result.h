@@ -96,6 +96,8 @@ typedef enum
     EDGEHOG_RESULT_TELEMETRY_STOP_FAIL = 33,
     /** @brief A function has been called with incorrect parameters. */
     EDGEHOG_RESULT_INVALID_PARAM = 34,
+    /** @brief HTTP request was aborted. */
+    EDGEHOG_RESULT_HTTP_REQUEST_ABORTED = 35,
 
 } edgehog_result_t;
 

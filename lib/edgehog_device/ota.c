@@ -139,7 +139,7 @@ static void wait_for_reboot(void);
  * @brief Callback used when download data is received from the server.
  */
 static edgehog_result_t http_download_payload_cbk(
-    int sock_id, http_download_chunk_t *download_chunk, void *user_data);
+    bool *abort_flag, http_download_chunk_t *download_chunk, void *user_data);
 /**
  * @brief Publish an OTA update event to Astarte.
  *
@@ -581,7 +581,7 @@ static edgehog_result_t perform_ota_attempt(edgehog_device_handle_t edgehog_devi
 }
 
 static edgehog_result_t http_download_payload_cbk(
-    int sock_id, http_download_chunk_t *download_chunk, void *user_data)
+    bool *abort_flag, http_download_chunk_t *download_chunk, void *user_data)
 {
     if (!download_chunk) {
         EDGEHOG_LOG_ERR("Unable to read chunk, It is empty");
@@ -596,7 +596,7 @@ static edgehog_result_t http_download_payload_cbk(
     edgehog_device_handle_t edgehog_device = (edgehog_device_handle_t) user_data;
     ota_thread_data_t *ota_thread_data = &edgehog_device->ota_thread.ota_thread_data;
     if (!atomic_test_bit(&ota_thread_data->ota_run_state, OTA_STATE_RUN_BIT)) {
-        edgehog_http_download_abort(sock_id);
+        edgehog_http_download_abort(abort_flag);
         return EDGEHOG_RESULT_OK;
     }
 
@@ -605,7 +605,7 @@ static edgehog_result_t http_download_payload_cbk(
     if (ret < 0) {
         EDGEHOG_LOG_ERR("Flash write error: %d", ret);
         EDGEHOG_LOG_ERR("Errno: %s\n", strerror(errno));
-        edgehog_http_download_abort(sock_id);
+        edgehog_http_download_abort(abort_flag);
         return EDGEHOG_RESULT_OTA_WRITE_FLASH_ERROR;
     }
 
