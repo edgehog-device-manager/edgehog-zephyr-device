@@ -56,6 +56,6 @@ void publish_storage_usage(edgehog_device_handle_t edgehog_device)
         io_edgehog_devicemanager_StorageUsage.name, path, object_entries,
         ARRAY_SIZE(object_entries), &timestamp_ms);
     if (res != ASTARTE_RESULT_OK) {
-        EDGEHOG_LOG_ERR("Unable to send syste_status"); // NOLINT
+        EDGEHOG_LOG_ERR("Unable to send storage usage"); // NOLINT
     }
 }
