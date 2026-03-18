@@ -25,6 +25,11 @@ doc/html
 
 # samples private conf used to store secrets like wifi passwords and credential secrets
 samples/*/private.conf
+e2e/private.conf
 
 # cache
 .cache
+
+# End to end self signed certificates for the HTTP server
+e2e/http_server_certs/192.0.2.2.pem
+e2e/http_server_certs/192.0.2.2.key

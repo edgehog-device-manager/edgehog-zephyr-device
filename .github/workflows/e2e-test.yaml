@@ -1,0 +1,119 @@
+# (C) Copyright 2026, SECO Mind Srl
+#
+# SPDX-License-Identifier: Apache-2.0
+
+name: End to end test
+
+on: [workflow_call, workflow_dispatch]
+
+permissions:
+  contents: read
+
+env:
+  EDGEHOG_INTERFACES_REF: v0.8.0
+  ASTARTE_API_BASE: api.autotest.astarte-platform.org
+  ASTARTE_BROKER_BASE: broker.autotest.astarte-platform.org
+  ASTARTE_ACTION_CERT: /usr/local/share/ca-certificates/astarte-autotest.crt
+
+jobs:
+  e2e-test:
+    runs-on: ubuntu-24.04
+    steps:
+      # setup astarte
+      - name: Create Astarte Cluster
+        id: astarte
+        uses: astarte-platform/astarte-cluster-action@v1
+        with:
+          astarte_version: "1.1.1"
+
+      - name: Checkout Edgehog device
+        uses: actions/checkout@v6
+        with:
+          path: edgehog-zephyr-device
+
+      - name: Checkout Edgehog interfaces
+        uses: actions/checkout@v6
+        with:
+          repository: edgehog-device-manager/edgehog-astarte-interfaces
+          ref: ${{ env.EDGEHOG_INTERFACES_REF }}
+          path: edgehog-astarte-interfaces
+
+      - name: Install interface
+        timeout-minutes: 3
+        run: |
+          ./edgehog-zephyr-device/.github/install_interfaces.sh ./edgehog-astarte-interfaces
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: 3.12
+
+      - name: Set up Python dependencies
+        working-directory: edgehog-zephyr-device/
+        run: |
+          pip install -r ./scripts/requirements.txt
+          pip install -r ./e2e/pytest/requirements.txt
+
+      - name: Set end to end manifest as defaults
+        working-directory: edgehog-zephyr-device
+        run: mv west-e2e.yml west.yml
+
+      - name: Setup Zephyr project
+        uses: zephyrproject-rtos/action-zephyr-setup@v1
+        with:
+          app-path: edgehog-zephyr-device
+          toolchains: x86_64-zephyr-elf
+
+      - name: Setup e2e application configuration values
+        working-directory: edgehog-zephyr-device/e2e/
+        run: |
+          # Register a device
+          DEVICE_ID=$(astartectl utils device-id generate-random)
+          CREDENTIAL_SECRET=$(astartectl pairing agent register --compact-output -- "$DEVICE_ID")
+          PAIRING_TOKEN=$(astartectl utils gen-jwt pairing)
+          TOKEN=$(astartectl utils gen-jwt appengine)
+          tee -a private.conf << END
+          # Store Astarte configuration and device credentials
+          CONFIG_ASTARTE_DEVICE_SDK_HOSTNAME="$ASTARTE_API_BASE"
+          CONFIG_ASTARTE_DEVICE_SDK_REALM_NAME="test"
+          CONFIG_E2E_ASTARTE_DEVICE_ID="$DEVICE_ID"
+          CONFIG_E2E_ASTARTE_CREDENTIAL_SECRET="$CREDENTIAL_SECRET"
+          CONFIG_ASTARTE_DEVICE_SDK_PAIRING_JWT="$PAIRING_TOKEN"
+          CONFIG_E2E_APPENGINE_TOKEN="$TOKEN"
+          CONFIG_E2E_APPENGINE_URL="https://$ASTARTE_API_BASE/appengine"
+          # Configuration for the DNS (must be the one of the zeth interface)
+          # Since we are injecting there the correct domain name resolutions
+          CONFIG_DNS_SERVER1="192.0.2.2:53"
+          END
+          # Write the Astarte certificate
+          cat "$ASTARTE_ACTION_CERT" > ./certificate/astarte.pem
+
+      - name: Install net-setup dependencies
+        run: sudo apt install dnsmasq
+
+      # NOTE this step could silently fail
+      - name: Start net-setup nat configuration
+        working-directory: tools/net-tools
+        run: |
+          # Add the correct dns resolution for zeth dnsmasq
+          tee -a dnsmasq_nat.conf << END
+          # do not read /etc/hosts
+          no-hosts
+          # do not bind to loopback address
+          except-interface=lo
+          # add resolution for action astarte dns
+          address=/$ASTARTE_API_BASE/$ASTARTE_BROKER_BASE/192.0.2.2
+          END
+          # Launch net-setup with debugging enabled
+          sudo bash -xuEo pipefail ./net-setup.sh start --config nat.conf
+
+      - name: Build and run e2e test zephyr application [native_sim]
+        run: west twister -v --log-level debug --force-color --integration --inline-logs -T ./edgehog-zephyr-device/e2e
+
+      - name: Build and run e2e test zephyr application [qemu_x86]
+        run: west twister -v --log-level debug --force-color -p qemu_x86 --inline-logs -T ./edgehog-zephyr-device/e2e
+
+      - name: Stop net-setup nat configuration
+        working-directory: tools/net-tools
+        run: |
+          sudo bash -xuEo pipefail ./net-setup.sh stop --config nat.conf

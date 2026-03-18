@@ -1,0 +1,30 @@
+# (C) Copyright 2024, SECO Mind Srl
+#
+# SPDX-License-Identifier: Apache-2.0
+
+manifest:
+
+  remotes:
+    - name: zephyrproject-rtos
+      url-base: https://github.com/zephyrproject-rtos
+    - name: astarte-platform
+      url-base: https://github.com/astarte-platform
+    - name: secomind
+      url-base: https://github.com/secomind
+
+  projects:
+    - name: zephyr
+      remote: zephyrproject-rtos
+      revision: v4.3.0
+      import:
+        # By using name-allowlist we can clone only the modules that are
+        # strictly needed by the application.
+        name-allowlist:
+          - mbedtls
+          - picolibc
+          - mcuboot
+          - net-tools
+    - name: astarte-device-sdk-zephyr
+      remote: astarte-platform
+      revision: master
+      import: true

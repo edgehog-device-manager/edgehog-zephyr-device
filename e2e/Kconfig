@@ -1,0 +1,146 @@
+# (C) Copyright 2024, SECO Mind Srl
+#
+# SPDX-License-Identifier: Apache-2.0
+
+menu "Zephyr"
+source "Kconfig.zephyr"
+endmenu
+
+rsource "../Kconfig"
+
+menu "End to end test"
+
+config E2E_ASTARTE_TLS_CERTIFICATE_PATH
+	string "Path of the tls root Astarte certificate"
+	help
+	  Path to a certificate in PEM format. It will be included in the binary and used for TLS
+	  authentication with Astarte.
+	  This path should be relative to the end to end project folder.
+
+config E2E_EDGEHOG_OTA_TLS_CERTIFICATE_PATH
+	string "Path of the tls root Edgehog certificate for OTA"
+	help
+	  Path to a certificate in PEM format. It will be included in the binary and used for TLS
+	  authentication with Edgehog.
+	  This path should be relative to the end to end project folder.
+
+config E2E_ASTARTE_DEVICE_ID
+	string "Astarte device ID"
+    default ""
+	help
+	  Device ID to be used to connect to Astarte.
+
+config E2E_ASTARTE_CREDENTIAL_SECRET
+    string "Astarte credential secret"
+    default ""
+    help
+        The credential secret to be used to connect to Astarte.
+
+config E2E_HTTP_SERVER_DATA_DIR
+    string "Directory for HTTP server data"
+    default "http_server_data"
+    help
+        Directory where the HTTP server will store its data.
+
+config E2E_HTTP_SERVER_CERT_DIR
+    string "Directory for HTTP server certificates"
+    default "http_server_certs"
+    help
+        Directory where the HTTP server will store its certificates.
+
+config E2E_HTTP_SERVER_PORT
+    int "HTTP server port"
+    default 8443
+    help
+        Port on which the HTTP server will listen.
+
+config E2E_APPENGINE_TOKEN
+	string "Token to access appengine APIs"
+    default ""
+	help
+	  Token used to access the Astarte appengine APIs.
+
+config E2E_APPENGINE_URL
+    string "Url of the appengine APIs"
+    default ""
+    help
+        Url of the appengine APIs exposed by astarte
+
+config E2E_LOG_ONLY
+    bool "Enable device log only mode"
+    default n
+    help
+        Incoming astarte server messages will only be logged and no check will be
+        performed against incoming data
+
+config E2E_DEVICE_THREAD_STACK_SIZE
+    int "Device thread stack size (Bytes)"
+    default 8192
+    help
+        Use this setting to change the size of the stack for the thread running the Astarte device.
+
+config E2E_DEVICE_THREAD_PRIORITY
+    int "Device thread priority"
+    default 0
+    help
+        Use this setting to change the priority of the thread running the Astarte device.
+
+config E2E_DEVICE_POLL_PERIOD_MS
+    int "Device thread polling period (ms)"
+    default 100
+    help
+        Use this setting to change the polling period for the Astarte device.
+
+config E2E_ETH_POLL_PERIOD_MS
+    int "Device thread polling period (ms)"
+    default 100
+    help
+        Use this setting to change the polling period for the ethernet connection.
+
+config E2E_MQTT_CONNECTION_TIMEOUT_MS
+    int "MQTT connection timeout (ms)"
+    default 3000
+    help
+        Use this setting to change the MQTT connection timeout.
+
+config E2E_MQTT_POLL_TIMEOUT_MS
+    int "MQTT subsequent polling timeout (ms)"
+    default 200
+    help
+        Use this setting to change the MQTT polling timeout.
+
+config E2E_HTTP_TIMEOUT_MS
+    int "HTTP operations timeout (ms)"
+    default 3000
+    help
+        Use this setting to change the timeout for HTTP requests.
+
+menu "Logging options"
+
+module = APP
+module-str = APP
+source "subsys/logging/Kconfig.template.log_config"
+
+module = RUNNER
+module-str = Log level for e2e runner and command handler
+module-help = Sets log level for e2e runner and command handler
+source "subsys/logging/Kconfig.template.log_config"
+
+module = UTILITIES
+module-str = Log level for e2e utilities functions
+module-help = Sets log level for e2e utilities functions
+source "subsys/logging/Kconfig.template.log_config"
+
+module = SHELL_HANDLERS
+module-str = Log level for shell handlers
+module-help = Sets log level for zephyr shell handlers
+source "subsys/logging/Kconfig.template.log_config"
+
+module = DEVICE_HANDLER
+module-str = Log level for device handler
+module-help = Sets log level for zephyr device handler
+source "subsys/logging/Kconfig.template.log_config"
+
+endmenu
+
+endmenu
