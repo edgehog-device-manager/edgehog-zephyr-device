@@ -35,10 +35,12 @@ EDGEHOG_LOG_MODULE_REGISTER(edgehog_device, CONFIG_EDGEHOG_DEVICE_DEVICE_LOG_LEV
 
 // Semaphore used to check if an OTA or File Transfer event of is being handled.
 // This should be used to avoid other requests to be handled concurrently
+// NOLINTBEGIN(cppcoreguidelines-avoid-non-const-global-variables)
 K_SEM_DEFINE(sync_obj_event_sem, 1, 1);
+// NOLINTEND(cppcoreguidelines-avoid-non-const-global-variables)
 
 // function pointer representing the callback to synchronize using the sync_obj_event_sem semaphore
-typedef edgehog_result_t (*datastream_obj_event_handler_cb)(
+typedef edgehog_result_t (*datastream_obj_event_handler_cb_t)(
     edgehog_device_handle_t, astarte_device_datastream_object_event_t *);
 
 /************************************************
@@ -50,7 +52,7 @@ static edgehog_result_t add_interfaces(astarte_device_handle_t astarte_device);
 static void edgehog_initial_publish(edgehog_device_handle_t edgehog_device);
 
 static void sync_obj_event(edgehog_device_handle_t edgehog_device,
-    astarte_device_datastream_object_event_t *event, datastream_obj_event_handler_cb handler,
+    astarte_device_datastream_object_event_t *event, datastream_obj_event_handler_cb_t handler,
     const char *err_msg);
 
 /************************************************
@@ -353,7 +355,7 @@ void edgehog_device_destroy(edgehog_device_handle_t edgehog_device)
         EDGEHOG_LOG_ERR("Astarte device destroy error: %s", astarte_result_to_name(ares));
     }
     edgehog_telemetry_destroy(edgehog_device->telemetry);
-    edgehog_file_transfer_destroy(edgehog_device->file_transfer);
+    edgehog_ft_destroy(edgehog_device->file_transfer);
     free(edgehog_device);
 }
 
@@ -394,8 +396,8 @@ edgehog_result_t edgehog_device_poll(edgehog_device_handle_t edgehog_device)
         }
 
         edgehog_file_transfer_t *file_transfer = edgehog_device->file_transfer;
-        if (!edgehog_file_transfer_is_running(file_transfer)) {
-            eres = edgehog_file_transfer_start(edgehog_device);
+        if (!edgehog_ft_is_running(file_transfer)) {
+            eres = edgehog_ft_start(edgehog_device);
             if (eres != EDGEHOG_RESULT_OK) {
                 EDGEHOG_LOG_ERR("Unable to start Edgehog telemetry service");
             }
@@ -411,7 +413,7 @@ edgehog_result_t edgehog_device_stop(edgehog_device_handle_t edgehog_device, k_t
         EDGEHOG_LOG_ERR("Unable to stop the Edgehog device within the timeout");
         return eres;
     }
-    eres = edgehog_file_transfer_stop(edgehog_device->file_transfer, timeout);
+    eres = edgehog_ft_stop(edgehog_device->file_transfer, timeout);
     if (eres != EDGEHOG_RESULT_OK) {
         EDGEHOG_LOG_ERR("Unable to stop the Edgehog device within the timeout");
         return eres;
@@ -500,7 +502,7 @@ static void edgehog_initial_publish(edgehog_device_handle_t edgehog_device)
 }
 
 static void sync_obj_event(edgehog_device_handle_t edgehog_device,
-    astarte_device_datastream_object_event_t *event, datastream_obj_event_handler_cb handler,
+    astarte_device_datastream_object_event_t *event, datastream_obj_event_handler_cb_t handler,
     const char *err_msg)
 {
     k_sem_take(&sync_obj_event_sem, K_FOREVER);
@@ -509,8 +511,6 @@ static void sync_obj_event(edgehog_device_handle_t edgehog_device,
     if (result != EDGEHOG_RESULT_OK) {
         EDGEHOG_LOG_ERR("%s", err_msg);
     }
-
-    k_sleep(K_SECONDS(5));
 
     k_sem_give(&sync_obj_event_sem);
 }

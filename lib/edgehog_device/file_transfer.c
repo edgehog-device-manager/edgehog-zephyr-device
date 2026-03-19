@@ -1,3 +1,9 @@
+/*
+ * (C) Copyright 2026, SECO Mind Srl
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 #include "file_transfer_private.h"
 
 #include "edgehog_private.h"
@@ -27,6 +33,7 @@ EDGEHOG_LOG_MODULE_REGISTER(file_transfer, CONFIG_EDGEHOG_DEVICE_FILE_TRANSFER_L
 
 // NOLINTBEGIN(cppcoreguidelines-avoid-non-const-global-variables)
 K_THREAD_STACK_DEFINE(file_transfer_service_stack_area, FILE_TRANSFER_SERVICE_THREAD_STACK_SIZE);
+// NOLINTEND(cppcoreguidelines-avoid-non-const-global-variables)
 
 /************************************************
  *         Static functions declarations        *
@@ -37,8 +44,7 @@ static void ft_handle_server_to_device(edgehog_device_handle_t edgehog_device, f
 static void ft_handle_device_to_server(edgehog_device_handle_t edgehog_device, ft_msgq_data_t *msg);
 
 // entry point for the thread handling the file transfer operations
-static void file_transfer_service_thread_entry_point(
-    void *device_ptr, void *queue_ptr, void *unused);
+static void ft_service_thread_entry_point(void *device_ptr, void *queue_ptr, void *unused);
 
 // Equivalent of POSIX strdup() funciton
 static char *duplicate_string(const char *src);
@@ -56,41 +62,42 @@ static char *duplicate_string(const char *src);
 edgehog_file_transfer_t *edgehog_file_transfer_new()
 {
     // Allocate space for the file transfer internal struct
-    edgehog_file_transfer_t *ft = calloc(1, sizeof(edgehog_file_transfer_t));
-    if (!ft) {
+    edgehog_file_transfer_t *file_transfer = calloc(1, sizeof(edgehog_file_transfer_t));
+    if (!file_transfer) {
         EDGEHOG_LOG_ERR("Out of memory %s: %d", __FILE__, __LINE__);
         return NULL;
     }
 
     // TODO: add config operations
 
-    return ft;
+    return file_transfer;
 }
 
-edgehog_result_t edgehog_file_transfer_start(edgehog_device_handle_t device)
+edgehog_result_t edgehog_ft_start(edgehog_device_handle_t device)
 {
-    edgehog_file_transfer_t *ft = device->file_transfer;
+    edgehog_file_transfer_t *file_tansfer = device->file_transfer;
 
-    if (!ft) {
+    if (!file_tansfer) {
         EDGEHOG_LOG_ERR("Unable to start file transfer, reference is null");
         return EDGEHOG_RESULT_FILE_TRANSFER_START_FAIL;
     }
 
-    if (atomic_test_and_set_bit(&ft->thread_state, FILE_TRANSFER_SERVICE_THREAD_RUNNING_BIT)) {
+    if (atomic_test_and_set_bit(
+            &file_tansfer->thread_state, FILE_TRANSFER_SERVICE_THREAD_RUNNING_BIT)) {
         EDGEHOG_LOG_ERR("Failed starting file transfer service as it's already running");
         return EDGEHOG_RESULT_FILE_TRANSFER_START_FAIL;
     }
 
-    k_msgq_init(&ft->msgq, ft->msgq_buffer, sizeof(ft_msgq_data_t), EDGEHOG_FILE_TRANSFER_LEN);
+    k_msgq_init(&file_tansfer->msgq, file_tansfer->msgq_buffer, sizeof(ft_msgq_data_t),
+        EDGEHOG_FILE_TRANSFER_LEN);
 
-    k_tid_t thread_id = k_thread_create(&ft->thread, file_transfer_service_stack_area,
-        FILE_TRANSFER_SERVICE_THREAD_STACK_SIZE, file_transfer_service_thread_entry_point,
-        (void *) device, (void *) &ft->msgq, NULL, FILE_TRANSFER_SERVICE_THREAD_PRIORITY, 0,
-        K_NO_WAIT);
+    k_tid_t thread_id = k_thread_create(&file_tansfer->thread, file_transfer_service_stack_area,
+        FILE_TRANSFER_SERVICE_THREAD_STACK_SIZE, ft_service_thread_entry_point, (void *) device,
+        (void *) &file_tansfer->msgq, NULL, FILE_TRANSFER_SERVICE_THREAD_PRIORITY, 0, K_NO_WAIT);
 
     if (!thread_id) {
         EDGEHOG_LOG_ERR("Unable to start file transfer message thread");
-        atomic_clear_bit(&ft->thread_state, FILE_TRANSFER_SERVICE_THREAD_RUNNING_BIT);
+        atomic_clear_bit(&file_tansfer->thread_state, FILE_TRANSFER_SERVICE_THREAD_RUNNING_BIT);
         return EDGEHOG_RESULT_FILE_TRANSFER_START_FAIL;
     }
 
@@ -98,7 +105,7 @@ edgehog_result_t edgehog_file_transfer_start(edgehog_device_handle_t device)
     int ret = k_thread_name_set(thread_id, "file_transfer");
     if (ret != 0) {
         EDGEHOG_LOG_ERR("Failed to set thread name, error %d", ret);
-        atomic_clear_bit(&ft->thread_state, FILE_TRANSFER_SERVICE_THREAD_RUNNING_BIT);
+        atomic_clear_bit(&file_tansfer->thread_state, FILE_TRANSFER_SERVICE_THREAD_RUNNING_BIT);
         return EDGEHOG_RESULT_FILE_TRANSFER_START_FAIL;
     }
 
@@ -171,9 +178,7 @@ edgehog_result_t edgehog_ft_server_to_device_event(
 
     edgehog_result_t res = EDGEHOG_RESULT_OK;
 
-    edgehog_file_transfer_t *ft = device->file_transfer;
-
-    if (k_msgq_put(&ft->msgq, &msg, K_NO_WAIT) != 0) {
+    if (k_msgq_put(&device->file_transfer->msgq, &msg, K_NO_WAIT) != 0) {
         EDGEHOG_LOG_ERR("Unable to send file transfer data to the task handling it");
         // if message is not sent free the resources allocad onto the heap
         free(ft_id);
@@ -258,15 +263,15 @@ edgehog_result_t edgehog_ft_device_to_server_event(
 
     edgehog_result_t res = EDGEHOG_RESULT_OK;
 
-    edgehog_file_transfer_t *ft = device->file_transfer;
-
-    if (k_msgq_put(&ft->msgq, &msg, K_NO_WAIT) != 0) {
+    if (k_msgq_put(&device->file_transfer->msgq, &msg, K_NO_WAIT) != 0) {
         EDGEHOG_LOG_ERR("Unable to send file transfer data to the task handling it");
         // if message is not sent free the resources allocad onto the heap
         free(ft_id);
         free(ft_url);
         free(ft_http_header_key);
         free(ft_http_header_value);
+        free(ft_source_type);
+        free(ft_source);
         memset(&data, 0, sizeof(data));
         res = EDGEHOG_RESULT_FILE_TRANSFER_QUEUE_ERROR;
     }
@@ -274,8 +279,7 @@ edgehog_result_t edgehog_ft_device_to_server_event(
     return res;
 }
 
-edgehog_result_t edgehog_file_transfer_stop(
-    edgehog_file_transfer_t *file_transfer, k_timeout_t timeout)
+edgehog_result_t edgehog_ft_stop(edgehog_file_transfer_t *file_transfer, k_timeout_t timeout)
 {
     // Request the thread to self exit
     atomic_clear_bit(&file_transfer->thread_state, FILE_TRANSFER_SERVICE_THREAD_RUNNING_BIT);
@@ -291,13 +295,13 @@ edgehog_result_t edgehog_file_transfer_stop(
     }
 }
 
-void edgehog_file_transfer_destroy(edgehog_file_transfer_t *ft)
+void edgehog_ft_destroy(edgehog_file_transfer_t *file_transfer)
 {
-    k_msgq_cleanup(&ft->msgq);
-    free(ft);
+    k_msgq_cleanup(&file_transfer->msgq);
+    free(file_transfer);
 }
 
-bool edgehog_file_transfer_is_running(edgehog_file_transfer_t *file_transfer)
+bool edgehog_ft_is_running(edgehog_file_transfer_t *file_transfer)
 {
     if (!file_transfer) {
         return false;
@@ -341,7 +345,7 @@ static void ft_handle_server_to_device(edgehog_device_handle_t edgehog_device, f
         EDGEHOG_LOG_ERR("Unable to send File transfer response"); // NOLINT
     }
 
-    // free resoources
+    // free resources
     free(msg->payload.server_to_device.id);
     free(msg->payload.server_to_device.url);
     free(msg->payload.server_to_device.http_header_key);
@@ -383,7 +387,7 @@ static void ft_handle_device_to_server(edgehog_device_handle_t edgehog_device, f
         EDGEHOG_LOG_ERR("Unable to send File transfer response"); // NOLINT
     }
 
-    // free resoources
+    // free resources
     free(msg->payload.device_to_server.id);
     free(msg->payload.device_to_server.url);
     free(msg->payload.device_to_server.http_header_key);
@@ -394,8 +398,7 @@ static void ft_handle_device_to_server(edgehog_device_handle_t edgehog_device, f
 }
 
 // entry point for the thread handling the file transfer operations
-static void file_transfer_service_thread_entry_point(
-    void *device_ptr, void *queue_ptr, void *unused)
+static void ft_service_thread_entry_point(void *device_ptr, void *queue_ptr, void *unused)
 {
     EDGEHOG_LOG_DBG("FILE TRANSFER ENTRY POINT");
     ARG_UNUSED(unused);
