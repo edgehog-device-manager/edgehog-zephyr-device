@@ -1,0 +1,18 @@
+/*
+ * (C) Copyright 2026, SECO Mind Srl
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+&flash_sim0 {
+	partitions {
+		astarte_partition: partition@41000 {
+			label = "astarte";
+			reg = <0x00041000 0x00010000>;
+		};
+		edgehog_partition: partition@51000 {
+			label = "edgehog";
+			reg = <0x00051000 0x00010000>;
+		};
+	};
+};

@@ -17,7 +17,7 @@ edgehog_result_t system_time_current_ms(int64_t *timestamp_ms)
     }
 
     struct timespec tspec;
-    int res = sys_clock_gettime(CLOCK_REALTIME, &tspec);
+    int res = sys_clock_gettime(SYS_CLOCK_REALTIME, &tspec);
 
     if (res != 0) {
         return EDGEHOG_RESULT_INTERNAL_ERROR;

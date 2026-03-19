@@ -20,12 +20,10 @@ manifest:
         # By using name-allowlist we can clone only the modules that are
         # strictly needed by the application.
         name-allowlist:
-          - cmsis_6
-          - hal_nxp
-          - hal_stm32
           - mbedtls
           - picolibc
           - mcuboot
+          - net-tools
     - name: astarte-device-sdk-zephyr
       remote: astarte-platform
       revision: master

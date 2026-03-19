@@ -27,10 +27,19 @@ config EDGEHOG_DEVICE_PART_NUMBER
 	depends on EDGEHOG_DEVICE
 	help
 	  This changes the value passed as part of SystemInfo interface.
-config EDGEHOG_DEVICE_CA_CERT_OTA_TAG
+
+config EDGEHOG_DEVICE_OTA_HTTPS_CA_CERT_TAG
 	int "CA root certificate TLS security tag for the OTA download URL"
 	depends on EDGEHOG_DEVICE
-	depends on !EDGEHOG_DEVICE_DEVELOP_DISABLE_OR_IGNORE_TLS
+	depends on !EDGEHOG_DEVICE_DEVELOP_USE_NON_TLS_HTTP
+	help
+	  The CA certificate should be added by the user with the tls_credential_add function.
+	  This configuration option should be set to the tag used when adding the CA certificate.
+
+config EDGEHOG_DEVICE_FT_HTTPS_CA_CERT_TAG
+	int "CA root certificate TLS security tag for the file transfer download URL"
+	depends on EDGEHOG_DEVICE
+	depends on !EDGEHOG_DEVICE_DEVELOP_USE_NON_TLS_HTTP
 	help
 	  The CA certificate should be added by the user with the tls_credential_add function.
 	  This configuration option should be set to the tag used when adding the CA certificate.
@@ -57,7 +66,7 @@ config EDGEHOG_DEVICE_ZBUS_OTA_EVENT
 
 menu "Development options"
 
-config EDGEHOG_DEVICE_DEVELOP_DISABLE_OR_IGNORE_TLS
+config EDGEHOG_DEVICE_DEVELOP_USE_NON_TLS_HTTP
 	bool "Disable TLS for all sockets"
 	depends on EDGEHOG_DEVICE
 	default false

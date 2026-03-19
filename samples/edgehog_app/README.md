@@ -108,7 +108,7 @@ you will be able to fully take advantage of the secure TLS connection of Astarte
   is the hostname for your Astarte instance, `<REALM_NAME>` is the name of your testing realm and
   `<CREDENTIAL_SECRET>` is the credential secret obtained through the manual registration.
 
-  In addition, the file `ca_certificates.h` should be modified, placing in the `ca_certificate_root`
+  In addition, the file `ca_certificates.h` should be modified, placing in the `astarte_ca_certificate_root`
   array a valid CA certificate in the PEM format.
 
 - If you instead configured Astarte and Edgehog on a local machine using the Astarte quick instance
@@ -127,7 +127,7 @@ you will be able to fully take advantage of the secure TLS connection of Astarte
   CONFIG_ASTARTE_DEVICE_SDK_CLIENT_CERT_TAG=1
   CONFIG_ASTARTE_DEVICE_SDK_REALM_NAME="<REALM_NAME>"
 
-  CONFIG_EDGEHOG_DEVICE_DEVELOP_DISABLE_OR_IGNORE_TLS=y
+  CONFIG_EDGEHOG_DEVICE_DEVELOP_USE_NON_TLS_HTTP=y
 
   CONFIG_ASTARTE_DEVICE_ID="<DEVICE_ID>"
   CONFIG_ASTARTE_CREDENTIAL_SECRET="<CREDENTIAL_SECRET>"

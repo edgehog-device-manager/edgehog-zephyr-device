@@ -1,0 +1,24 @@
+# (C) Copyright 2026, SECO Mind Srl
+#
+# SPDX-License-Identifier: Apache-2.0
+
+# The certificate can be generated with:
+# openssl req -x509 -new -nodes -keyout 192.0.2.2.key -out 192.0.2.2.pem -days 3650 -config cert_config.cnf
+
+[req]
+default_bits       = 2048
+prompt             = no
+default_md         = sha256
+x509_extensions    = v3_req
+distinguished_name = dn
+
+[dn]
+# Common Name (CN)
+CN = 192.0.2.2
+
+[v3_req]
+# This satisfies mbedTLS's requirement for a root CA
+basicConstraints = critical,CA:TRUE
+
+# This tells mbedTLS that this certificate is explicitly for this IP
+subjectAltName = IP:192.0.2.2

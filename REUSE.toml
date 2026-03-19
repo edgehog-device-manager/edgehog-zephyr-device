@@ -23,3 +23,21 @@ path = "lib/edgehog_device/include/generated_interfaces.h"
 precedence = "aggregate"
 SPDX-FileCopyrightText = "SECO Mind Srl"
 SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = "e2e/certificate/astarte.pem"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "SECO Mind Srl"
+SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = "e2e/certificate/edgehog-ota.pem"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "SECO Mind Srl"
+SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = "e2e/http_server_data/test_data.txt"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "SECO Mind Srl"
+SPDX-License-Identifier = "Apache-2.0"
