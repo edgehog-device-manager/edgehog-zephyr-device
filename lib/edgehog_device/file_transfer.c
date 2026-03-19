@@ -115,21 +115,23 @@ edgehog_result_t edgehog_ft_start(edgehog_device_handle_t device)
 edgehog_result_t edgehog_ft_server_to_device_event(
     edgehog_device_handle_t device, astarte_device_datastream_object_event_t *object_event)
 {
-    if (!object_event) {
-        EDGEHOG_LOG_ERR(
-            "Unable to handle fdile transfer server to device event, object event undefined");
-        return EDGEHOG_RESULT_FILE_TRANSFER_INVALID_REQUEST;
-    }
-
-    astarte_object_entry_t *rx_values = object_event->entries;
-    size_t rx_values_length = object_event->entries_len;
+    edgehog_result_t res = EDGEHOG_RESULT_FILE_TRANSFER_INVALID_REQUEST;
 
     char *ft_id = NULL;
     char *ft_url = NULL;
     char *ft_http_header_key = NULL;
     char *ft_http_header_value = NULL;
-    int64_t ft_file_size_bytes = -1;
     bool ft_progress = false;
+    int64_t ft_file_size_bytes = -1;
+
+    if (!object_event) {
+        EDGEHOG_LOG_ERR(
+            "Unable to handle fdile transfer server to device event, object event undefined");
+        goto failure;
+    }
+
+    astarte_object_entry_t *rx_values = object_event->entries;
+    size_t rx_values_length = object_event->entries_len;
 
     for (size_t i = 0; i < rx_values_length; i++) {
         const char *path = rx_values[i].path;
@@ -160,7 +162,8 @@ edgehog_result_t edgehog_ft_server_to_device_event(
     if (!ft_id || !ft_url || !ft_http_header_key || !ft_http_header_value || !ft_file_size_bytes
         || !ft_progress) {
         EDGEHOG_LOG_ERR("Unable to extract data from request");
-        return EDGEHOG_RESULT_FILE_TRANSFER_INVALID_REQUEST;
+        res = EDGEHOG_RESULT_FILE_TRANSFER_INVALID_REQUEST;
+        goto failure;
     }
 
     ft_server_to_device_data_t data = {
@@ -176,18 +179,20 @@ edgehog_result_t edgehog_ft_server_to_device_event(
     msg.type = FT_MSG_SERVER_TO_DEVICE;
     msg.payload.server_to_device = data;
 
-    edgehog_result_t res = EDGEHOG_RESULT_OK;
-
     if (k_msgq_put(&device->file_transfer->msgq, &msg, K_NO_WAIT) != 0) {
         EDGEHOG_LOG_ERR("Unable to send file transfer data to the task handling it");
-        // if message is not sent free the resources allocad onto the heap
-        free(ft_id);
-        free(ft_url);
-        free(ft_http_header_key);
-        free(ft_http_header_value);
-        memset(&data, 0, sizeof(data));
         res = EDGEHOG_RESULT_FILE_TRANSFER_QUEUE_ERROR;
+        goto failure;
     }
+
+    return EDGEHOG_RESULT_OK;
+
+failure:
+
+    free(ft_id);
+    free(ft_url);
+    free(ft_http_header_key);
+    free(ft_http_header_value);
 
     return res;
 }
@@ -195,14 +200,7 @@ edgehog_result_t edgehog_ft_server_to_device_event(
 edgehog_result_t edgehog_ft_device_to_server_event(
     edgehog_device_handle_t device, astarte_device_datastream_object_event_t *object_event)
 {
-    if (!object_event) {
-        EDGEHOG_LOG_ERR(
-            "Unable to handle fdile transfer device to server event, object event undefined");
-        return EDGEHOG_RESULT_FILE_TRANSFER_INVALID_REQUEST;
-    }
-
-    astarte_object_entry_t *rx_values = object_event->entries;
-    size_t rx_values_length = object_event->entries_len;
+    edgehog_result_t res = EDGEHOG_RESULT_FILE_TRANSFER_INVALID_REQUEST;
 
     char *ft_id = NULL;
     char *ft_url = NULL;
@@ -211,6 +209,15 @@ edgehog_result_t edgehog_ft_device_to_server_event(
     char *ft_source_type = NULL;
     char *ft_source = NULL;
     bool ft_progress = false;
+
+    if (!object_event) {
+        EDGEHOG_LOG_ERR(
+            "Unable to handle fdile transfer device to server event, object event undefined");
+        goto failure;
+    }
+
+    astarte_object_entry_t *rx_values = object_event->entries;
+    size_t rx_values_length = object_event->entries_len;
 
     for (size_t i = 0; i < rx_values_length; i++) {
         const char *path = rx_values[i].path;
@@ -244,7 +251,8 @@ edgehog_result_t edgehog_ft_device_to_server_event(
     if (!ft_id || !ft_url || !ft_http_header_key || !ft_http_header_value || !ft_source_type
         || !ft_source || !ft_progress) {
         EDGEHOG_LOG_ERR("Unable to extract data from request");
-        return EDGEHOG_RESULT_FILE_TRANSFER_INVALID_REQUEST;
+        res = EDGEHOG_RESULT_FILE_TRANSFER_INVALID_REQUEST;
+        goto failure;
     }
 
     ft_device_to_server_data_t data = {
@@ -261,20 +269,22 @@ edgehog_result_t edgehog_ft_device_to_server_event(
     msg.type = FT_MSG_DEVICE_TO_SERVER;
     msg.payload.device_to_server = data;
 
-    edgehog_result_t res = EDGEHOG_RESULT_OK;
-
     if (k_msgq_put(&device->file_transfer->msgq, &msg, K_NO_WAIT) != 0) {
         EDGEHOG_LOG_ERR("Unable to send file transfer data to the task handling it");
-        // if message is not sent free the resources allocad onto the heap
-        free(ft_id);
-        free(ft_url);
-        free(ft_http_header_key);
-        free(ft_http_header_value);
-        free(ft_source_type);
-        free(ft_source);
-        memset(&data, 0, sizeof(data));
         res = EDGEHOG_RESULT_FILE_TRANSFER_QUEUE_ERROR;
+        goto failure;
     }
+
+    return EDGEHOG_RESULT_OK;
+
+failure:
+
+    free(ft_id);
+    free(ft_url);
+    free(ft_http_header_key);
+    free(ft_http_header_value);
+    free(ft_source_type);
+    free(ft_source);
 
     return res;
 }
@@ -327,6 +337,8 @@ static void ft_handle_server_to_device(edgehog_device_handle_t edgehog_device, f
         "FT (server to device) - received progress: %d", msg->payload.server_to_device.progress);
 
     // TODO: handle file transfer request (http req to download file)
+    //  now we simulate the operation with a sleep
+    k_sleep(K_SECONDS(3));
 
     // Communicatre to Astarte a Response to the FT request
     astarte_object_entry_t object_entries[] = {
@@ -369,6 +381,8 @@ static void ft_handle_device_to_server(edgehog_device_handle_t edgehog_device, f
         "FT (device to server) - received progress: %d", msg->payload.device_to_server.progress);
 
     // TODO: handle file transfer request (upload file)
+    //  now we simulate the operation with a sleep
+    k_sleep(K_SECONDS(3));
 
     // Communicatre to Astarte a Response to the FT request
     astarte_object_entry_t object_entries[] = {
@@ -410,6 +424,9 @@ static void ft_service_thread_entry_point(void *device_ptr, void *queue_ptr, voi
 
     while (atomic_test_bit(
         &edgehog_device->file_transfer->thread_state, FILE_TRANSFER_SERVICE_THREAD_RUNNING_BIT)) {
+        // before performing the FT opration, check if there is an ongoing OTA operation
+        k_sem_take(edgehog_device->sync_ota_ft_sem, K_FOREVER);
+
         if (k_msgq_get(msgq, &msg_rcv, K_FOREVER) == 0) {
             if (msg_rcv.type == FT_MSG_SERVER_TO_DEVICE) {
                 EDGEHOG_LOG_DBG("handle server to device file transfer: %s",
@@ -421,6 +438,8 @@ static void ft_service_thread_entry_point(void *device_ptr, void *queue_ptr, voi
                 ft_handle_device_to_server(edgehog_device, &msg_rcv);
             }
         }
+
+        k_sem_give(edgehog_device->sync_ota_ft_sem);
     }
 
     EDGEHOG_LOG_DBG("CLOSING FILE TRANSFER THREAD");

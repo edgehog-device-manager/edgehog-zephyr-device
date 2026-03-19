@@ -163,13 +163,13 @@ edgehog_result_t edgehog_ft_stop(edgehog_file_transfer_t *file_transfer, k_timeo
 
 /**
  * @brief Frees all resources associated with a file transfer context.
- * * @param file_transfer The file transfer context to destroy.
+ * @param file_transfer The file transfer context to destroy.
  */
 void edgehog_ft_destroy(edgehog_file_transfer_t *file_transfer);
 
 /**
  * @brief Checks if the file transfer service thread is currently running.
- * * @param file_transfer The file transfer context to check.
+ * @param file_transfer The file transfer context to check.
  * @return true if running, false otherwise.
  */
 bool edgehog_ft_is_running(edgehog_file_transfer_t *file_transfer);

@@ -31,15 +31,11 @@
 #include <astarte_device_sdk/device.h>
 #include <astarte_device_sdk/interface.h>
 
+#define FT_REQUEST_PATH "/request"
+
 EDGEHOG_LOG_MODULE_REGISTER(edgehog_device, CONFIG_EDGEHOG_DEVICE_DEVICE_LOG_LEVEL);
 
-// Semaphore used to check if an OTA or File Transfer event of is being handled.
-// This should be used to avoid other requests to be handled concurrently
-// NOLINTBEGIN(cppcoreguidelines-avoid-non-const-global-variables)
-K_SEM_DEFINE(sync_obj_event_sem, 1, 1);
-// NOLINTEND(cppcoreguidelines-avoid-non-const-global-variables)
-
-// function pointer representing the callback to synchronize using the sync_obj_event_sem semaphore
+// function pointer representing the callback to synchronize using the sync_ota_ft_sem semaphore
 typedef edgehog_result_t (*datastream_obj_event_handler_cb_t)(
     edgehog_device_handle_t, astarte_device_datastream_object_event_t *);
 
@@ -50,10 +46,6 @@ typedef edgehog_result_t (*datastream_obj_event_handler_cb_t)(
 static edgehog_result_t add_interfaces(astarte_device_handle_t astarte_device);
 
 static void edgehog_initial_publish(edgehog_device_handle_t edgehog_device);
-
-static void sync_obj_event(edgehog_device_handle_t edgehog_device,
-    astarte_device_datastream_object_event_t *event, datastream_obj_event_handler_cb_t handler,
-    const char *err_msg);
 
 /************************************************
  *       Callbacks declaration/definition       *
@@ -96,7 +88,7 @@ static void astarte_datastream_individual_cbk(astarte_device_datastream_individu
     edgehog_device_handle_t edgehog_device = (edgehog_device_handle_t) base_event.user_data;
 
     if ((strcmp(base_event.interface_name, io_edgehog_devicemanager_Commands.name) == 0)
-        && (strcmp(base_event.path, "/request") == 0)) {
+        && (strcmp(base_event.path, FT_REQUEST_PATH) == 0)) {
         edgehog_result_t ota_result = edgehog_command_event(&event);
         if (ota_result != EDGEHOG_RESULT_OK) {
             EDGEHOG_LOG_ERR("Unable to handle Command request");
@@ -126,13 +118,15 @@ static void astarte_datastream_object_cbk(astarte_device_datastream_object_event
     edgehog_device_handle_t edgehog_device = (edgehog_device_handle_t) base_event.user_data;
 
     if (strcmp(base_event.interface_name, io_edgehog_devicemanager_OTARequest.name) == 0) {
-        if (strcmp(base_event.path, "/request") != 0) {
+        if (strcmp(base_event.path, FT_REQUEST_PATH) != 0) {
             EDGEHOG_LOG_ERR("Received OTA request on incorrect common path: '%s'", base_event.path);
             return;
         }
 
-        sync_obj_event(
-            edgehog_device, &event, edgehog_ota_event, "Unable to handle OTA update request");
+        edgehog_result_t ota_result = edgehog_ota_event(edgehog_device, &event);
+        if (ota_result != EDGEHOG_RESULT_OK) {
+            EDGEHOG_LOG_ERR("Unable to handle OTA update request");
+        }
 
         return;
     }
@@ -142,14 +136,16 @@ static void astarte_datastream_object_cbk(astarte_device_datastream_object_event
         == 0) {
         EDGEHOG_LOG_INF("Received File Transfer server to device event");
 
-        if (strcmp(base_event.path, "/request") != 0) {
+        if (strcmp(base_event.path, FT_REQUEST_PATH) != 0) {
             EDGEHOG_LOG_ERR(
                 "Received File Transfer request on incorrect common path: '%s'", base_event.path);
             return;
         }
 
-        sync_obj_event(edgehog_device, &event, edgehog_ft_server_to_device_event,
-            "Unable to handle FT server to device request");
+        edgehog_result_t ft_result = edgehog_ft_server_to_device_event(edgehog_device, &event);
+        if (ft_result != EDGEHOG_RESULT_OK) {
+            EDGEHOG_LOG_ERR("Unable to handle FT server to device request");
+        }
 
         return;
     }
@@ -158,14 +154,16 @@ static void astarte_datastream_object_cbk(astarte_device_datastream_object_event
         == 0) {
         EDGEHOG_LOG_INF("Received File Transfer device to server event");
 
-        if (strcmp(base_event.path, "/request") != 0) {
+        if (strcmp(base_event.path, FT_REQUEST_PATH) != 0) {
             EDGEHOG_LOG_ERR(
                 "Received File Transfer request on incorrect common path: '%s'", base_event.path);
             return;
         }
 
-        sync_obj_event(edgehog_device, &event, edgehog_ft_device_to_server_event,
-            "Unable to handle FT device to server request");
+        edgehog_result_t ft_result = edgehog_ft_device_to_server_event(edgehog_device, &event);
+        if (ft_result != EDGEHOG_RESULT_OK) {
+            EDGEHOG_LOG_ERR("Unable to handle FT device to server request");
+        }
 
         return;
     }
@@ -311,6 +309,8 @@ edgehog_result_t edgehog_device_new(
         EDGEHOG_LOG_ERR("Unable to create edgehog file transfer");
         goto failure;
     }
+
+    k_sem_init(edgehog_device->sync_ota_ft_sem, 1, 1);
 
     // Step 8: Fill in the Edgehog device struct
     *edgehog_device = (struct edgehog_device){
@@ -498,18 +498,4 @@ static void edgehog_initial_publish(edgehog_device_handle_t edgehog_device)
 #ifdef CONFIG_WIFI
     edgehog_wifi_scan_start(edgehog_device);
 #endif
-}
-
-static void sync_obj_event(edgehog_device_handle_t edgehog_device,
-    astarte_device_datastream_object_event_t *event, datastream_obj_event_handler_cb_t handler,
-    const char *err_msg)
-{
-    k_sem_take(&sync_obj_event_sem, K_FOREVER);
-
-    edgehog_result_t result = handler(edgehog_device, event);
-    if (result != EDGEHOG_RESULT_OK) {
-        EDGEHOG_LOG_ERR("%s", err_msg);
-    }
-
-    k_sem_give(&sync_obj_event_sem);
 }
