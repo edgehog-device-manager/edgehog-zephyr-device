@@ -33,6 +33,14 @@
 
 EDGEHOG_LOG_MODULE_REGISTER(edgehog_device, CONFIG_EDGEHOG_DEVICE_DEVICE_LOG_LEVEL);
 
+// Semaphore used to check if an OTA or File Transfer event of is being handled.
+// This should be used to avoid other requests to be handled concurrently
+K_SEM_DEFINE(sync_obj_event_sem, 1, 1);
+
+// function pointer representing the callback to synchronize using the sync_obj_event_sem semaphore
+typedef edgehog_result_t (*datastream_obj_event_handler_cb)(
+    edgehog_device_handle_t, astarte_device_datastream_object_event_t *);
+
 /************************************************
  * Static functions declaration
  ***********************************************/
@@ -40,6 +48,10 @@ EDGEHOG_LOG_MODULE_REGISTER(edgehog_device, CONFIG_EDGEHOG_DEVICE_DEVICE_LOG_LEV
 static edgehog_result_t add_interfaces(astarte_device_handle_t astarte_device);
 
 static void edgehog_initial_publish(edgehog_device_handle_t edgehog_device);
+
+static void sync_obj_event(edgehog_device_handle_t edgehog_device,
+    astarte_device_datastream_object_event_t *event, datastream_obj_event_handler_cb handler,
+    const char *err_msg);
 
 /************************************************
  *       Callbacks declaration/definition       *
@@ -116,10 +128,10 @@ static void astarte_datastream_object_cbk(astarte_device_datastream_object_event
             EDGEHOG_LOG_ERR("Received OTA request on incorrect common path: '%s'", base_event.path);
             return;
         }
-        edgehog_result_t ota_result = edgehog_ota_event(edgehog_device, &event);
-        if (ota_result != EDGEHOG_RESULT_OK) {
-            EDGEHOG_LOG_ERR("Unable to handle OTA update request");
-        }
+
+        sync_obj_event(
+            edgehog_device, &event, edgehog_ota_event, "Unable to handle OTA update request");
+
         return;
     }
 
@@ -134,10 +146,9 @@ static void astarte_datastream_object_cbk(astarte_device_datastream_object_event
             return;
         }
 
-        edgehog_result_t ft_result = edgehog_ft_server_to_device_event(edgehog_device, &event);
-        if (ft_result != EDGEHOG_RESULT_OK) {
-            EDGEHOG_LOG_ERR("Unable to handle OTA update request");
-        }
+        sync_obj_event(edgehog_device, &event, edgehog_ft_server_to_device_event,
+            "Unable to handle FT server to device request");
+
         return;
     }
 
@@ -151,10 +162,9 @@ static void astarte_datastream_object_cbk(astarte_device_datastream_object_event
             return;
         }
 
-        edgehog_result_t ft_result = edgehog_ft_device_to_server_event(edgehog_device, &event);
-        if (ft_result != EDGEHOG_RESULT_OK) {
-            EDGEHOG_LOG_ERR("Unable to handle OTA update request");
-        }
+        sync_obj_event(edgehog_device, &event, edgehog_ft_device_to_server_event,
+            "Unable to handle FT device to server request");
+
         return;
     }
 
@@ -487,4 +497,20 @@ static void edgehog_initial_publish(edgehog_device_handle_t edgehog_device)
 #ifdef CONFIG_WIFI
     edgehog_wifi_scan_start(edgehog_device);
 #endif
+}
+
+static void sync_obj_event(edgehog_device_handle_t edgehog_device,
+    astarte_device_datastream_object_event_t *event, datastream_obj_event_handler_cb handler,
+    const char *err_msg)
+{
+    k_sem_take(&sync_obj_event_sem, K_FOREVER);
+
+    edgehog_result_t result = handler(edgehog_device, event);
+    if (result != EDGEHOG_RESULT_OK) {
+        EDGEHOG_LOG_ERR("%s", err_msg);
+    }
+
+    k_sleep(K_SECONDS(5));
+
+    k_sem_give(&sync_obj_event_sem);
 }
