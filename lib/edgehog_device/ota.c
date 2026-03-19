@@ -404,6 +404,9 @@ static void ota_thread_entry_point(void *edgehog_device, void *ptr2, void *ptr3)
     ota_thread_data_t *ota_thread_data = &edgehog_dev->ota_thread.ota_thread_data;
     const char *req_uuid = ota_thread_data->ota_request.uuid;
 
+    // before performing the OTA update, check if there is a File Transfer ongoing operation
+    k_sem_take(edgehog_dev->sync_ota_ft_sem, K_FOREVER);
+
     // Step 1 acknowledge the valid update request and notify the start of the download
     // operation.
 
@@ -465,6 +468,8 @@ static void ota_thread_entry_point(void *edgehog_device, void *ptr2, void *ptr3)
         wait_for_reboot();
         EDGEHOG_LOG_INF("Device restart now");
         sys_reboot(SYS_REBOOT_WARM);
+        // everything is reinitialized if the system reboots, therefore we don't need to release the
+        // OTA/FT seaphore
 
     } else {
         EDGEHOG_LOG_WRN("OTA FAILED");
@@ -482,6 +487,9 @@ selfdestruct:
     edgehog_settings_delete(OTA_KEY, OTA_REQUEST_ID_KEY);
     ota_state = OTA_STATE_IDLE;
     edgehog_settings_save(OTA_KEY, OTA_STATE_KEY, &ota_state, sizeof(uint8_t));
+
+    // release the lock to the semaphore so that pending FT requests can be handled
+    k_sem_give(edgehog_dev->sync_ota_ft_sem);
 }
 
 static void wait_for_reboot(void)
