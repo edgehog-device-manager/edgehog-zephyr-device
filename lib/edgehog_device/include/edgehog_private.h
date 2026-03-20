@@ -12,6 +12,7 @@
  * @brief Private Edgehog Device APIs and fields
  */
 
+#include "file_transfer_private.h"
 #include "led.h"
 #include "ota.h"
 #include "telemetry_private.h"
@@ -71,6 +72,10 @@ struct edgehog_device
     led_thread_t led_thread;
     /** @brief Telemetry data. */
     edgehog_telemetry_t *telemetry;
+    /** @brief File transfer data. */
+    edgehog_file_transfer_t *file_transfer;
+    /** @brief Semaphore used to synchronize an OTA or File Transfer operation. */
+    struct k_sem *sync_ota_ft_sem;
 #ifdef CONFIG_WIFI
     /** @brief WiFi scan data struct. */
     struct wifi_scan wifi_scan_data;

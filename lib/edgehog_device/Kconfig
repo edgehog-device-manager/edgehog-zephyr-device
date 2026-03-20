@@ -177,4 +177,9 @@ module-str = Log level for Edgehog device uuid utilities.
 module-help = Sets log level for Edgehog device uuid utilities.
 source "subsys/logging/Kconfig.template.log_config"
 
+module = EDGEHOG_DEVICE_FILE_TRANSFER
+module-str = Log level for Edgehog device file transfer utilities.
+module-help = Sets log level for Edgehog device file transfer utilities.
+source "subsys/logging/Kconfig.template.log_config"
+
 endmenu

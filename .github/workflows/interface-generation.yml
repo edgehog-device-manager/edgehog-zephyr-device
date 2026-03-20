@@ -8,7 +8,7 @@ on:
   workflow_call:
 
 env:
-  EDGEHOG_INTERFACES_REF: v0.8.0
+  EDGEHOG_INTERFACES_REF: a67a5a8e5fa0e7563005b1d87598800390ca1797
 
 jobs:
   interface-check:
@@ -60,6 +60,9 @@ jobs:
             io.edgehog.devicemanager.WiFiScanResults.json \
             io.edgehog.devicemanager.BatteryStatus.json \
             io.edgehog.devicemanager.config.Telemetry.json \
+            io.edgehog.devicemanager.fileTransfer.DeviceToServer \
+            io.edgehog.devicemanager.fileTransfer.Response \
+            io.edgehog.devicemanager.fileTransfer.posix.ServerToDevice \
             ../edgehog-zephyr-device/interfaces
       - name: Generate interface reference code
         working-directory: edgehog-zephyr-device
