@@ -7,11 +7,15 @@ from pathlib import Path
 from typing import Any, Optional, Union
 import requests
 from typing import List
+import zipfile
+import io
 
 import pytest
 from astarte.device import Interface
 from dotenv import dotenv_values
 from twister_harness import DeviceAdapter, Shell
+
+EDGEHOG_INTERFACES_REFERENCE="v0.8.0"
 
 class MissingConfigError(Exception):
     def __init__(self, key: str) -> None:
@@ -82,28 +86,25 @@ class Configuration:
 # See: https://docs.github.com/en/rest/using-the-rest-api/rate-limits-for-the-rest-api
 def get_edgehog_json_interfaces() -> List[dict]:
     """
-    Fetches the unparsed content of all JSON files in the root of the
-    edgehog-device-manager/edgehog-astarte-interfaces repository.
+    Fetches the unparsed content of all JSON files by downloading the repository zip archive.
+    This reduces N+1 API calls to a single standard HTTP request.
     """
-    api_url = "https://api.github.com/repos/edgehog-device-manager/edgehog-astarte-interfaces/contents/"
-    json_file_contents = []
 
-    # Get the directory listing of the repo root
-    response = requests.get(api_url)
+    # Download the repository as a ZIP archive
+    edgehog_interfaces_url = "https://github.com/edgehog-device-manager/edgehog-astarte-interfaces"
+    zip_url = f"{edgehog_interfaces_url}/archive/refs/tags/{EDGEHOG_INTERFACES_REFERENCE}.zip"
+    response = requests.get(zip_url)
     response.raise_for_status()
 
-    for item in response.json():
-        # Look only for files that end with .json
-        if item.get("type") == "file" and item.get("name", "").endswith(".json"):
-            download_url = item["download_url"]
+    parsed_interfaces = []
+    with zipfile.ZipFile(io.BytesIO(response.content)) as unzipped:
+        for filename in unzipped.namelist():
+            if filename.endswith(".json") and filename.count('/') == 1:
+                with unzipped.open(filename) as f:
+                    content = f.read().decode('utf-8')
+                    parsed_interfaces.append(json.loads(content))
 
-            # Fetch the raw text content of the file
-            file_response = requests.get(download_url)
-            file_response.raise_for_status()
-
-            json_file_contents.append(file_response.text)
-
-    return [json.loads(json_file_content) for json_file_content in json_file_contents]
+    return parsed_interfaces
 
 @pytest.fixture(scope="session")
 def end_to_end_configuration(dut: DeviceAdapter, shell: Shell) -> Configuration:
