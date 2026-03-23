@@ -75,7 +75,7 @@ struct edgehog_device
     /** @brief File transfer data. */
     edgehog_file_transfer_t *file_transfer;
     /** @brief Semaphore used to synchronize an OTA or File Transfer operation. */
-    struct k_sem *sync_ota_ft_sem;
+    struct k_sem sync_ota_ft_sem;
 #ifdef CONFIG_WIFI
     /** @brief WiFi scan data struct. */
     struct wifi_scan wifi_scan_data;

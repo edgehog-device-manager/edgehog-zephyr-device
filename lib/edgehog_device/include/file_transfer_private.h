@@ -98,8 +98,6 @@ typedef struct
  */
 typedef struct
 {
-    /** @brief File transfer entries list. */
-    ft_msgq_data_t *entries[EDGEHOG_FILE_TRANSFER_LEN];
     /** @brief Message queue. */
     struct k_msgq msgq;
     /** @brief Ring buffer that holds queued messages. */
@@ -114,7 +112,7 @@ typedef struct
  * @brief Allocates and initializes a new file transfer context.
  * @return A pointer to the newly created context, or NULL on failure.
  */
-edgehog_file_transfer_t *edgehog_file_transfer_new();
+edgehog_file_transfer_t *edgehog_ft_new();
 
 /**
  * @brief Starts the file transfer background service/thread.

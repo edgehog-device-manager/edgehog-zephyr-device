@@ -31,6 +31,8 @@
 #include <astarte_device_sdk/device.h>
 #include <astarte_device_sdk/interface.h>
 
+#define COMMANDS_REQUEST_PATH "/request"
+#define OTA_REQUEST_PATH "/request"
 #define FT_REQUEST_PATH "/request"
 
 EDGEHOG_LOG_MODULE_REGISTER(edgehog_device, CONFIG_EDGEHOG_DEVICE_DEVICE_LOG_LEVEL);
@@ -88,7 +90,7 @@ static void astarte_datastream_individual_cbk(astarte_device_datastream_individu
     edgehog_device_handle_t edgehog_device = (edgehog_device_handle_t) base_event.user_data;
 
     if ((strcmp(base_event.interface_name, io_edgehog_devicemanager_Commands.name) == 0)
-        && (strcmp(base_event.path, FT_REQUEST_PATH) == 0)) {
+        && (strcmp(base_event.path, COMMANDS_REQUEST_PATH) == 0)) {
         edgehog_result_t ota_result = edgehog_command_event(&event);
         if (ota_result != EDGEHOG_RESULT_OK) {
             EDGEHOG_LOG_ERR("Unable to handle Command request");
@@ -118,7 +120,7 @@ static void astarte_datastream_object_cbk(astarte_device_datastream_object_event
     edgehog_device_handle_t edgehog_device = (edgehog_device_handle_t) base_event.user_data;
 
     if (strcmp(base_event.interface_name, io_edgehog_devicemanager_OTARequest.name) == 0) {
-        if (strcmp(base_event.path, FT_REQUEST_PATH) != 0) {
+        if (strcmp(base_event.path, OTA_REQUEST_PATH) != 0) {
             EDGEHOG_LOG_ERR("Received OTA request on incorrect common path: '%s'", base_event.path);
             return;
         }
@@ -304,13 +306,11 @@ edgehog_result_t edgehog_device_new(
 
     // Step 7: Initialize the file transfer for the Edgehog device
     // TODO: use the `config` struct to populate the file transfer
-    edgehog_file_transfer_t *file_transfer = edgehog_file_transfer_new();
+    edgehog_file_transfer_t *file_transfer = edgehog_ft_new();
     if (!file_transfer) {
         EDGEHOG_LOG_ERR("Unable to create edgehog file transfer");
         goto failure;
     }
-
-    k_sem_init(edgehog_device->sync_ota_ft_sem, 1, 1);
 
     // Step 8: Fill in the Edgehog device struct
     *edgehog_device = (struct edgehog_device){
@@ -328,6 +328,9 @@ edgehog_result_t edgehog_device_new(
         .telemetry = telemetry,
         .file_transfer = file_transfer,
     };
+
+    k_sem_init(&edgehog_device->sync_ota_ft_sem, 1, 1);
+
     memcpy(edgehog_device->boot_id, boot_id, UUID_STR_LEN + 1);
     *edgehog_handle = edgehog_device;
 

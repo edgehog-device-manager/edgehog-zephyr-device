@@ -405,7 +405,7 @@ static void ota_thread_entry_point(void *edgehog_device, void *ptr2, void *ptr3)
     const char *req_uuid = ota_thread_data->ota_request.uuid;
 
     // before performing the OTA update, check if there is a File Transfer ongoing operation
-    k_sem_take(edgehog_dev->sync_ota_ft_sem, K_FOREVER);
+    k_sem_take(&edgehog_dev->sync_ota_ft_sem, K_FOREVER);
 
     // Step 1 acknowledge the valid update request and notify the start of the download
     // operation.
@@ -489,7 +489,7 @@ selfdestruct:
     edgehog_settings_save(OTA_KEY, OTA_STATE_KEY, &ota_state, sizeof(uint8_t));
 
     // release the lock to the semaphore so that pending FT requests can be handled
-    k_sem_give(edgehog_dev->sync_ota_ft_sem);
+    k_sem_give(&edgehog_dev->sync_ota_ft_sem);
 }
 
 static void wait_for_reboot(void)

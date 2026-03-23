@@ -56,10 +56,9 @@ static char *duplicate_string(const char *src);
 /**
  * @brief Create an Edgehog file transfer service.
  *
- * // TODO: add config params to populate the file transfer
  * @return A pointer to Edgehog telemetry or a NULL if an error occurred.
  */
-edgehog_file_transfer_t *edgehog_file_transfer_new()
+edgehog_file_transfer_t *edgehog_ft_new()
 {
     // Allocate space for the file transfer internal struct
     edgehog_file_transfer_t *file_transfer = calloc(1, sizeof(edgehog_file_transfer_t));
@@ -103,7 +102,10 @@ edgehog_result_t edgehog_ft_start(edgehog_device_handle_t device)
 
     // assign a name to the thread for debugging purposes
     int ret = k_thread_name_set(thread_id, "file_transfer");
-    if (ret != 0) {
+    if (ret == -ENOSYS) {
+        EDGEHOG_LOG_DBG(
+            "Couldn't set thread name since the config CONFIG_THREAD_NAME is not enabled");
+    } else if (ret != 0) {
         EDGEHOG_LOG_ERR("Failed to set thread name, error %d", ret);
         atomic_clear_bit(&file_tansfer->thread_state, FILE_TRANSFER_SERVICE_THREAD_RUNNING_BIT);
         return EDGEHOG_RESULT_FILE_TRANSFER_START_FAIL;
@@ -424,10 +426,11 @@ static void ft_service_thread_entry_point(void *device_ptr, void *queue_ptr, voi
 
     while (atomic_test_bit(
         &edgehog_device->file_transfer->thread_state, FILE_TRANSFER_SERVICE_THREAD_RUNNING_BIT)) {
-        // before performing the FT opration, check if there is an ongoing OTA operation
-        k_sem_take(edgehog_device->sync_ota_ft_sem, K_FOREVER);
 
-        if (k_msgq_get(msgq, &msg_rcv, K_FOREVER) == 0) {
+        if (k_msgq_get(msgq, &msg_rcv, K_MSEC(100)) == 0) {
+            // before performing the FT operation, check if there is an ongoing OTA operation
+            k_sem_take(&edgehog_device->sync_ota_ft_sem, K_FOREVER);
+
             if (msg_rcv.type == FT_MSG_SERVER_TO_DEVICE) {
                 EDGEHOG_LOG_DBG("handle server to device file transfer: %s",
                     msg_rcv.payload.server_to_device.id);
@@ -437,9 +440,9 @@ static void ft_service_thread_entry_point(void *device_ptr, void *queue_ptr, voi
                     msg_rcv.payload.device_to_server.source);
                 ft_handle_device_to_server(edgehog_device, &msg_rcv);
             }
-        }
 
-        k_sem_give(edgehog_device->sync_ota_ft_sem);
+            k_sem_give(&edgehog_device->sync_ota_ft_sem);
+        }
     }
 
     EDGEHOG_LOG_DBG("CLOSING FILE TRANSFER THREAD");
