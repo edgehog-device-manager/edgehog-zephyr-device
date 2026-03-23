@@ -127,7 +127,7 @@ static void device_thread_entry_point(void *unused1, void *unused2, void *unused
     LOG_INF("Starting Edgehog.");
     eres = edgehog_device_start(device_handle);
     if (eres != EDGEHOG_RESULT_OK) {
-        LOG_ERR("Unable to start edgehog device"); // NOLINT
+        LOG_ERR("Unable to start edgehog device");
         return;
     }
 

@@ -67,9 +67,10 @@ class Configuration:
         except MissingConfigError:
             self.log_only = False
 
-        self.interfaces = []
+        self.interfaces = {}
         for interface_json in get_edgehog_json_interfaces():
-            self.interfaces.append(Interface(interface_json))
+            interface = Interface(interface_json)
+            self.interfaces[interface.name] = interface
 
 
     @staticmethod

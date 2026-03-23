@@ -4,9 +4,11 @@
 
 import time
 import logging
+import datetime
 
 from configuration import Configuration
 from http_server import start_server, stop_server
+from telemetry import validate_initial_telemetry, validate_telemetry_frequency
 
 logger = logging.getLogger(__name__)
 
@@ -16,6 +18,8 @@ SHELL_CMD_DISCONNECT = "dvcshellcmd_disconnect"
 
 
 def test_device(end_to_end_configuration: Configuration):
+
+    initial_time = datetime.datetime.now(datetime.timezone.utc)
 
     logger.info("Starting the http server")
 
@@ -31,9 +35,11 @@ def test_device(end_to_end_configuration: Configuration):
     end_to_end_configuration.dut.readlines_until(SHELL_IS_READY, timeout=60)
 
     # Wait a couple of seconds
-    time.sleep(1)
+    time.sleep(10)
 
     # TODO: Perform the end to end tests
+    validate_initial_telemetry(end_to_end_configuration, initial_time)
+    validate_telemetry_frequency(end_to_end_configuration)
 
     # Wait a couple of seconds
     time.sleep(1)

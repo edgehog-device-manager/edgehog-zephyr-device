@@ -46,6 +46,7 @@ static void publish_build_id(edgehog_device_handle_t edgehog_device);
 
 void publish_base_image(edgehog_device_handle_t edgehog_device)
 {
+    EDGEHOG_LOG_DBG("Publishing Edgehog device base image properties");
     publish_fingerprint(edgehog_device);
     publish_name(edgehog_device);
     publish_version(edgehog_device);
