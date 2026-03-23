@@ -144,7 +144,7 @@ static void system_time_init()
         tspec.tv_nsec = ((uint64_t) now.fraction * (1000lu * 1000lu * 1000lu)) >> 32;
         // NOLINTEND(bugprone-narrowing-conversions, hicpp-signed-bitwise,
         // readability-magic-numbers)
-        sys_clock_settime(CLOCK_REALTIME, &tspec);
+        sys_clock_settime(SYS_CLOCK_REALTIME, &tspec);
     }
 #endif
 }
