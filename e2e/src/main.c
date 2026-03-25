@@ -100,13 +100,12 @@ int main(void)
 
 #endif
 
-    // Initalize the system time
-    system_time_init();
-
     LOG_INF("Spawning a new thread to poll the eth interface and check connectivity.");
     k_thread_create(&eth_thread_data, eth_thread_stack_area,
         K_THREAD_STACK_SIZEOF(eth_thread_stack_area), eth_thread_entry_point, NULL, NULL, NULL,
         CONFIG_E2E_DEVICE_THREAD_PRIORITY, 0, K_NO_WAIT);
+
+    system_time_init();
 
     LOG_INF("Running the end to end test.");
     run_end_to_end_test();
@@ -135,6 +134,8 @@ static void system_time_init()
     struct sntp_time now;
     struct timespec tspec;
 
+    LOG_INF("Attempting to sync time via SNTP from %s...", CONFIG_NET_CONFIG_SNTP_INIT_SERVER);
+
     ret = sntp_simple(
         CONFIG_NET_CONFIG_SNTP_INIT_SERVER, CONFIG_NET_CONFIG_SNTP_INIT_TIMEOUT, &now);
     if (ret == 0) {
@@ -145,6 +146,10 @@ static void system_time_init()
         // NOLINTEND(bugprone-narrowing-conversions, hicpp-signed-bitwise,
         // readability-magic-numbers)
         sys_clock_settime(SYS_CLOCK_REALTIME, &tspec);
+
+        LOG_INF("SNTP sync successful! System time set to: %lld seconds", (long long) tspec.tv_sec);
+    } else {
+        LOG_ERR("Failed to get time from SNTP server, error: %d", ret);
     }
 #endif
 }

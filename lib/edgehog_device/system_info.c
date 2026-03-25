@@ -42,8 +42,8 @@ static void publish_part_number(edgehog_device_handle_t edgehog_device);
 
 void publish_system_info(edgehog_device_handle_t edgehog_device)
 {
+    EDGEHOG_LOG_DBG("Publishing Edgehog device system info");
     publish_serial_number(edgehog_device);
-
     publish_part_number(edgehog_device);
 }
 

@@ -51,7 +51,7 @@ static void k_thread_stack_sum_cb(const struct k_thread *thread, void *user_data
 
 void publish_system_status(edgehog_device_handle_t edgehog_device)
 {
-
+    EDGEHOG_LOG_DBG("Publishing Edgehog device system status");
     thread_info_t thread_info = { 0 };
     k_thread_foreach_unlocked(k_thread_stack_sum_cb, &thread_info);
 

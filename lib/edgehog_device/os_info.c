@@ -32,6 +32,7 @@ EDGEHOG_LOG_MODULE_REGISTER(os_info, CONFIG_EDGEHOG_DEVICE_OS_INFO_LOG_LEVEL);
 
 void publish_os_info(edgehog_device_handle_t edgehog_device)
 {
+    EDGEHOG_LOG_DBG("Publishing Edgehog device os info");
     astarte_result_t res = astarte_device_set_property(edgehog_device->astarte_device,
         io_edgehog_devicemanager_OSInfo.name, "/osName", astarte_data_from_string("Zephyr"));
 

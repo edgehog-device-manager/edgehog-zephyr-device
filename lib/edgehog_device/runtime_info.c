@@ -38,6 +38,7 @@ EDGEHOG_LOG_MODULE_REGISTER(runtime_info, CONFIG_EDGEHOG_DEVICE_RUNTIME_INFO_LOG
 
 void publish_runtime_info(edgehog_device_handle_t edgehog_device)
 {
+    EDGEHOG_LOG_DBG("Publishing Edgehog device runtime info");
     astarte_result_t res = astarte_device_set_property(edgehog_device->astarte_device,
         io_edgehog_devicemanager_RuntimeInfo.name, RUNTIME_NAME_PROP,
         astarte_data_from_string(RUNTIME_NAME));

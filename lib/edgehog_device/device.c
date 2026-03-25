@@ -414,6 +414,7 @@ static edgehog_result_t add_interfaces(astarte_device_handle_t astarte_device)
 
 static void edgehog_initial_publish(edgehog_device_handle_t edgehog_device)
 {
+    EDGEHOG_LOG_DBG("Initial publish for the edgehog device");
     edgehog_ota_init(edgehog_device);
     publish_hardware_info(edgehog_device);
     publish_os_info(edgehog_device);

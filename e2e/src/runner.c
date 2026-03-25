@@ -58,6 +58,9 @@ void run_end_to_end_test()
     LOG_INF("Waiting for the device to be connected");
     wait_for_device_connection();
 
+    // Wait for a second to allow the Edgehog device to perform the initial publish
+    k_sleep(K_SECONDS(1));
+
     // We are ready to send and receive data
     const struct shell *uart_shell = shell_backend_uart_get_ptr();
     shell_start(uart_shell);
