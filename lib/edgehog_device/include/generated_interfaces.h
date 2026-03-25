@@ -8,6 +8,8 @@
  * and are automatically generated from the json interfaces definitions.
  */
 
+// clang-format off
+
 // NOLINTNEXTLINE This guard is clear enough.
 #ifndef GENERATED_INTERFACES_H
 #define GENERATED_INTERFACES_H

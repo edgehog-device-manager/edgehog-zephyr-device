@@ -5,6 +5,8 @@
  * @warning Do not modify this file manually.
  */
 
+// clang-format off
+
 #include "generated_interfaces.h"
 
 // Interface names should resemble as closely as possible their respective .json file names.
