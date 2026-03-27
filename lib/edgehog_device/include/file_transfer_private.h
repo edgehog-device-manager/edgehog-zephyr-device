@@ -28,8 +28,12 @@ typedef struct
     char *id;
     /** @brief The URL to get the file from. */
     char *url;
+    // TODO: change this to an array of strings (i.e., char* http_header_key[]) when the Astarte
+    // interface is updated
     /** @brief Keys for the HTTP headers, must be in the order of the values. */
     char *http_header_key;
+    // TODO: change this to an array of strings (i.e., char* http_header_key[]) when the Astarte
+    // interface is updated
     /** @brief Values for the HTTP headers, must be in the order of the keys. */
     char *http_header_value;
     /** @brief Total decompressed file size in bytes. */
@@ -41,6 +45,27 @@ typedef struct
 } ft_server_to_device_data_t;
 
 /**
+ * @brief Data payload for a Server-to-Device HTTP callback.
+ */
+typedef struct
+{
+    /** @brief Transfer ID for the file. */
+    char *id;
+    /** @brief The URL to get the file from. */
+    char *url;
+    /** @brief Total file size in bytes. */
+    size_t file_size_bytes;
+    /** @brief Flag to enable the progress reporting of the download. */
+    bool progress;
+    /** @brief Edgehog device handle. */
+    edgehog_device_handle_t edgehog_device;
+    /** @brief Target file path or identifier. */
+    char *file; // TODO: used to test download functionality, remove and use littlefs
+    /** @brief Keep track of the point to store the next http chunk. */
+    size_t current_offset;
+} ft_server_to_device_http_cb_data_t;
+
+/**
  * @brief Data payload for a Device-to-Server file transfer request.
  */
 typedef struct
@@ -49,8 +74,12 @@ typedef struct
     char *id;
     /** @brief The URL to upload the file to. */
     char *url;
+    // TODO: change this to an array of strings (i.e., char* http_header_key[]) when the Astarte
+    // interface is updated
     /** @brief Keys for the HTTP headers, must be in the order of the values. */
     char *http_header_key;
+    // TODO: change this to an array of strings (i.e., char* http_header_key[]) when the Astarte
+    // interface is updated
     /** @brief Values for the HTTP headers, must be in the order of the keys. */
     char *http_header_value;
     /** @brief Flag to enable the progress reporting of the upload. */

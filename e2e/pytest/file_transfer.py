@@ -18,19 +18,11 @@ logger = logging.getLogger(__name__)
 def file_transfer_test(end_to_end_configuration: Configuration):
     ft_data = {
         "url": "https://192.0.2.2:8443/test_data.txt",
-        "progress": True,
-        "digest": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
         "id": "550e8400-e29b-41d4-a716-446655440000",
-        "ttlSeconds": 3600,
-        "destination": "storage",
-        "fileMode": 420,
-        "fileSizeBytes": 1048576,
-        "userId": 1000,
-        "httpHeaderKey": "Authorization",
-        "httpHeaderValue": "Bearer token123",
-        "groupId": 1000,
-        "compression": "tar.gz",
-        "fileName": "backup.tar.gz"
+        "progress": False,
+        "fileSizeBytes": 15,
+        "httpHeaderKey": "Content-Type,foo",
+        "httpHeaderValue": "application/json,bar",
     }
 
     start_time = datetime.now(timezone.utc)

@@ -58,7 +58,7 @@ def http_get_server_data(
     res = requests.get(
         url, headers=headers, params=params, timeout=5, verify=e2e_cfg.appengine_cert
     )
-    logger.info(curlify.to_curl(res.request))
+    logger.debug(curlify.to_curl(res.request))
     if res.status_code != 200:
         if not quiet:
             logger.error(res.text)

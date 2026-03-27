@@ -9,10 +9,12 @@
 #include "edgehog_private.h"
 #include "generated_interfaces.h"
 #include "hardware_info.h"
+#include "http.h"
 #include "settings.h"
 #include "storage_usage.h"
 #include "system_status.h"
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -30,6 +32,9 @@ EDGEHOG_LOG_MODULE_REGISTER(file_transfer, CONFIG_EDGEHOG_DEVICE_FILE_TRANSFER_L
 #define FILE_TRANSFER_SERVICE_THREAD_PRIORITY 5
 #define FILE_TRANSFER_SERVICE_THREAD_RUNNING_BIT (1)
 #define FILE_TRANSFER_SERVICE_MSGQ_GET_TIMEOUT 100
+#define FILE_TRANSFER_MAX_HTTP_HEADERS 15
+
+#define FT_REQ_TIMEOUT_MS (60 * 1000)
 
 // NOLINTBEGIN(cppcoreguidelines-avoid-non-const-global-variables)
 K_THREAD_STACK_DEFINE(file_transfer_service_stack_area, FILE_TRANSFER_SERVICE_THREAD_STACK_SIZE);
@@ -39,7 +44,11 @@ K_THREAD_STACK_DEFINE(file_transfer_service_stack_area, FILE_TRANSFER_SERVICE_TH
  *         Static functions declarations        *
  ***********************************************/
 
-static void ft_handle_server_to_device(edgehog_device_handle_t edgehog_device, ft_msgq_data_t *msg);
+static edgehog_result_t parse_http_headers(
+    const char *header_key, const char *header_value, char *header_fields[], size_t max_elements);
+
+static edgehog_result_t ft_handle_server_to_device(
+    edgehog_device_handle_t edgehog_device, ft_msgq_data_t *msg);
 
 static void ft_handle_device_to_server(edgehog_device_handle_t edgehog_device, ft_msgq_data_t *msg);
 
@@ -48,6 +57,75 @@ static void ft_service_thread_entry_point(void *device_ptr, void *queue_ptr, voi
 
 // Equivalent of POSIX strdup() funciton
 static char *duplicate_string(const char *src);
+
+/************************************************
+ *     Callbacks definition and declaration     *
+ ***********************************************/
+
+static edgehog_result_t http_download_ft_std_payload_cbk(
+    bool *abort_flag, http_download_chunk_t *download_chunk, void *user_data)
+{
+    if (!download_chunk) {
+        EDGEHOG_LOG_ERR("Unable to read chunk, It is empty");
+        return EDGEHOG_RESULT_HTTP_REQUEST_ERROR;
+    }
+
+    if (!user_data) {
+        EDGEHOG_LOG_ERR("Unable to read user data context");
+        return EDGEHOG_RESULT_INTERNAL_ERROR;
+    }
+
+    ft_server_to_device_http_cb_data_t *ft_data = (ft_server_to_device_http_cb_data_t *) user_data;
+
+    // store the file
+    if (download_chunk->chunk_size > 0 && ft_data->file != NULL) {
+        // check potential buffer overflow
+        if (ft_data->current_offset + download_chunk->chunk_size <= ft_data->file_size_bytes) {
+
+            memcpy(ft_data->file + ft_data->current_offset, download_chunk->chunk_start_addr,
+                download_chunk->chunk_size);
+
+            ft_data->current_offset += download_chunk->chunk_size;
+            EDGEHOG_LOG_DBG("Downloaded %d bytes", ft_data->current_offset);
+        } else {
+            EDGEHOG_LOG_ERR("Potential buffer overflow, the file exceed declared dimensions");
+            edgehog_http_download_abort(abort_flag);
+            return EDGEHOG_RESULT_INTERNAL_ERROR;
+        }
+    }
+
+    if (download_chunk->last_chunk) {
+        if (ft_data->file_size_bytes != ft_data->current_offset) {
+            EDGEHOG_LOG_ERR("File transfer download aborted");
+            edgehog_http_download_abort(abort_flag);
+            return EDGEHOG_RESULT_INTERNAL_ERROR;
+        }
+
+        EDGEHOG_LOG_DBG("Download completed successfully!");
+        // TODO: close here the file
+
+        astarte_object_entry_t object_entries[] = {
+            { .path = "id", .data = astarte_data_from_string(ft_data->id) },
+            { .path = "type", .data = astarte_data_from_string("server_to_device") },
+            { .path = "code", .data = astarte_data_from_longinteger(0) },
+            { .path = "message", .data = astarte_data_from_string("") },
+        };
+
+        astarte_result_t res = astarte_device_send_object(ft_data->edgehog_device->astarte_device,
+            io_edgehog_devicemanager_fileTransfer_Response.name, "/request", object_entries,
+            ARRAY_SIZE(object_entries), NULL);
+
+        if (res != ASTARTE_RESULT_OK) {
+            EDGEHOG_LOG_ERR("Unable to send File transfer response");
+            edgehog_http_download_abort(abort_flag);
+            return EDGEHOG_RESULT_INTERNAL_ERROR;
+        }
+    } else {
+        // TODO: if progress is required, send FT Progress update to Astarte + log progress
+    }
+
+    return EDGEHOG_RESULT_OK;
+}
 
 /************************************************
  *         Global functions definitions         *
@@ -161,8 +239,7 @@ edgehog_result_t edgehog_ft_server_to_device_event(
         }
     }
 
-    if (!ft_id || !ft_url || !ft_http_header_key || !ft_http_header_value || !ft_file_size_bytes
-        || !ft_progress) {
+    if (!ft_id || !ft_url || !ft_http_header_key || !ft_http_header_value || !ft_file_size_bytes) {
         EDGEHOG_LOG_ERR("Unable to extract data from request");
         res = EDGEHOG_RESULT_FILE_TRANSFER_INVALID_REQUEST;
         goto failure;
@@ -191,10 +268,10 @@ edgehog_result_t edgehog_ft_server_to_device_event(
 
 failure:
 
-    free(ft_id);
-    free(ft_url);
-    free(ft_http_header_key);
-    free(ft_http_header_value);
+    k_free(ft_id);
+    k_free(ft_url);
+    k_free(ft_http_header_key);
+    k_free(ft_http_header_value);
 
     return res;
 }
@@ -251,7 +328,7 @@ edgehog_result_t edgehog_ft_device_to_server_event(
     }
 
     if (!ft_id || !ft_url || !ft_http_header_key || !ft_http_header_value || !ft_source_type
-        || !ft_source || !ft_progress) {
+        || !ft_source) {
         EDGEHOG_LOG_ERR("Unable to extract data from request");
         res = EDGEHOG_RESULT_FILE_TRANSFER_INVALID_REQUEST;
         goto failure;
@@ -281,12 +358,12 @@ edgehog_result_t edgehog_ft_device_to_server_event(
 
 failure:
 
-    free(ft_id);
-    free(ft_url);
-    free(ft_http_header_key);
-    free(ft_http_header_value);
-    free(ft_source_type);
-    free(ft_source);
+    k_free(ft_id);
+    k_free(ft_url);
+    k_free(ft_http_header_key);
+    k_free(ft_http_header_value);
+    k_free(ft_source_type);
+    k_free(ft_source);
 
     return res;
 }
@@ -325,7 +402,68 @@ bool edgehog_ft_is_running(edgehog_file_transfer_t *file_transfer)
  *         Static functions definitions         *
  ***********************************************/
 
-static void ft_handle_server_to_device(edgehog_device_handle_t edgehog_device, ft_msgq_data_t *msg)
+// TODO: this function implementation must be changed once the httpHeaderKey and httpHeaderValue
+// endpoint
+//  of the FT Astarte interface value is changed from string to stringarray.
+static edgehog_result_t parse_http_headers(
+    const char *header_key, const char *header_value, char *header_fields[], size_t max_elements)
+{
+    if (!header_key || !header_value || !header_fields || max_elements == 0) {
+        return EDGEHOG_RESULT_FILE_TRANSFER_INVALID_REQUEST;
+    }
+
+    char *key_copy = duplicate_string(header_key);
+    char *val_copy = duplicate_string(header_value);
+    edgehog_result_t eres = EDGEHOG_RESULT_OK;
+
+    if (!key_copy || !val_copy) {
+        eres = EDGEHOG_RESULT_OUT_OF_MEMORY;
+        goto cleanup_copies;
+    }
+
+    char *saveptr_key = NULL;
+    char *saveptr_val = NULL;
+    char *token_key = strtok_r(key_copy, ",", &saveptr_key);
+    char *token_val = strtok_r(val_copy, ",", &saveptr_val);
+
+    size_t idx = 0;
+    // the last element (max_elements - 1) must be NULL
+    while (token_key && token_val && idx < (max_elements - 1)) {
+        size_t needed = strlen(token_key) + strlen(token_val) + 3;
+
+        header_fields[idx] = k_malloc(needed);
+        if (header_fields[idx] == NULL) {
+            eres = EDGEHOG_RESULT_OUT_OF_MEMORY;
+            goto cleanup_allocated;
+        }
+
+        snprintf(header_fields[idx], needed, "%s: %s", token_key, token_val); // NOLINT
+        idx++;
+
+        token_key = strtok_r(NULL, ",", &saveptr_key);
+        token_val = strtok_r(NULL, ",", &saveptr_val);
+    }
+
+    header_fields[idx] = NULL;
+
+    goto cleanup_copies;
+
+cleanup_allocated:
+    // free the partially allocated data
+    for (size_t j = 0; j < idx; j++) {
+        k_free(header_fields[j]);
+        header_fields[j] = NULL;
+    }
+
+cleanup_copies:
+    k_free(key_copy);
+    k_free(val_copy);
+
+    return eres;
+}
+
+static edgehog_result_t ft_handle_server_to_device(
+    edgehog_device_handle_t edgehog_device, ft_msgq_data_t *msg)
 {
     EDGEHOG_LOG_DBG("FT (server to device) - received id: %s", msg->payload.server_to_device.id);
     EDGEHOG_LOG_DBG("FT (server to device) - received url: %s", msg->payload.server_to_device.url);
@@ -338,33 +476,72 @@ static void ft_handle_server_to_device(edgehog_device_handle_t edgehog_device, f
     EDGEHOG_LOG_DBG(
         "FT (server to device) - received progress: %d", msg->payload.server_to_device.progress);
 
-    // TODO: handle file transfer request (http req to download file)
-    //  now we simulate the operation with a sleep
-    k_sleep(K_SECONDS(3));
-
-    // Communicatre to Astarte a Response to the FT request
-    astarte_object_entry_t object_entries[] = {
-        { .path = "id", .data = astarte_data_from_string(msg->payload.server_to_device.id) },
-        { .path = "type", .data = astarte_data_from_string("server_to_device") },
-        // TODO: put here the correct posix return code after finished processing the file transfer
-        // request
-        { .path = "code", .data = astarte_data_from_longinteger(0) },
-        { .path = "message", .data = astarte_data_from_string("") },
-    };
-
-    astarte_result_t res = astarte_device_send_object(edgehog_device->astarte_device,
-        io_edgehog_devicemanager_fileTransfer_Response.name, "/request", object_entries,
-        ARRAY_SIZE(object_entries), NULL);
-    if (res != ASTARTE_RESULT_OK) {
-        EDGEHOG_LOG_ERR("Unable to send File transfer response"); // NOLINT
+    if (msg->payload.server_to_device.file_size_bytes > SIZE_MAX) {
+        EDGEHOG_LOG_ERR("Requested file transfer file size too big: %lld",
+            msg->payload.server_to_device.file_size_bytes);
+        return EDGEHOG_RESULT_FILE_TRANSFER_INVALID_REQUEST;
     }
 
-    // free resources
-    free(msg->payload.server_to_device.id);
-    free(msg->payload.server_to_device.url);
-    free(msg->payload.server_to_device.http_header_key);
-    free(msg->payload.server_to_device.http_header_value);
-    memset(&msg->payload.server_to_device, 0, sizeof(msg->payload));
+    size_t expected_file_size = (size_t) msg->payload.server_to_device.file_size_bytes;
+
+    char *file = k_calloc(expected_file_size, sizeof(char));
+    if (file == NULL) {
+        EDGEHOG_LOG_ERR("Failed to allocate memory for file (%zu bytes)", expected_file_size);
+        return EDGEHOG_RESULT_OUT_OF_MEMORY;
+    }
+
+    ft_server_to_device_http_cb_data_t user_data = {
+        .id = msg->payload.server_to_device.id,
+        .url = msg->payload.server_to_device.url,
+        .file_size_bytes = (size_t) msg->payload.server_to_device.file_size_bytes,
+        .progress = msg->payload.server_to_device.progress,
+        .edgehog_device = edgehog_device,
+        .file = file,
+        .current_offset = 0,
+    };
+
+    char *header_fields[FILE_TRANSFER_MAX_HTTP_HEADERS];
+    memset((void *) header_fields, 0, sizeof(header_fields));
+
+    edgehog_result_t eres = parse_http_headers(msg->payload.server_to_device.http_header_key,
+        msg->payload.server_to_device.http_header_value, header_fields,
+        FILE_TRANSFER_MAX_HTTP_HEADERS);
+
+    if (eres != EDGEHOG_RESULT_OK) {
+        EDGEHOG_LOG_ERR("Failed to parse http headers");
+        goto exit;
+    }
+
+    http_download_t http_download
+        = { .user_data = &user_data, .download_cbk = http_download_ft_std_payload_cbk };
+
+    eres = edgehog_http_download(msg->payload.server_to_device.url, (const char **) header_fields,
+        FT_REQ_TIMEOUT_MS, &http_download);
+
+    if (eres != EDGEHOG_RESULT_OK) {
+        EDGEHOG_LOG_ERR("Failed to perform http file transfer request");
+    }
+
+exit:
+    // cleanup header-allocated strings
+    for (size_t i = 0; i < FILE_TRANSFER_MAX_HTTP_HEADERS; i++) {
+        if (header_fields[i] != NULL) {
+            k_free(header_fields[i]);
+        } else {
+            break;
+        }
+    }
+
+    if (file != NULL) {
+        k_free(file);
+    }
+
+    k_free(msg->payload.server_to_device.id);
+    k_free(msg->payload.server_to_device.url);
+    k_free(msg->payload.server_to_device.http_header_key);
+    k_free(msg->payload.server_to_device.http_header_value);
+
+    return eres;
 }
 
 static void ft_handle_device_to_server(edgehog_device_handle_t edgehog_device, ft_msgq_data_t *msg)
@@ -404,12 +581,12 @@ static void ft_handle_device_to_server(edgehog_device_handle_t edgehog_device, f
     }
 
     // free resources
-    free(msg->payload.device_to_server.id);
-    free(msg->payload.device_to_server.url);
-    free(msg->payload.device_to_server.http_header_key);
-    free(msg->payload.device_to_server.http_header_value);
-    free(msg->payload.device_to_server.source_type);
-    free(msg->payload.device_to_server.source);
+    k_free(msg->payload.device_to_server.id);
+    k_free(msg->payload.device_to_server.url);
+    k_free(msg->payload.device_to_server.http_header_key);
+    k_free(msg->payload.device_to_server.http_header_value);
+    k_free(msg->payload.device_to_server.source_type);
+    k_free(msg->payload.device_to_server.source);
     memset(&msg->payload.device_to_server, 0, sizeof(msg->payload));
 }
 
@@ -456,7 +633,7 @@ static char *duplicate_string(const char *src)
 
     // length including the null terminator
     size_t len = strlen(src) + 1;
-    char *dest = malloc(len);
+    char *dest = k_malloc(len);
 
     if (dest != NULL) {
         memcpy(dest, src, len);
