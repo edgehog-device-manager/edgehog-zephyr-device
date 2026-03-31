@@ -9,6 +9,7 @@ import datetime
 from configuration import Configuration
 from http_server import start_server, stop_server
 from telemetry import validate_initial_telemetry, validate_telemetry_frequency
+from file_transfer import file_transfer_test
 
 logger = logging.getLogger(__name__)
 
@@ -35,14 +36,15 @@ def test_device(end_to_end_configuration: Configuration):
     end_to_end_configuration.dut.readlines_until(SHELL_IS_READY, timeout=60)
 
     # Wait a couple of seconds
-    time.sleep(10)
+    time.sleep(1)
 
-    # TODO: Perform the end to end tests
     validate_initial_telemetry(end_to_end_configuration, initial_time)
     validate_telemetry_frequency(end_to_end_configuration)
 
     # Wait a couple of seconds
     time.sleep(1)
+
+    file_transfer_test(end_to_end_configuration)
 
     end_to_end_configuration.dut.readlines()
     end_to_end_configuration.shell.exec_command(SHELL_CMD_DISCONNECT)

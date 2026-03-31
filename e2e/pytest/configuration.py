@@ -15,7 +15,7 @@ from astarte.device import Interface
 from dotenv import dotenv_values
 from twister_harness import DeviceAdapter, Shell
 
-EDGEHOG_INTERFACES_REFERENCE="v0.8.0"
+EDGEHOG_INTERFACES_REFERENCE = "a67a5a8e5fa0e7563005b1d87598800390ca1797"
 
 class MissingConfigError(Exception):
     def __init__(self, key: str) -> None:
@@ -93,7 +93,7 @@ def get_edgehog_json_interfaces() -> List[dict]:
 
     # Download the repository as a ZIP archive
     edgehog_interfaces_url = "https://github.com/edgehog-device-manager/edgehog-astarte-interfaces"
-    zip_url = f"{edgehog_interfaces_url}/archive/refs/tags/{EDGEHOG_INTERFACES_REFERENCE}.zip"
+    zip_url = f"{edgehog_interfaces_url}/archive/{EDGEHOG_INTERFACES_REFERENCE}.zip"
     response = requests.get(zip_url)
     response.raise_for_status()
 

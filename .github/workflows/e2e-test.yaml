@@ -10,7 +10,7 @@ permissions:
   contents: read
 
 env:
-  EDGEHOG_INTERFACES_REF: v0.8.0
+  EDGEHOG_INTERFACES_REF: a67a5a8e5fa0e7563005b1d87598800390ca1797
   ASTARTE_API_BASE: api.autotest.astarte-platform.org
   ASTARTE_BROKER_BASE: broker.autotest.astarte-platform.org
   ASTARTE_ACTION_CERT: /usr/local/share/ca-certificates/astarte-autotest.crt

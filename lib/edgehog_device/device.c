@@ -31,7 +31,15 @@
 #include <astarte_device_sdk/device.h>
 #include <astarte_device_sdk/interface.h>
 
+#define COMMANDS_REQUEST_PATH "/request"
+#define OTA_REQUEST_PATH "/request"
+#define FT_REQUEST_PATH "/request"
+
 EDGEHOG_LOG_MODULE_REGISTER(edgehog_device, CONFIG_EDGEHOG_DEVICE_DEVICE_LOG_LEVEL);
+
+// function pointer representing the callback to synchronize using the sync_ota_ft_sem semaphore
+typedef edgehog_result_t (*datastream_obj_event_handler_cb_t)(
+    edgehog_device_handle_t, astarte_device_datastream_object_event_t *);
 
 /************************************************
  * Static functions declaration
@@ -82,7 +90,7 @@ static void astarte_datastream_individual_cbk(astarte_device_datastream_individu
     edgehog_device_handle_t edgehog_device = (edgehog_device_handle_t) base_event.user_data;
 
     if ((strcmp(base_event.interface_name, io_edgehog_devicemanager_Commands.name) == 0)
-        && (strcmp(base_event.path, "/request") == 0)) {
+        && (strcmp(base_event.path, COMMANDS_REQUEST_PATH) == 0)) {
         edgehog_result_t ota_result = edgehog_command_event(&event);
         if (ota_result != EDGEHOG_RESULT_OK) {
             EDGEHOG_LOG_ERR("Unable to handle Command request");
@@ -112,14 +120,53 @@ static void astarte_datastream_object_cbk(astarte_device_datastream_object_event
     edgehog_device_handle_t edgehog_device = (edgehog_device_handle_t) base_event.user_data;
 
     if (strcmp(base_event.interface_name, io_edgehog_devicemanager_OTARequest.name) == 0) {
-        if (strcmp(base_event.path, "/request") != 0) {
+        if (strcmp(base_event.path, OTA_REQUEST_PATH) != 0) {
             EDGEHOG_LOG_ERR("Received OTA request on incorrect common path: '%s'", base_event.path);
             return;
         }
+
         edgehog_result_t ota_result = edgehog_ota_event(edgehog_device, &event);
         if (ota_result != EDGEHOG_RESULT_OK) {
             EDGEHOG_LOG_ERR("Unable to handle OTA update request");
         }
+
+        return;
+    }
+
+    if (strcmp(base_event.interface_name,
+            io_edgehog_devicemanager_fileTransfer_posix_ServerToDevice.name)
+        == 0) {
+        EDGEHOG_LOG_INF("Received File Transfer server to device event");
+
+        if (strcmp(base_event.path, FT_REQUEST_PATH) != 0) {
+            EDGEHOG_LOG_ERR(
+                "Received File Transfer request on incorrect common path: '%s'", base_event.path);
+            return;
+        }
+
+        edgehog_result_t ft_result = edgehog_ft_server_to_device_event(edgehog_device, &event);
+        if (ft_result != EDGEHOG_RESULT_OK) {
+            EDGEHOG_LOG_ERR("Unable to handle FT server to device request");
+        }
+
+        return;
+    }
+
+    if (strcmp(base_event.interface_name, io_edgehog_devicemanager_fileTransfer_DeviceToServer.name)
+        == 0) {
+        EDGEHOG_LOG_INF("Received File Transfer device to server event");
+
+        if (strcmp(base_event.path, FT_REQUEST_PATH) != 0) {
+            EDGEHOG_LOG_ERR(
+                "Received File Transfer request on incorrect common path: '%s'", base_event.path);
+            return;
+        }
+
+        edgehog_result_t ft_result = edgehog_ft_device_to_server_event(edgehog_device, &event);
+        if (ft_result != EDGEHOG_RESULT_OK) {
+            EDGEHOG_LOG_ERR("Unable to handle FT device to server request");
+        }
+
         return;
     }
 
@@ -257,7 +304,15 @@ edgehog_result_t edgehog_device_new(
         goto failure;
     }
 
-    // Step 7: Fill in the Edgehog device struct
+    // Step 7: Initialize the file transfer for the Edgehog device
+    // TODO: use the `config` struct to populate the file transfer
+    edgehog_file_transfer_t *file_transfer = edgehog_ft_new();
+    if (!file_transfer) {
+        EDGEHOG_LOG_ERR("Unable to create edgehog file transfer");
+        goto failure;
+    }
+
+    // Step 8: Fill in the Edgehog device struct
     *edgehog_device = (struct edgehog_device){
         .state = EDGEHOG_DEVICE_STOPPED,
         .initial_publish = false,
@@ -271,7 +326,11 @@ edgehog_result_t edgehog_device_new(
         .user_property_unset_cbk = user_property_unset_cbk,
         .user_cbk_user_data = user_cbk_user_data,
         .telemetry = telemetry,
+        .file_transfer = file_transfer,
     };
+
+    k_sem_init(&edgehog_device->sync_ota_ft_sem, 1, 1);
+
     memcpy(edgehog_device->boot_id, boot_id, UUID_STR_LEN + 1);
     *edgehog_handle = edgehog_device;
 
@@ -299,6 +358,7 @@ void edgehog_device_destroy(edgehog_device_handle_t edgehog_device)
         EDGEHOG_LOG_ERR("Astarte device destroy error: %s", astarte_result_to_name(ares));
     }
     edgehog_telemetry_destroy(edgehog_device->telemetry);
+    edgehog_ft_destroy(edgehog_device->file_transfer);
     free(edgehog_device);
 }
 
@@ -337,6 +397,14 @@ edgehog_result_t edgehog_device_poll(edgehog_device_handle_t edgehog_device)
                 EDGEHOG_LOG_ERR("Unable to start Edgehog telemetry service");
             }
         }
+
+        edgehog_file_transfer_t *file_transfer = edgehog_device->file_transfer;
+        if (!edgehog_ft_is_running(file_transfer)) {
+            eres = edgehog_ft_start(edgehog_device);
+            if (eres != EDGEHOG_RESULT_OK) {
+                EDGEHOG_LOG_ERR("Unable to start Edgehog telemetry service");
+            }
+        }
     }
     return eres;
 }
@@ -344,6 +412,11 @@ edgehog_result_t edgehog_device_poll(edgehog_device_handle_t edgehog_device)
 edgehog_result_t edgehog_device_stop(edgehog_device_handle_t edgehog_device, k_timeout_t timeout)
 {
     edgehog_result_t eres = edgehog_telemetry_stop(edgehog_device->telemetry, timeout);
+    if (eres != EDGEHOG_RESULT_OK) {
+        EDGEHOG_LOG_ERR("Unable to stop the Edgehog device within the timeout");
+        return eres;
+    }
+    eres = edgehog_ft_stop(edgehog_device->file_transfer, timeout);
     if (eres != EDGEHOG_RESULT_OK) {
         EDGEHOG_LOG_ERR("Unable to stop the Edgehog device within the timeout");
         return eres;
@@ -398,6 +471,9 @@ static edgehog_result_t add_interfaces(astarte_device_handle_t astarte_device)
         &io_edgehog_devicemanager_WiFiScanResults,
 #endif
         &io_edgehog_devicemanager_config_Telemetry,
+        &io_edgehog_devicemanager_fileTransfer_posix_ServerToDevice,
+        &io_edgehog_devicemanager_fileTransfer_Response,
+        &io_edgehog_devicemanager_fileTransfer_DeviceToServer,
     };
 
     for (int i = 0; i < ARRAY_SIZE(interfaces); i++) {

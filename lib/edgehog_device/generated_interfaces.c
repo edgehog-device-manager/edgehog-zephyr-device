@@ -551,4 +551,244 @@ const astarte_interface_t io_edgehog_devicemanager_config_Telemetry = {
     .mappings_length = 2U,
 };
 
+/** @brief Automatically generated mapping definition. */
+static const astarte_mapping_t io_edgehog_devicemanager_fileTransfer_DeviceToServer_mappings[8] = {
+
+    {
+        .endpoint = "/request/id",
+        .type = ASTARTE_MAPPING_TYPE_STRING,
+        .reliability = ASTARTE_MAPPING_RELIABILITY_GUARANTEED,
+        .explicit_timestamp = false,
+        .allow_unset = false,
+    },
+    {
+        .endpoint = "/request/url",
+        .type = ASTARTE_MAPPING_TYPE_STRING,
+        .reliability = ASTARTE_MAPPING_RELIABILITY_GUARANTEED,
+        .explicit_timestamp = false,
+        .allow_unset = false,
+    },
+    {
+        .endpoint = "/request/httpHeaderKey",
+        .type = ASTARTE_MAPPING_TYPE_STRING,
+        .reliability = ASTARTE_MAPPING_RELIABILITY_GUARANTEED,
+        .explicit_timestamp = false,
+        .allow_unset = false,
+    },
+    {
+        .endpoint = "/request/httpHeaderValue",
+        .type = ASTARTE_MAPPING_TYPE_STRING,
+        .reliability = ASTARTE_MAPPING_RELIABILITY_GUARANTEED,
+        .explicit_timestamp = false,
+        .allow_unset = false,
+    },
+    {
+        .endpoint = "/request/compression",
+        .type = ASTARTE_MAPPING_TYPE_STRING,
+        .reliability = ASTARTE_MAPPING_RELIABILITY_GUARANTEED,
+        .explicit_timestamp = false,
+        .allow_unset = false,
+    },
+    {
+        .endpoint = "/request/progress",
+        .type = ASTARTE_MAPPING_TYPE_BOOLEAN,
+        .reliability = ASTARTE_MAPPING_RELIABILITY_GUARANTEED,
+        .explicit_timestamp = false,
+        .allow_unset = false,
+    },
+    {
+        .endpoint = "/request/sourceType",
+        .type = ASTARTE_MAPPING_TYPE_STRING,
+        .reliability = ASTARTE_MAPPING_RELIABILITY_GUARANTEED,
+        .explicit_timestamp = false,
+        .allow_unset = false,
+    },
+    {
+        .endpoint = "/request/source",
+        .type = ASTARTE_MAPPING_TYPE_STRING,
+        .reliability = ASTARTE_MAPPING_RELIABILITY_GUARANTEED,
+        .explicit_timestamp = false,
+        .allow_unset = false,
+    },
+};
+
+/** @brief Automatically generated interface definition. */
+const astarte_interface_t io_edgehog_devicemanager_fileTransfer_DeviceToServer = {
+    .name = "io.edgehog.devicemanager.fileTransfer.DeviceToServer",
+    .major_version = 0,
+    .minor_version = 1,
+    .type = ASTARTE_INTERFACE_TYPE_DATASTREAM,
+    .ownership = ASTARTE_INTERFACE_OWNERSHIP_SERVER,
+    .aggregation = ASTARTE_INTERFACE_AGGREGATION_OBJECT,
+    .mappings = io_edgehog_devicemanager_fileTransfer_DeviceToServer_mappings,
+    .mappings_length = 8U,
+};
+
+/** @brief Automatically generated mapping definition. */
+static const astarte_mapping_t io_edgehog_devicemanager_fileTransfer_Response_mappings[4] = {
+
+    {
+        .endpoint = "/request/id",
+        .type = ASTARTE_MAPPING_TYPE_STRING,
+        .reliability = ASTARTE_MAPPING_RELIABILITY_GUARANTEED,
+        .explicit_timestamp = false,
+        .allow_unset = false,
+    },
+    {
+        .endpoint = "/request/type",
+        .type = ASTARTE_MAPPING_TYPE_STRING,
+        .reliability = ASTARTE_MAPPING_RELIABILITY_GUARANTEED,
+        .explicit_timestamp = false,
+        .allow_unset = false,
+    },
+    {
+        .endpoint = "/request/code",
+        .type = ASTARTE_MAPPING_TYPE_LONGINTEGER,
+        .reliability = ASTARTE_MAPPING_RELIABILITY_GUARANTEED,
+        .explicit_timestamp = false,
+        .allow_unset = false,
+    },
+    {
+        .endpoint = "/request/message",
+        .type = ASTARTE_MAPPING_TYPE_STRING,
+        .reliability = ASTARTE_MAPPING_RELIABILITY_GUARANTEED,
+        .explicit_timestamp = false,
+        .allow_unset = false,
+    },
+};
+
+/** @brief Automatically generated interface definition. */
+const astarte_interface_t io_edgehog_devicemanager_fileTransfer_Response = {
+    .name = "io.edgehog.devicemanager.fileTransfer.Response",
+    .major_version = 0,
+    .minor_version = 1,
+    .type = ASTARTE_INTERFACE_TYPE_DATASTREAM,
+    .ownership = ASTARTE_INTERFACE_OWNERSHIP_DEVICE,
+    .aggregation = ASTARTE_INTERFACE_AGGREGATION_OBJECT,
+    .mappings = io_edgehog_devicemanager_fileTransfer_Response_mappings,
+    .mappings_length = 4U,
+};
+
+/** @brief Automatically generated mapping definition. */
+static const astarte_mapping_t io_edgehog_devicemanager_fileTransfer_posix_ServerToDevice_mappings[15] = {
+
+    {
+        .endpoint = "/request/id",
+        .type = ASTARTE_MAPPING_TYPE_STRING,
+        .reliability = ASTARTE_MAPPING_RELIABILITY_GUARANTEED,
+        .explicit_timestamp = false,
+        .allow_unset = false,
+    },
+    {
+        .endpoint = "/request/url",
+        .type = ASTARTE_MAPPING_TYPE_STRING,
+        .reliability = ASTARTE_MAPPING_RELIABILITY_GUARANTEED,
+        .explicit_timestamp = false,
+        .allow_unset = false,
+    },
+    {
+        .endpoint = "/request/httpHeaderKey",
+        .type = ASTARTE_MAPPING_TYPE_STRING,
+        .reliability = ASTARTE_MAPPING_RELIABILITY_GUARANTEED,
+        .explicit_timestamp = false,
+        .allow_unset = false,
+    },
+    {
+        .endpoint = "/request/httpHeaderValue",
+        .type = ASTARTE_MAPPING_TYPE_STRING,
+        .reliability = ASTARTE_MAPPING_RELIABILITY_GUARANTEED,
+        .explicit_timestamp = false,
+        .allow_unset = false,
+    },
+    {
+        .endpoint = "/request/compression",
+        .type = ASTARTE_MAPPING_TYPE_STRING,
+        .reliability = ASTARTE_MAPPING_RELIABILITY_GUARANTEED,
+        .explicit_timestamp = false,
+        .allow_unset = false,
+    },
+    {
+        .endpoint = "/request/fileSizeBytes",
+        .type = ASTARTE_MAPPING_TYPE_LONGINTEGER,
+        .reliability = ASTARTE_MAPPING_RELIABILITY_GUARANTEED,
+        .explicit_timestamp = false,
+        .allow_unset = false,
+    },
+    {
+        .endpoint = "/request/progress",
+        .type = ASTARTE_MAPPING_TYPE_BOOLEAN,
+        .reliability = ASTARTE_MAPPING_RELIABILITY_GUARANTEED,
+        .explicit_timestamp = false,
+        .allow_unset = false,
+    },
+    {
+        .endpoint = "/request/digest",
+        .type = ASTARTE_MAPPING_TYPE_STRING,
+        .reliability = ASTARTE_MAPPING_RELIABILITY_GUARANTEED,
+        .explicit_timestamp = false,
+        .allow_unset = false,
+    },
+    {
+        .endpoint = "/request/fileName",
+        .type = ASTARTE_MAPPING_TYPE_STRING,
+        .reliability = ASTARTE_MAPPING_RELIABILITY_GUARANTEED,
+        .explicit_timestamp = false,
+        .allow_unset = false,
+    },
+    {
+        .endpoint = "/request/ttlSeconds",
+        .type = ASTARTE_MAPPING_TYPE_LONGINTEGER,
+        .reliability = ASTARTE_MAPPING_RELIABILITY_GUARANTEED,
+        .explicit_timestamp = false,
+        .allow_unset = false,
+    },
+    {
+        .endpoint = "/request/fileMode",
+        .type = ASTARTE_MAPPING_TYPE_LONGINTEGER,
+        .reliability = ASTARTE_MAPPING_RELIABILITY_GUARANTEED,
+        .explicit_timestamp = false,
+        .allow_unset = false,
+    },
+    {
+        .endpoint = "/request/userId",
+        .type = ASTARTE_MAPPING_TYPE_LONGINTEGER,
+        .reliability = ASTARTE_MAPPING_RELIABILITY_GUARANTEED,
+        .explicit_timestamp = false,
+        .allow_unset = false,
+    },
+    {
+        .endpoint = "/request/groupId",
+        .type = ASTARTE_MAPPING_TYPE_LONGINTEGER,
+        .reliability = ASTARTE_MAPPING_RELIABILITY_GUARANTEED,
+        .explicit_timestamp = false,
+        .allow_unset = false,
+    },
+    {
+        .endpoint = "/request/destinationType",
+        .type = ASTARTE_MAPPING_TYPE_STRING,
+        .reliability = ASTARTE_MAPPING_RELIABILITY_GUARANTEED,
+        .explicit_timestamp = false,
+        .allow_unset = false,
+    },
+    {
+        .endpoint = "/request/destination",
+        .type = ASTARTE_MAPPING_TYPE_STRING,
+        .reliability = ASTARTE_MAPPING_RELIABILITY_GUARANTEED,
+        .explicit_timestamp = false,
+        .allow_unset = false,
+    },
+};
+
+/** @brief Automatically generated interface definition. */
+const astarte_interface_t io_edgehog_devicemanager_fileTransfer_posix_ServerToDevice = {
+    .name = "io.edgehog.devicemanager.fileTransfer.posix.ServerToDevice",
+    .major_version = 0,
+    .minor_version = 1,
+    .type = ASTARTE_INTERFACE_TYPE_DATASTREAM,
+    .ownership = ASTARTE_INTERFACE_OWNERSHIP_SERVER,
+    .aggregation = ASTARTE_INTERFACE_AGGREGATION_OBJECT,
+    .mappings = io_edgehog_devicemanager_fileTransfer_posix_ServerToDevice_mappings,
+    .mappings_length = 15U,
+};
+
 // NOLINTEND(readability-identifier-naming)
