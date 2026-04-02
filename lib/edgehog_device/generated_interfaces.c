@@ -625,6 +625,44 @@ const astarte_interface_t io_edgehog_devicemanager_fileTransfer_DeviceToServer =
 };
 
 /** @brief Automatically generated mapping definition. */
+static const astarte_mapping_t io_edgehog_devicemanager_fileTransfer_Progress_mappings[3] = {
+
+    {
+        .endpoint = "/request/id",
+        .type = ASTARTE_MAPPING_TYPE_STRING,
+        .reliability = ASTARTE_MAPPING_RELIABILITY_UNRELIABLE,
+        .explicit_timestamp = false,
+        .allow_unset = false,
+    },
+    {
+        .endpoint = "/request/type",
+        .type = ASTARTE_MAPPING_TYPE_STRING,
+        .reliability = ASTARTE_MAPPING_RELIABILITY_UNRELIABLE,
+        .explicit_timestamp = false,
+        .allow_unset = false,
+    },
+    {
+        .endpoint = "/request/progress",
+        .type = ASTARTE_MAPPING_TYPE_INTEGER,
+        .reliability = ASTARTE_MAPPING_RELIABILITY_UNRELIABLE,
+        .explicit_timestamp = false,
+        .allow_unset = false,
+    },
+};
+
+/** @brief Automatically generated interface definition. */
+const astarte_interface_t io_edgehog_devicemanager_fileTransfer_Progress = {
+    .name = "io.edgehog.devicemanager.fileTransfer.Progress",
+    .major_version = 0,
+    .minor_version = 1,
+    .type = ASTARTE_INTERFACE_TYPE_DATASTREAM,
+    .ownership = ASTARTE_INTERFACE_OWNERSHIP_DEVICE,
+    .aggregation = ASTARTE_INTERFACE_AGGREGATION_OBJECT,
+    .mappings = io_edgehog_devicemanager_fileTransfer_Progress_mappings,
+    .mappings_length = 3U,
+};
+
+/** @brief Automatically generated mapping definition. */
 static const astarte_mapping_t io_edgehog_devicemanager_fileTransfer_Response_mappings[4] = {
 
     {

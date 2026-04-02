@@ -473,6 +473,7 @@ static edgehog_result_t add_interfaces(astarte_device_handle_t astarte_device)
         &io_edgehog_devicemanager_config_Telemetry,
         &io_edgehog_devicemanager_fileTransfer_posix_ServerToDevice,
         &io_edgehog_devicemanager_fileTransfer_Response,
+        &io_edgehog_devicemanager_fileTransfer_Progress,
         &io_edgehog_devicemanager_fileTransfer_DeviceToServer,
     };
 

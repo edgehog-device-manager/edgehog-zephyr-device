@@ -33,6 +33,7 @@ EDGEHOG_LOG_MODULE_REGISTER(file_transfer, CONFIG_EDGEHOG_DEVICE_FILE_TRANSFER_L
 #define FILE_TRANSFER_SERVICE_THREAD_RUNNING_BIT (1)
 #define FILE_TRANSFER_SERVICE_MSGQ_GET_TIMEOUT 100
 #define FILE_TRANSFER_MAX_HTTP_HEADERS 15
+#define FILE_TRANSFER_PERCENTAGE 100
 
 #define FT_REQ_TIMEOUT_MS (60 * 1000)
 
@@ -46,6 +47,8 @@ K_THREAD_STACK_DEFINE(file_transfer_service_stack_area, FILE_TRANSFER_SERVICE_TH
 
 static edgehog_result_t parse_http_headers(
     const char *header_key, const char *header_value, char *header_fields[], size_t max_elements);
+
+static void free_http_headers(char *header_fields[], size_t max_elements);
 
 static edgehog_result_t ft_handle_server_to_device(
     edgehog_device_handle_t edgehog_device, ft_msgq_data_t *msg);
@@ -94,6 +97,28 @@ static edgehog_result_t http_download_ft_std_payload_cbk(
         }
     }
 
+    if (ft_data->progress) {
+        int32_t progress
+            = (int32_t) (((uint64_t) ft_data->current_offset * FILE_TRANSFER_PERCENTAGE)
+                / ft_data->file_size_bytes);
+
+        astarte_object_entry_t object_entries[] = {
+            { .path = "id", .data = astarte_data_from_string(ft_data->id) },
+            { .path = "type", .data = astarte_data_from_string("server_to_device") },
+            { .path = "progress", .data = astarte_data_from_integer(progress) },
+        };
+
+        astarte_result_t res = astarte_device_send_object(ft_data->edgehog_device->astarte_device,
+            io_edgehog_devicemanager_fileTransfer_Progress.name, "/request", object_entries,
+            ARRAY_SIZE(object_entries), NULL);
+
+        if (res != ASTARTE_RESULT_OK) {
+            EDGEHOG_LOG_ERR("Unable to send File transfer progress");
+        }
+
+        EDGEHOG_LOG_INF("File transfer ID %s progress: %d/100", ft_data->id, progress);
+    }
+
     if (download_chunk->last_chunk) {
         if (ft_data->file_size_bytes != ft_data->current_offset) {
             EDGEHOG_LOG_ERR("File transfer download aborted");
@@ -120,8 +145,6 @@ static edgehog_result_t http_download_ft_std_payload_cbk(
             edgehog_http_download_abort(abort_flag);
             return EDGEHOG_RESULT_INTERNAL_ERROR;
         }
-    } else {
-        // TODO: if progress is required, send FT Progress update to Astarte + log progress
     }
 
     return EDGEHOG_RESULT_OK;
@@ -450,16 +473,24 @@ static edgehog_result_t parse_http_headers(
 
 cleanup_allocated:
     // free the partially allocated data
-    for (size_t j = 0; j < idx; j++) {
-        k_free(header_fields[j]);
-        header_fields[j] = NULL;
-    }
+    free_http_headers(header_fields, idx);
 
 cleanup_copies:
     k_free(key_copy);
     k_free(val_copy);
 
     return eres;
+}
+
+static void free_http_headers(char *header_fields[], size_t max_elements)
+{
+    // free header values
+    size_t idx = 0;
+    while (idx < max_elements && header_fields[idx] != NULL) {
+        k_free(header_fields[idx]);
+        header_fields[idx] = NULL;
+        idx++;
+    }
 }
 
 static edgehog_result_t ft_handle_server_to_device(
@@ -524,13 +555,7 @@ static edgehog_result_t ft_handle_server_to_device(
 
 exit:
     // cleanup header-allocated strings
-    for (size_t i = 0; i < FILE_TRANSFER_MAX_HTTP_HEADERS; i++) {
-        if (header_fields[i] != NULL) {
-            k_free(header_fields[i]);
-        } else {
-            break;
-        }
-    }
+    free_http_headers(header_fields, FILE_TRANSFER_MAX_HTTP_HEADERS);
 
     if (file != NULL) {
         k_free(file);
