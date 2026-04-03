@@ -28,14 +28,10 @@ typedef struct
     char *id;
     /** @brief The URL to get the file from. */
     char *url;
-    // TODO: change this to an array of strings (i.e., char* http_header_key[]) when the Astarte
-    // interface is updated
     /** @brief Keys for the HTTP headers, must be in the order of the values. */
-    char *http_header_key;
-    // TODO: change this to an array of strings (i.e., char* http_header_key[]) when the Astarte
-    // interface is updated
+    char **http_header_keys;
     /** @brief Values for the HTTP headers, must be in the order of the keys. */
-    char *http_header_value;
+    char **http_header_values;
     /** @brief Total decompressed file size in bytes. */
     int64_t file_size_bytes;
     /** @brief Flag to enable the progress reporting of the download. */
@@ -74,14 +70,10 @@ typedef struct
     char *id;
     /** @brief The URL to upload the file to. */
     char *url;
-    // TODO: change this to an array of strings (i.e., char* http_header_key[]) when the Astarte
-    // interface is updated
     /** @brief Keys for the HTTP headers, must be in the order of the values. */
-    char *http_header_key;
-    // TODO: change this to an array of strings (i.e., char* http_header_key[]) when the Astarte
-    // interface is updated
+    char **http_header_keys;
     /** @brief Values for the HTTP headers, must be in the order of the keys. */
-    char *http_header_value;
+    char **http_header_values;
     /** @brief Flag to enable the progress reporting of the upload. */
     bool progress;
     /** @brief Source from which the file should be read from (storage, streaming, filesystem). */
