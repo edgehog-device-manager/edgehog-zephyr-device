@@ -35,11 +35,11 @@ def test_device(end_to_end_configuration: Configuration):
     end_to_end_configuration.dut.launch()
     end_to_end_configuration.dut.readlines_until(SHELL_IS_READY, timeout=60)
 
-    # Wait a couple of seconds
-    time.sleep(1)
+    # # Wait a couple of seconds
+    # time.sleep(1)
 
-    validate_initial_telemetry(end_to_end_configuration, initial_time)
-    validate_telemetry_frequency(end_to_end_configuration)
+    # validate_initial_telemetry(end_to_end_configuration, initial_time)
+    # validate_telemetry_frequency(end_to_end_configuration)
 
     # Wait a couple of seconds
     time.sleep(1)

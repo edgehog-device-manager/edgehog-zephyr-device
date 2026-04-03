@@ -62,6 +62,7 @@ jobs:
             io.edgehog.devicemanager.config.Telemetry.json \
             io.edgehog.devicemanager.fileTransfer.DeviceToServer.json \
             io.edgehog.devicemanager.fileTransfer.Response.json \
+            io.edgehog.devicemanager.fileTransfer.Progress.json \
             io.edgehog.devicemanager.fileTransfer.posix.ServerToDevice.json \
             ../edgehog-zephyr-device/interfaces
       - name: Generate interface reference code
