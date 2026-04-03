@@ -22,8 +22,8 @@ def file_transfer_test(end_to_end_configuration: Configuration):
         "id": "550e8400-e29b-41d4-a716-446655440000",
         "progress": True,
         "fileSizeBytes": 10000,
-        "httpHeaderKey": "Content-Type,foo",
-        "httpHeaderValue": "application/json,bar",
+        "httpHeaderKeys": ["Content-Type", "foo"],
+        "httpHeaderValues": ["application/json", "bar"],
     }
 
     start_time = datetime.now(timezone.utc)
