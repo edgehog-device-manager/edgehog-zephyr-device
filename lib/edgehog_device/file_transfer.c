@@ -44,8 +44,16 @@ K_THREAD_STACK_DEFINE(file_transfer_service_stack_area, FILE_TRANSFER_SERVICE_TH
  *         Static functions declarations        *
  ***********************************************/
 
-static edgehog_result_t parse_http_headers(
-    char *header_keys[], char *header_values[], char *header_fields[], size_t num_headers);
+/**
+ * @brief Parses HTTP headers into an array of header fields.
+ *
+ * @note The caller must ensure that
+ * - header_fields is allocated with at least (num_headers 1) elements, even if num_headers == 0, to
+ * accommodate the terminating NULL pointer.
+ * - the keys and values arrays have the same size.
+ */
+static edgehog_result_t serialize_http_headers(
+    char *keys[], char *values[], size_t num_headers, char *out[]);
 
 static void free_http_headers(char *header_fields[], size_t max_elements);
 
@@ -54,7 +62,6 @@ static edgehog_result_t ft_handle_server_to_device(
 
 static void ft_handle_device_to_server(edgehog_device_handle_t edgehog_device, ft_msgq_data_t *msg);
 
-// entry point for the thread handling the file transfer operations
 static void ft_service_thread_entry_point(void *device_ptr, void *queue_ptr, void *unused);
 
 // Equivalent of POSIX strdup() funciton
@@ -82,7 +89,7 @@ static edgehog_result_t http_download_ft_std_payload_cbk(
     ft_server_to_device_http_cb_data_t *ft_data = (ft_server_to_device_http_cb_data_t *) user_data;
 
     // store the file
-    if (download_chunk->chunk_size > 0 && ft_data->file != NULL) {
+    if (download_chunk->chunk_size > 0 && ft_data->file) {
         // check potential buffer overflow
         if (ft_data->current_offset + download_chunk->chunk_size <= ft_data->file_size_bytes) {
 
@@ -436,36 +443,35 @@ bool edgehog_ft_is_running(edgehog_file_transfer_t *file_transfer)
  *         Static functions definitions         *
  ***********************************************/
 
-static edgehog_result_t parse_http_headers(
-    char *header_keys[], char *header_values[], char *header_fields[], size_t num_headers)
+static edgehog_result_t serialize_http_headers(
+    char *keys[], char *values[], size_t num_headers, char *out[])
 {
-    if (num_headers == 0) {
-        header_fields[0] = NULL;
-        return EDGEHOG_RESULT_OK;
+    if (!keys || !values || !out || num_headers > FILE_TRANSFER_MAX_HTTP_HEADERS) {
+        return EDGEHOG_RESULT_FILE_TRANSFER_INVALID_REQUEST;
     }
 
-    if (!header_keys || !header_values || !header_fields
-        || num_headers > FILE_TRANSFER_MAX_HTTP_HEADERS) {
-        return EDGEHOG_RESULT_FILE_TRANSFER_INVALID_REQUEST;
+    if (num_headers == 0) {
+        out[0] = NULL;
+        return EDGEHOG_RESULT_OK;
     }
 
     size_t idx = 0;
     for (; idx < num_headers; idx++) {
-        size_t needed = strlen(header_keys[idx]) + strlen(header_values[idx]) + 3;
-        header_fields[idx] = k_malloc(needed);
+        size_t needed = strlen(keys[idx]) + strlen(values[idx]) + 3;
+        out[idx] = k_malloc(needed);
 
-        if (header_fields[idx] == NULL) {
+        if (!out[idx]) {
             EDGEHOG_LOG_WRN("Failed to allocate memory for ft http headers");
             // free the partially allocated data
-            free_http_headers(header_fields, idx);
+            free_http_headers(out, idx);
             return EDGEHOG_RESULT_OUT_OF_MEMORY;
         }
 
         // NOLINTNEXTLINE(cert-err33-c)
-        snprintf(header_fields[idx], needed, "%s: %s", header_keys[idx], header_values[idx]);
+        snprintf(out[idx], needed, "%s: %s", keys[idx], values[idx]);
     }
 
-    header_fields[idx + 1] = NULL;
+    out[num_headers] = NULL;
 
     return EDGEHOG_RESULT_OK;
 }
@@ -473,11 +479,9 @@ static edgehog_result_t parse_http_headers(
 static void free_http_headers(char *header_fields[], size_t max_elements)
 {
     // free header values
-    size_t idx = 0;
-    while (idx < max_elements && header_fields[idx] != NULL) {
-        k_free(header_fields[idx]);
-        header_fields[idx] = NULL;
-        idx++;
+    for (size_t i = 0; i < max_elements; i++) {
+        k_free(header_fields[i]);
+        header_fields[i] = NULL;
     }
 }
 
@@ -493,7 +497,7 @@ static edgehog_result_t ft_handle_server_to_device(
     size_t expected_file_size = (size_t) msg->payload.server_to_device.file_size_bytes;
 
     char *file = k_calloc(expected_file_size, sizeof(char));
-    if (file == NULL) {
+    if (!file) {
         EDGEHOG_LOG_ERR("Failed to allocate memory for file (%zu bytes)", expected_file_size);
         return EDGEHOG_RESULT_OUT_OF_MEMORY;
     }
@@ -510,9 +514,9 @@ static edgehog_result_t ft_handle_server_to_device(
 
     char *header_fields[msg->payload.server_to_device.http_headers_len + 1];
     memset((void *) header_fields, 0, sizeof(header_fields));
-    edgehog_result_t eres = parse_http_headers(msg->payload.server_to_device.http_header_keys,
-        msg->payload.server_to_device.http_header_values, header_fields,
-        msg->payload.server_to_device.http_headers_len);
+    edgehog_result_t eres = serialize_http_headers(msg->payload.server_to_device.http_header_keys,
+        msg->payload.server_to_device.http_header_values,
+        msg->payload.server_to_device.http_headers_len, header_fields);
 
     if (eres != EDGEHOG_RESULT_OK) {
         EDGEHOG_LOG_ERR("Failed to parse http headers");
@@ -533,7 +537,7 @@ exit:
     // cleanup header-allocated strings
     free_http_headers(header_fields, msg->payload.server_to_device.http_headers_len);
 
-    if (file != NULL) {
+    if (file) {
         k_free(file);
     }
 
@@ -615,7 +619,7 @@ static void ft_service_thread_entry_point(void *device_ptr, void *queue_ptr, voi
 
 static char *duplicate_string(const char *src)
 {
-    if (src == NULL) {
+    if (!src) {
         return NULL;
     }
 
@@ -623,7 +627,7 @@ static char *duplicate_string(const char *src)
     size_t len = strlen(src) + 1;
     char *dest = k_malloc(len);
 
-    if (dest != NULL) {
+    if (dest) {
         memcpy(dest, src, len);
     }
 
@@ -632,12 +636,12 @@ static char *duplicate_string(const char *src)
 
 static char **duplicate_string_array(const astarte_data_stringarray_t *src)
 {
-    if (src == NULL || src->buf == NULL || src->len == 0) {
+    if (!src || !src->buf || src->len == 0) {
         return NULL;
     }
 
     char **dup = (char **) k_malloc((src->len + 1) * sizeof(char *));
-    if (dup == NULL) {
+    if (!dup) {
         return NULL;
     }
 
@@ -645,9 +649,9 @@ static char **duplicate_string_array(const astarte_data_stringarray_t *src)
         dup[i] = duplicate_string(src->buf[i]);
 
         // cleanup if a single string fails to allocate
-        if (dup[i] == NULL && src->buf[i] != NULL) {
-            for (size_t j = 0; j < i; j++) {
-                k_free(dup[j]);
+        if (!dup[i] && src->buf[i]) {
+            while (i > 0) {
+                k_free(dup[--i]);
             }
             k_free((void *) dup);
             return NULL;
