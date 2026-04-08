@@ -28,9 +28,11 @@ typedef struct
     char *id;
     /** @brief The URL to get the file from. */
     char *url;
-    /** @brief Keys for the HTTP headers, must be in the order of the values. */
+    /** @brief The number of HTTP headers. */
+    size_t http_headers_len;
+    /** @brief Keys for the HTTP headers, must be the same number and in the order of the values. */
     char **http_header_keys;
-    /** @brief Values for the HTTP headers, must be in the order of the keys. */
+    /** @brief Values for the HTTP headers, must be the same number and in the order of the keys. */
     char **http_header_values;
     /** @brief Total decompressed file size in bytes. */
     int64_t file_size_bytes;
@@ -70,9 +72,11 @@ typedef struct
     char *id;
     /** @brief The URL to upload the file to. */
     char *url;
-    /** @brief Keys for the HTTP headers, must be in the order of the values. */
+    /** @brief The number of HTTP headers. */
+    size_t http_headers_len;
+    /** @brief Keys for the HTTP headers, must be the same number and in the order of the values. */
     char **http_header_keys;
-    /** @brief Values for the HTTP headers, must be in the order of the keys. */
+    /** @brief Values for the HTTP headers, must be the same number and in the order of the keys. */
     char **http_header_values;
     /** @brief Flag to enable the progress reporting of the upload. */
     bool progress;

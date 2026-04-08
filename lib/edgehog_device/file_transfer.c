@@ -44,10 +44,6 @@ K_THREAD_STACK_DEFINE(file_transfer_service_stack_area, FILE_TRANSFER_SERVICE_TH
  *         Static functions declarations        *
  ***********************************************/
 
-// TODO: i could take the number from edgehog_ft_device_to_server_event and store it into the
-// ft_server_to_device_data_t structure, so to avoid defining this function
-static size_t ft_num_headers(char *header[]);
-
 static edgehog_result_t parse_http_headers(
     char *header_keys[], char *header_values[], char *header_fields[], size_t num_headers);
 
@@ -279,6 +275,7 @@ edgehog_result_t edgehog_ft_server_to_device_event(
     ft_server_to_device_data_t data = {
         .id = ft_id,
         .url = ft_url,
+        .http_headers_len = http_headers_len,
         .http_header_keys = ft_http_header_keys,
         .http_header_values = ft_http_header_values,
         .file_size_bytes = ft_file_size_bytes,
@@ -371,6 +368,7 @@ edgehog_result_t edgehog_ft_device_to_server_event(
     ft_device_to_server_data_t data = {
         .id = ft_id,
         .url = ft_url,
+        .http_headers_len = http_headers_len,
         .http_header_keys = ft_http_header_keys,
         .http_header_values = ft_http_header_values,
         .source_type = ft_source_type,
@@ -437,20 +435,6 @@ bool edgehog_ft_is_running(edgehog_file_transfer_t *file_transfer)
 /************************************************
  *         Static functions definitions         *
  ***********************************************/
-
-static size_t ft_num_headers(char *header[])
-{
-    if (header == NULL) {
-        return 0;
-    }
-
-    size_t count = 0;
-    while (header[count] != NULL) {
-        count++;
-    }
-
-    return count;
-}
 
 static edgehog_result_t parse_http_headers(
     char *header_keys[], char *header_values[], char *header_fields[], size_t num_headers)
@@ -524,11 +508,11 @@ static edgehog_result_t ft_handle_server_to_device(
         .current_offset = 0,
     };
 
-    size_t num_headers = ft_num_headers(msg->payload.server_to_device.http_header_keys);
-    char *header_fields[num_headers + 1];
+    char *header_fields[msg->payload.server_to_device.http_headers_len + 1];
     memset((void *) header_fields, 0, sizeof(header_fields));
     edgehog_result_t eres = parse_http_headers(msg->payload.server_to_device.http_header_keys,
-        msg->payload.server_to_device.http_header_values, header_fields, num_headers);
+        msg->payload.server_to_device.http_header_values, header_fields,
+        msg->payload.server_to_device.http_headers_len);
 
     if (eres != EDGEHOG_RESULT_OK) {
         EDGEHOG_LOG_ERR("Failed to parse http headers");
@@ -547,7 +531,7 @@ static edgehog_result_t ft_handle_server_to_device(
 
 exit:
     // cleanup header-allocated strings
-    free_http_headers(header_fields, num_headers);
+    free_http_headers(header_fields, msg->payload.server_to_device.http_headers_len);
 
     if (file != NULL) {
         k_free(file);
