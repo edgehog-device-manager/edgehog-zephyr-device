@@ -32,7 +32,6 @@ EDGEHOG_LOG_MODULE_REGISTER(file_transfer, CONFIG_EDGEHOG_DEVICE_FILE_TRANSFER_L
 #define FILE_TRANSFER_SERVICE_THREAD_PRIORITY 5
 #define FILE_TRANSFER_SERVICE_THREAD_RUNNING_BIT (1)
 #define FILE_TRANSFER_SERVICE_MSGQ_GET_TIMEOUT 100
-#define FILE_TRANSFER_MAX_HTTP_HEADERS 15
 #define FILE_TRANSFER_PERCENTAGE 100
 #define FILE_TRANSFER_REQ_TIMEOUT_MS (60 * 1000)
 
@@ -73,7 +72,7 @@ static char **duplicate_string_array(const astarte_data_stringarray_t *src);
  *     Callbacks definition and declaration     *
  ***********************************************/
 
-static edgehog_result_t http_download_ft_std_payload_cbk(
+static edgehog_result_t http_get_server_to_device_request_cbk(
     bool *abort_flag, http_download_chunk_t *download_chunk, void *user_data)
 {
     if (!download_chunk) {
@@ -88,6 +87,8 @@ static edgehog_result_t http_download_ft_std_payload_cbk(
 
     ft_server_to_device_http_cb_data_t *ft_data = (ft_server_to_device_http_cb_data_t *) user_data;
 
+    int64_t posix_errno = 0;
+
     // store the file
     if (download_chunk->chunk_size > 0 && ft_data->file) {
         // check potential buffer overflow
@@ -99,16 +100,18 @@ static edgehog_result_t http_download_ft_std_payload_cbk(
             ft_data->current_offset += download_chunk->chunk_size;
             EDGEHOG_LOG_DBG("Downloaded %d bytes", ft_data->current_offset);
         } else {
-            EDGEHOG_LOG_ERR("Potential buffer overflow, the file exceed declared dimensions");
-            edgehog_http_download_abort(abort_flag);
-            return EDGEHOG_RESULT_INTERNAL_ERROR;
+            EDGEHOG_LOG_WRN(
+                "Potential buffer overflow, the received chunk exceed declared dimensions");
+            posix_errno = -EMSGSIZE;
+            goto error;
         }
     }
 
     if (ft_data->progress) {
-        int32_t progress
-            = (int32_t) (((uint64_t) ft_data->current_offset * FILE_TRANSFER_PERCENTAGE)
-                / ft_data->file_size_bytes);
+        int32_t progress = ft_data->file_size_bytes == 0
+            ? FILE_TRANSFER_PERCENTAGE
+            : (int32_t) (((uint64_t) ft_data->current_offset * FILE_TRANSFER_PERCENTAGE)
+                  / ft_data->file_size_bytes);
 
         astarte_object_entry_t object_entries[] = {
             { .path = "id", .data = astarte_data_from_string(ft_data->id) },
@@ -122,6 +125,8 @@ static edgehog_result_t http_download_ft_std_payload_cbk(
 
         if (res != ASTARTE_RESULT_OK) {
             EDGEHOG_LOG_ERR("Unable to send File transfer progress");
+            posix_errno = -ECONNABORTED;
+            goto error;
         }
 
         EDGEHOG_LOG_INF("File transfer ID %s progress: %d/100", ft_data->id, progress);
@@ -130,8 +135,8 @@ static edgehog_result_t http_download_ft_std_payload_cbk(
     if (download_chunk->last_chunk) {
         if (ft_data->file_size_bytes != ft_data->current_offset) {
             EDGEHOG_LOG_ERR("File transfer download aborted");
-            edgehog_http_download_abort(abort_flag);
-            return EDGEHOG_RESULT_INTERNAL_ERROR;
+            posix_errno = -EMSGSIZE;
+            goto error;
         }
 
         EDGEHOG_LOG_DBG("Download completed successfully!");
@@ -140,7 +145,7 @@ static edgehog_result_t http_download_ft_std_payload_cbk(
         astarte_object_entry_t object_entries[] = {
             { .path = "id", .data = astarte_data_from_string(ft_data->id) },
             { .path = "type", .data = astarte_data_from_string("server_to_device") },
-            { .path = "code", .data = astarte_data_from_longinteger(0) },
+            { .path = "code", .data = astarte_data_from_longinteger(posix_errno) },
             { .path = "message", .data = astarte_data_from_string("") },
         };
 
@@ -150,12 +155,35 @@ static edgehog_result_t http_download_ft_std_payload_cbk(
 
         if (res != ASTARTE_RESULT_OK) {
             EDGEHOG_LOG_ERR("Unable to send File transfer response");
-            edgehog_http_download_abort(abort_flag);
-            return EDGEHOG_RESULT_INTERNAL_ERROR;
+            posix_errno = -ECONNABORTED;
+            goto error;
         }
     }
 
     return EDGEHOG_RESULT_OK;
+
+error:
+
+    edgehog_http_download_abort(abort_flag);
+
+    astarte_object_entry_t object_entries[] = {
+        { .path = "id", .data = astarte_data_from_string(ft_data->id) },
+        { .path = "type", .data = astarte_data_from_string("server_to_device") },
+        { .path = "code", .data = astarte_data_from_longinteger(posix_errno) },
+        { .path = "message", .data = astarte_data_from_string("") },
+    };
+
+    astarte_result_t res = astarte_device_send_object(ft_data->edgehog_device->astarte_device,
+        io_edgehog_devicemanager_fileTransfer_Response.name, "/request", object_entries,
+        ARRAY_SIZE(object_entries), NULL);
+
+    if (res != ASTARTE_RESULT_OK) {
+        EDGEHOG_LOG_ERR("Unable to send File transfer response");
+    }
+
+    // TODO: close here the file
+
+    return EDGEHOG_RESULT_INTERNAL_ERROR;
 }
 
 /************************************************
@@ -273,7 +301,7 @@ edgehog_result_t edgehog_ft_server_to_device_event(
         }
     }
 
-    if (!ft_id || !ft_url || !ft_file_size_bytes) {
+    if (!ft_id || !ft_url) {
         EDGEHOG_LOG_ERR("Unable to extract data from request");
         res = EDGEHOG_RESULT_FILE_TRANSFER_INVALID_REQUEST;
         goto failure;
@@ -446,7 +474,7 @@ bool edgehog_ft_is_running(edgehog_file_transfer_t *file_transfer)
 static edgehog_result_t serialize_http_headers(
     char *keys[], char *values[], size_t num_headers, char *out[])
 {
-    if (!keys || !values || !out || num_headers > FILE_TRANSFER_MAX_HTTP_HEADERS) {
+    if (!keys || !values || !out || num_headers < 0) {
         return EDGEHOG_RESULT_FILE_TRANSFER_INVALID_REQUEST;
     }
 
@@ -524,7 +552,7 @@ static edgehog_result_t ft_handle_server_to_device(
     }
 
     http_download_t http_download
-        = { .user_data = &user_data, .download_cbk = http_download_ft_std_payload_cbk };
+        = { .user_data = &user_data, .download_cbk = http_get_server_to_device_request_cbk };
 
     eres = edgehog_http_download(msg->payload.server_to_device.url, (const char **) header_fields,
         FILE_TRANSFER_REQ_TIMEOUT_MS, &http_download);

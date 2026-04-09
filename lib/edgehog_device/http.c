@@ -85,12 +85,6 @@ static void http_download_cb(
         goto exit;
     }
 
-    // Evaluate if body is found
-    if (!rsp->body_found) {
-        EDGEHOG_LOG_DBG("Empty body, skipping http download callback");
-        goto exit;
-    }
-
     http_download_chunk_t http_download_chunk = { 0 };
     http_download_chunk.chunk_start_addr = rsp->body_frag_start;
     http_download_chunk.chunk_size = rsp->body_frag_len;
