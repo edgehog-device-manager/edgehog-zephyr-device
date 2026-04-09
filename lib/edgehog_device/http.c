@@ -85,6 +85,12 @@ static void http_download_cb(
         goto exit;
     }
 
+    // Evaluate if body is found
+    if (!rsp->body_found) {
+        EDGEHOG_LOG_DBG("Empty body, skipping http download callback");
+        goto exit;
+    }
+
     http_download_chunk_t http_download_chunk = { 0 };
     http_download_chunk.chunk_start_addr = rsp->body_frag_start;
     http_download_chunk.chunk_size = rsp->body_frag_len;
@@ -131,7 +137,7 @@ edgehog_result_t edgehog_http_download(
 
     if (ret < 0) {
         EDGEHOG_LOG_ERR("Invalid http request url: %s %d", url, ret);
-        return EDGEHOG_RESULT_INVALID_PARAM;
+        return EDGEHOG_RESULT_PARSE_URL_ERROR;
     }
 
     uint16_t host_off = parser.field_data[UF_HOST].off;
@@ -141,7 +147,7 @@ edgehog_result_t edgehog_http_download(
     ret = snprintf(host, host_len + 1, "%s", url + host_off);
     if (ret < 0) {
         EDGEHOG_LOG_ERR("Error extracting hostname from url");
-        return EDGEHOG_RESULT_INTERNAL_ERROR;
+        return EDGEHOG_RESULT_PARSE_URL_ERROR;
     }
 
     char port[PORT_STR_LEN] = { 0 };
@@ -152,7 +158,7 @@ edgehog_result_t edgehog_http_download(
         ret = sprintf(port, "%u", parser.port);
         if (ret < 0) {
             EDGEHOG_LOG_ERR("Error extracting port from url");
-            return EDGEHOG_RESULT_INTERNAL_ERROR;
+            return EDGEHOG_RESULT_PARSE_URL_ERROR;
         }
     }
 
@@ -174,7 +180,7 @@ edgehog_result_t edgehog_http_download(
         if (ret < 0) {
             EDGEHOG_LOG_ERR("Error extracting path from url");
             zsock_close(sock_id);
-            return EDGEHOG_RESULT_INTERNAL_ERROR;
+            return EDGEHOG_RESULT_PARSE_URL_ERROR;
         }
     }
 

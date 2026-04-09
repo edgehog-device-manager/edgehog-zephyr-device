@@ -61,6 +61,10 @@ typedef struct
     char *file; // TODO: used to test download functionality, remove and use littlefs
     /** @brief Keep track of the point to store the next http chunk. */
     size_t current_offset;
+    /** @brief posix error number */
+    size_t posix_errno;
+    /** @brief Message to send to Astarte in case of success or error of a FT request */
+    char *message;
 } ft_server_to_device_http_cb_data_t;
 
 /**

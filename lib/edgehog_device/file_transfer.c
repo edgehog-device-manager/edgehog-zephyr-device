@@ -34,6 +34,7 @@ EDGEHOG_LOG_MODULE_REGISTER(file_transfer, CONFIG_EDGEHOG_DEVICE_FILE_TRANSFER_L
 #define FILE_TRANSFER_SERVICE_MSGQ_GET_TIMEOUT 100
 #define FILE_TRANSFER_PERCENTAGE 100
 #define FILE_TRANSFER_REQ_TIMEOUT_MS (60 * 1000)
+#define FILE_TRANSFER_ERROR_MSG_SIZE 50
 
 // NOLINTBEGIN(cppcoreguidelines-avoid-non-const-global-variables)
 K_THREAD_STACK_DEFINE(file_transfer_service_stack_area, FILE_TRANSFER_SERVICE_THREAD_STACK_SIZE);
@@ -75,19 +76,19 @@ static char **duplicate_string_array(const astarte_data_stringarray_t *src);
 static edgehog_result_t http_get_server_to_device_request_cbk(
     bool *abort_flag, http_download_chunk_t *download_chunk, void *user_data)
 {
-    if (!download_chunk) {
-        EDGEHOG_LOG_ERR("Unable to read chunk, It is empty");
-        return EDGEHOG_RESULT_HTTP_REQUEST_ERROR;
-    }
-
     if (!user_data) {
         EDGEHOG_LOG_ERR("Unable to read user data context");
-        return EDGEHOG_RESULT_INTERNAL_ERROR;
+        goto error;
     }
 
     ft_server_to_device_http_cb_data_t *ft_data = (ft_server_to_device_http_cb_data_t *) user_data;
 
-    int64_t posix_errno = 0;
+    if (!download_chunk) {
+        EDGEHOG_LOG_ERR("Unable to read chunk");
+        ft_data->posix_errno = EMSGSIZE;
+        ft_data->message = "Unable to read chunk data";
+        goto error;
+    }
 
     // store the file
     if (download_chunk->chunk_size > 0 && ft_data->file) {
@@ -102,7 +103,8 @@ static edgehog_result_t http_get_server_to_device_request_cbk(
         } else {
             EDGEHOG_LOG_WRN(
                 "Potential buffer overflow, the received chunk exceed declared dimensions");
-            posix_errno = -EMSGSIZE;
+            ft_data->posix_errno = EMSGSIZE;
+            ft_data->message = "the received data exceed declared dimensions";
             goto error;
         }
     }
@@ -125,7 +127,8 @@ static edgehog_result_t http_get_server_to_device_request_cbk(
 
         if (res != ASTARTE_RESULT_OK) {
             EDGEHOG_LOG_ERR("Unable to send File transfer progress");
-            posix_errno = -ECONNABORTED;
+            ft_data->posix_errno = EPIPE;
+            ft_data->message = "Unable to send File transfer progress";
             goto error;
         }
 
@@ -135,29 +138,16 @@ static edgehog_result_t http_get_server_to_device_request_cbk(
     if (download_chunk->last_chunk) {
         if (ft_data->file_size_bytes != ft_data->current_offset) {
             EDGEHOG_LOG_ERR("File transfer download aborted");
-            posix_errno = -EMSGSIZE;
+            ft_data->posix_errno = EMSGSIZE;
+            ft_data->message = "File transfer download aborted";
             goto error;
         }
 
         EDGEHOG_LOG_DBG("Download completed successfully!");
+        ft_data->posix_errno = 0;
+        ft_data->message = "Download completed successfully!";
+
         // TODO: close here the file
-
-        astarte_object_entry_t object_entries[] = {
-            { .path = "id", .data = astarte_data_from_string(ft_data->id) },
-            { .path = "type", .data = astarte_data_from_string("server_to_device") },
-            { .path = "code", .data = astarte_data_from_longinteger(posix_errno) },
-            { .path = "message", .data = astarte_data_from_string("") },
-        };
-
-        astarte_result_t res = astarte_device_send_object(ft_data->edgehog_device->astarte_device,
-            io_edgehog_devicemanager_fileTransfer_Response.name, "/request", object_entries,
-            ARRAY_SIZE(object_entries), NULL);
-
-        if (res != ASTARTE_RESULT_OK) {
-            EDGEHOG_LOG_ERR("Unable to send File transfer response");
-            posix_errno = -ECONNABORTED;
-            goto error;
-        }
     }
 
     return EDGEHOG_RESULT_OK;
@@ -166,24 +156,9 @@ error:
 
     edgehog_http_download_abort(abort_flag);
 
-    astarte_object_entry_t object_entries[] = {
-        { .path = "id", .data = astarte_data_from_string(ft_data->id) },
-        { .path = "type", .data = astarte_data_from_string("server_to_device") },
-        { .path = "code", .data = astarte_data_from_longinteger(posix_errno) },
-        { .path = "message", .data = astarte_data_from_string("") },
-    };
-
-    astarte_result_t res = astarte_device_send_object(ft_data->edgehog_device->astarte_device,
-        io_edgehog_devicemanager_fileTransfer_Response.name, "/request", object_entries,
-        ARRAY_SIZE(object_entries), NULL);
-
-    if (res != ASTARTE_RESULT_OK) {
-        EDGEHOG_LOG_ERR("Unable to send File transfer response");
-    }
-
     // TODO: close here the file
 
-    return EDGEHOG_RESULT_INTERNAL_ERROR;
+    return EDGEHOG_RESULT_HTTP_REQUEST_ABORTED;
 }
 
 /************************************************
@@ -530,6 +505,8 @@ static edgehog_result_t ft_handle_server_to_device(
         return EDGEHOG_RESULT_OUT_OF_MEMORY;
     }
 
+    char *response_message = "Couldn't pass context to file transfer HTTP handler";
+
     ft_server_to_device_http_cb_data_t user_data = {
         .id = msg->payload.server_to_device.id,
         .url = msg->payload.server_to_device.url,
@@ -538,6 +515,8 @@ static edgehog_result_t ft_handle_server_to_device(
         .edgehog_device = edgehog_device,
         .file = file,
         .current_offset = 0,
+        .posix_errno = EPIPE,
+        .message = response_message,
     };
 
     char *header_fields[msg->payload.server_to_device.http_headers_len + 1];
@@ -557,8 +536,37 @@ static edgehog_result_t ft_handle_server_to_device(
     eres = edgehog_http_download(msg->payload.server_to_device.url, (const char **) header_fields,
         FILE_TRANSFER_REQ_TIMEOUT_MS, &http_download);
 
-    if (eres != EDGEHOG_RESULT_OK) {
-        EDGEHOG_LOG_ERR("Failed to perform http file transfer request");
+    switch (eres) {
+        case EDGEHOG_RESULT_PARSE_URL_ERROR:
+            user_data.posix_errno = EINVAL;
+            user_data.message = "Couldn't parse HTTP URL.";
+            break;
+        case EDGEHOG_RESULT_NETWORK_ERROR:
+            user_data.posix_errno = ECONNREFUSED;
+            user_data.message = "Couldn't create or connect to socket.";
+            break;
+        case EDGEHOG_RESULT_HTTP_REQUEST_ERROR:
+            user_data.posix_errno = EPROTO;
+            user_data.message = "HTTP request failed.";
+            break;
+        default:
+            break;
+    }
+
+    astarte_object_entry_t object_entries[] = {
+        { .path = "id", .data = astarte_data_from_string(user_data.id) },
+        { .path = "type", .data = astarte_data_from_string("server_to_device") },
+        { .path = "code", .data = astarte_data_from_longinteger(user_data.posix_errno) },
+        { .path = "message", .data = astarte_data_from_string(user_data.message) },
+    };
+
+    astarte_result_t res = astarte_device_send_object(user_data.edgehog_device->astarte_device,
+        io_edgehog_devicemanager_fileTransfer_Response.name, "/request", object_entries,
+        ARRAY_SIZE(object_entries), NULL);
+
+    if (res != ASTARTE_RESULT_OK) {
+        EDGEHOG_LOG_ERR("Unable to send File transfer response");
+        eres = EDGEHOG_RESULT_ASTARTE_ERROR;
     }
 
 exit:
