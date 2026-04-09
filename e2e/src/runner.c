@@ -30,15 +30,15 @@ LOG_MODULE_REGISTER(runner, CONFIG_RUNNER_LOG_LEVEL);
  *         Global functions definition          *
  ***********************************************/
 
-edgehog_result_t my_download_callback(
-    bool *abort_flag, http_download_chunk_t *download_chunk, void *user_data)
+static edgehog_result_t http_response_cbk(
+    edgehog_http_response_chunk_t *response_chunk, void *user_data)
 {
-    LOG_WRN("%.*s", (int) download_chunk->chunk_size, download_chunk->chunk_start_addr);
-
-    if (download_chunk->last_chunk) {
+    if (response_chunk->chunk_size != 0) {
+        LOG_WRN("%.*s", (int) response_chunk->chunk_size, response_chunk->chunk_start_addr);
+    }
+    if (response_chunk->last_chunk) {
         LOG_WRN("Download complete!");
     }
-
     return EDGEHOG_RESULT_OK;
 }
 
@@ -69,11 +69,13 @@ void run_end_to_end_test()
     // Pytest detects the readyness of the shell through this string
     shell_print(uart_shell, SHELL_IS_READY);
 
-    http_download_t download_ctx = { .download_cbk = my_download_callback, .user_data = NULL };
-    const char *url = "https://192.0.2.2:8443/test_data.txt";
     const char *headers[] = { NULL };
-    int32_t timeout_ms = 5000;
-    edgehog_result_t result = edgehog_http_download(url, headers, timeout_ms, &download_ctx);
+    edgehog_http_get_data_t get_data = { .url = "https://192.0.2.2:8443/test_data.txt",
+        .header_fields = headers,
+        .timeout_ms = 5000,
+        .response_cbk = http_response_cbk,
+        .user_data = NULL };
+    edgehog_result_t result = edgehog_http_get(&get_data);
     if (result == EDGEHOG_RESULT_OK) {
         LOG_WRN("HTTP GET request succeeded.");
     } else {
