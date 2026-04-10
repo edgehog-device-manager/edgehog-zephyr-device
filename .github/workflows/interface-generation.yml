@@ -8,7 +8,7 @@ on:
   workflow_call:
 
 env:
-  EDGEHOG_INTERFACES_REF: a67a5a8e5fa0e7563005b1d87598800390ca1797
+  EDGEHOG_INTERFACES_REF: 1707969570a7121a130c97df914a025d5232c70e
 
 jobs:
   interface-check:
@@ -62,6 +62,7 @@ jobs:
             io.edgehog.devicemanager.config.Telemetry.json \
             io.edgehog.devicemanager.fileTransfer.DeviceToServer.json \
             io.edgehog.devicemanager.fileTransfer.Response.json \
+            io.edgehog.devicemanager.fileTransfer.Progress.json \
             io.edgehog.devicemanager.fileTransfer.posix.ServerToDevice.json \
             ../edgehog-zephyr-device/interfaces
       - name: Generate interface reference code

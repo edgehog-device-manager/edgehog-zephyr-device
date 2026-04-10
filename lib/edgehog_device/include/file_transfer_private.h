@@ -28,10 +28,12 @@ typedef struct
     char *id;
     /** @brief The URL to get the file from. */
     char *url;
-    /** @brief Keys for the HTTP headers, must be in the order of the values. */
-    char *http_header_key;
-    /** @brief Values for the HTTP headers, must be in the order of the keys. */
-    char *http_header_value;
+    /** @brief The number of HTTP headers. */
+    size_t http_headers_len;
+    /** @brief Keys for the HTTP headers, must be the same number and in the order of the values. */
+    char **http_header_keys;
+    /** @brief Values for the HTTP headers, must be the same number and in the order of the keys. */
+    char **http_header_values;
     /** @brief Total decompressed file size in bytes. */
     int64_t file_size_bytes;
     /** @brief Flag to enable the progress reporting of the download. */
@@ -39,6 +41,31 @@ typedef struct
     // TODO: add other fields from the io.edgehog.devicemanager.fileTransfer.posix.ServerToDevice
     // interface
 } ft_server_to_device_data_t;
+
+/**
+ * @brief Data payload for a Server-to-Device HTTP callback.
+ */
+typedef struct
+{
+    /** @brief Transfer ID for the file. */
+    char *id;
+    /** @brief The URL to get the file from. */
+    char *url;
+    /** @brief Total file size in bytes. */
+    size_t file_size_bytes;
+    /** @brief Flag to enable the progress reporting of the download. */
+    bool progress;
+    /** @brief Edgehog device handle. */
+    edgehog_device_handle_t edgehog_device;
+    /** @brief Target file path or identifier. */
+    char *file; // TODO: used to test download functionality, remove and use littlefs
+    /** @brief Keep track of the point to store the next http chunk. */
+    size_t current_offset;
+    /** @brief posix error number */
+    size_t posix_errno;
+    /** @brief Message to send to Astarte in case of success or error of a FT request */
+    char *message;
+} ft_server_to_device_http_cb_data_t;
 
 /**
  * @brief Data payload for a Device-to-Server file transfer request.
@@ -49,10 +76,12 @@ typedef struct
     char *id;
     /** @brief The URL to upload the file to. */
     char *url;
-    /** @brief Keys for the HTTP headers, must be in the order of the values. */
-    char *http_header_key;
-    /** @brief Values for the HTTP headers, must be in the order of the keys. */
-    char *http_header_value;
+    /** @brief The number of HTTP headers. */
+    size_t http_headers_len;
+    /** @brief Keys for the HTTP headers, must be the same number and in the order of the values. */
+    char **http_header_keys;
+    /** @brief Values for the HTTP headers, must be the same number and in the order of the keys. */
+    char **http_header_values;
     /** @brief Flag to enable the progress reporting of the upload. */
     bool progress;
     /** @brief Source from which the file should be read from (storage, streaming, filesystem). */

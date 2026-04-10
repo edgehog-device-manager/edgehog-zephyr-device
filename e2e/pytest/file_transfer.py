@@ -12,25 +12,18 @@ from http_requests import http_post_server_data, http_get_server_data
 
 interface_ft_server_to_device = "io.edgehog.devicemanager.fileTransfer.posix.ServerToDevice"
 interface_ft_response = "io.edgehog.devicemanager.fileTransfer.Response"
+interface_ft_progress = "io.edgehog.devicemanager.fileTransfer.Progress"
 
 logger = logging.getLogger(__name__)
 
 def file_transfer_test(end_to_end_configuration: Configuration):
     ft_data = {
         "url": "https://192.0.2.2:8443/test_data.txt",
-        "progress": True,
-        "digest": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
         "id": "550e8400-e29b-41d4-a716-446655440000",
-        "ttlSeconds": 3600,
-        "destination": "storage",
-        "fileMode": 420,
-        "fileSizeBytes": 1048576,
-        "userId": 1000,
-        "httpHeaderKey": "Authorization",
-        "httpHeaderValue": "Bearer token123",
-        "groupId": 1000,
-        "compression": "tar.gz",
-        "fileName": "backup.tar.gz"
+        "progress": True,
+        "fileSizeBytes": 10000,
+        "httpHeaderKeys": ["Content-Type", "foo"],
+        "httpHeaderValues": ["application/json", "bar"],
     }
 
     start_time = datetime.now(timezone.utc)
@@ -58,3 +51,16 @@ def file_transfer_test(end_to_end_configuration: Configuration):
 
     assert "request" in ft_res, "No response received"
     assert ft_res["request"][0]["code"] == '0'
+
+    # at this point we should have also received at least a Progress data
+    ft_res = http_get_server_data(
+            end_to_end_configuration,
+            interface_ft_progress,
+            limit=1,
+            since_after=start_time
+        )
+
+    time.sleep(1)
+
+    assert "request" in ft_res, "No response received"
+    assert ft_res["request"][0]["id"] == ft_data["id"]
