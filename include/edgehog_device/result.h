@@ -106,6 +106,8 @@ typedef enum
     EDGEHOG_RESULT_FILE_TRANSFER_INVALID_REQUEST = 38,
     /** @brief Unable to send File transfer data through message queue. */
     EDGEHOG_RESULT_FILE_TRANSFER_QUEUE_ERROR = 39,
+    /** @brief An HTTP request has invalid headers. */
+    EDGEHOG_RESULT_HTTP_REQUEST_INVALID_HEADERS = 40,
 } edgehog_result_t;
 
 /**

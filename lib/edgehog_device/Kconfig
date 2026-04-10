@@ -80,6 +80,18 @@ config EDGEHOG_DEVICE_DEVELOP_USE_NON_TLS_HTTP
 
 endmenu
 
+menu "Advanced options"
+
+config EDGEHOG_DEVICE_ADVANCED_HTTP_RCV_BUFFER_SIZE
+	int "Receive buffer size for HTTP requests"
+	depends on EDGEHOG_DEVICE
+	default 1024
+	help
+	  Use this option to increase/decrease the receive buffer size for http requests.
+	  This buffer will be allocated at runtime on the heap.
+
+endmenu
+
 menu "Logging options"
 
 module = EDGEHOG_DEVICE_DEVICE

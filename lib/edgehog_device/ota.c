@@ -139,7 +139,7 @@ static void wait_for_reboot(void);
  * @brief Callback used when download data is received from the server.
  */
 static edgehog_result_t http_download_payload_cbk(
-    bool *abort_flag, http_download_chunk_t *download_chunk, void *user_data);
+    edgehog_http_response_chunk_t *response_chunk, void *user_data);
 /**
  * @brief Publish an OTA update event to Astarte.
  *
@@ -564,11 +564,12 @@ static edgehog_result_t perform_ota_attempt(edgehog_device_handle_t edgehog_devi
 
     const char *header_fields[] = { 0 };
 
-    http_download_t http_download;
-    http_download.user_data = edgehog_device;
-    http_download.download_cbk = http_download_payload_cbk;
-    edgehog_result_t edgehog_result = edgehog_http_download(
-        thread_data->ota_request.download_url, header_fields, OTA_REQ_TIMEOUT_MS, &http_download);
+    edgehog_http_get_data_t http_get_data = { .url = thread_data->ota_request.download_url,
+        .timeout_ms = OTA_REQ_TIMEOUT_MS,
+        .header_fields = header_fields,
+        .response_cbk = http_download_payload_cbk,
+        .user_data = edgehog_device };
+    edgehog_result_t edgehog_result = edgehog_http_get(&http_get_data);
 
     if (!atomic_test_bit(&thread_data->ota_run_state, OTA_STATE_RUN_BIT)) {
         EDGEHOG_LOG_DBG("OTA canceled");
@@ -589,9 +590,9 @@ static edgehog_result_t perform_ota_attempt(edgehog_device_handle_t edgehog_devi
 }
 
 static edgehog_result_t http_download_payload_cbk(
-    bool *abort_flag, http_download_chunk_t *download_chunk, void *user_data)
+    edgehog_http_response_chunk_t *response_chunk, void *user_data)
 {
-    if (!download_chunk) {
+    if (!response_chunk) {
         EDGEHOG_LOG_ERR("Unable to read chunk, It is empty");
         return EDGEHOG_RESULT_HTTP_REQUEST_ERROR;
     }
@@ -604,31 +605,29 @@ static edgehog_result_t http_download_payload_cbk(
     edgehog_device_handle_t edgehog_device = (edgehog_device_handle_t) user_data;
     ota_thread_data_t *ota_thread_data = &edgehog_device->ota_thread.ota_thread_data;
     if (!atomic_test_bit(&ota_thread_data->ota_run_state, OTA_STATE_RUN_BIT)) {
-        edgehog_http_download_abort(abort_flag);
-        return EDGEHOG_RESULT_OK;
+        return EDGEHOG_RESULT_HTTP_REQUEST_ABORTED;
     }
 
     int ret = flash_img_buffered_write(&ota_thread_data->flash_ctx,
-        download_chunk->chunk_start_addr, download_chunk->chunk_size, download_chunk->last_chunk);
+        response_chunk->chunk_start_addr, response_chunk->chunk_size, response_chunk->last_chunk);
     if (ret < 0) {
         EDGEHOG_LOG_ERR("Flash write error: %d", ret);
         EDGEHOG_LOG_ERR("Errno: %s\n", strerror(errno));
-        edgehog_http_download_abort(abort_flag);
         return EDGEHOG_RESULT_OTA_WRITE_FLASH_ERROR;
     }
 
-    ota_thread_data->image_size = download_chunk->download_size;
+    ota_thread_data->image_size = response_chunk->response_size;
     ota_thread_data->download_size = flash_img_bytes_written(&ota_thread_data->flash_ctx);
     int read_perc = (int) (OTA_PROGRESS_PERC * ota_thread_data->download_size
-        / download_chunk->download_size);
+        / response_chunk->response_size);
     int read_perc_rounded = read_perc - (read_perc % OTA_PROGRESS_PERC_ROUNDING_STEP);
 
     if (read_perc_rounded != ota_thread_data->last_perc_sent) {
         pub_ota_event(edgehog_device->astarte_device, ota_thread_data->ota_request.uuid,
             OTA_EVENT_DOWNLOADING, read_perc_rounded, EDGEHOG_RESULT_OK, "");
         EDGEHOG_LOG_DBG("Downloading %d%% chunk %d written %d size %d \n", read_perc_rounded,
-            download_chunk->chunk_size, ota_thread_data->download_size,
-            download_chunk->download_size);
+            response_chunk->chunk_size, ota_thread_data->download_size,
+            response_chunk->response_size);
         ota_thread_data->last_perc_sent = read_perc_rounded;
     }
 
