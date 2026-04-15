@@ -30,18 +30,6 @@ LOG_MODULE_REGISTER(runner, CONFIG_RUNNER_LOG_LEVEL);
  *         Global functions definition          *
  ***********************************************/
 
-edgehog_result_t my_download_callback(
-    bool *abort_flag, http_download_chunk_t *download_chunk, void *user_data)
-{
-    LOG_WRN("%.*s", (int) download_chunk->chunk_size, download_chunk->chunk_start_addr);
-
-    if (download_chunk->last_chunk) {
-        LOG_WRN("Download complete!");
-    }
-
-    return EDGEHOG_RESULT_OK;
-}
-
 void run_end_to_end_test()
 {
     LOG_INF("End to end test runner");
@@ -68,17 +56,6 @@ void run_end_to_end_test()
 
     // Pytest detects the readyness of the shell through this string
     shell_print(uart_shell, SHELL_IS_READY);
-
-    http_download_t download_ctx = { .download_cbk = my_download_callback, .user_data = NULL };
-    const char *url = "https://192.0.2.2:8443/test_data.txt";
-    const char *headers[] = { NULL };
-    int32_t timeout_ms = 5000;
-    edgehog_result_t result = edgehog_http_download(url, headers, timeout_ms, &download_ctx);
-    if (result == EDGEHOG_RESULT_OK) {
-        LOG_WRN("HTTP GET request succeeded.");
-    } else {
-        LOG_WRN("HTTP GET request failed with error code: %d", result);
-    }
 
     // Wait untill a shell command disconnects the device
     wait_for_device_disconnection();

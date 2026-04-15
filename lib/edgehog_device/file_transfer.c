@@ -74,7 +74,7 @@ static char **duplicate_string_array(const astarte_data_stringarray_t *src);
  ***********************************************/
 
 static edgehog_result_t http_get_server_to_device_request_cbk(
-    bool *abort_flag, http_download_chunk_t *download_chunk, void *user_data)
+    edgehog_http_response_chunk_t *response_chunk, void *user_data)
 {
     if (!user_data) {
         EDGEHOG_LOG_ERR("Unable to read user data context");
@@ -83,7 +83,7 @@ static edgehog_result_t http_get_server_to_device_request_cbk(
 
     ft_server_to_device_http_cb_data_t *ft_data = (ft_server_to_device_http_cb_data_t *) user_data;
 
-    if (!download_chunk) {
+    if (!response_chunk) {
         EDGEHOG_LOG_ERR("Unable to read chunk");
         ft_data->posix_errno = EMSGSIZE;
         ft_data->message = "Unable to read chunk data";
@@ -91,14 +91,14 @@ static edgehog_result_t http_get_server_to_device_request_cbk(
     }
 
     // store the file
-    if (download_chunk->chunk_size > 0 && ft_data->file) {
+    if (response_chunk->chunk_size > 0 && ft_data->file) {
         // check potential buffer overflow
-        if (ft_data->current_offset + download_chunk->chunk_size <= ft_data->file_size_bytes) {
+        if (ft_data->current_offset + response_chunk->chunk_size <= ft_data->file_size_bytes) {
 
-            memcpy(ft_data->file + ft_data->current_offset, download_chunk->chunk_start_addr,
-                download_chunk->chunk_size);
+            memcpy(ft_data->file + ft_data->current_offset, response_chunk->chunk_start_addr,
+                response_chunk->chunk_size);
 
-            ft_data->current_offset += download_chunk->chunk_size;
+            ft_data->current_offset += response_chunk->chunk_size;
             EDGEHOG_LOG_DBG("Downloaded %d bytes", ft_data->current_offset);
         } else {
             EDGEHOG_LOG_WRN(
@@ -109,7 +109,7 @@ static edgehog_result_t http_get_server_to_device_request_cbk(
         }
     }
 
-    if (ft_data->progress) {
+    if (ft_data->progress && ft_data->file_size_bytes > 0) {
         int32_t progress = ft_data->file_size_bytes == 0
             ? FILE_TRANSFER_PERCENTAGE
             : (int32_t) (((uint64_t) ft_data->current_offset * FILE_TRANSFER_PERCENTAGE)
@@ -135,7 +135,7 @@ static edgehog_result_t http_get_server_to_device_request_cbk(
         EDGEHOG_LOG_INF("File transfer ID %s progress: %d/100", ft_data->id, progress);
     }
 
-    if (download_chunk->last_chunk) {
+    if (response_chunk->last_chunk) {
         if (ft_data->file_size_bytes != ft_data->current_offset) {
             EDGEHOG_LOG_ERR("File transfer download aborted");
             ft_data->posix_errno = EMSGSIZE;
@@ -153,8 +153,6 @@ static edgehog_result_t http_get_server_to_device_request_cbk(
     return EDGEHOG_RESULT_OK;
 
 error:
-
-    edgehog_http_download_abort(abort_flag);
 
     // TODO: close here the file
 
@@ -460,7 +458,7 @@ static edgehog_result_t serialize_http_headers(
 
     size_t idx = 0;
     for (; idx < num_headers; idx++) {
-        size_t needed = strlen(keys[idx]) + strlen(values[idx]) + 3;
+        size_t needed = strlen(keys[idx]) + strlen(values[idx]) + sizeof(": \r\n");
         out[idx] = k_malloc(needed);
 
         if (!out[idx]) {
@@ -471,7 +469,7 @@ static edgehog_result_t serialize_http_headers(
         }
 
         // NOLINTNEXTLINE(cert-err33-c)
-        snprintf(out[idx], needed, "%s: %s", keys[idx], values[idx]);
+        snprintf(out[idx], needed, "%s: %s\r\n", keys[idx], values[idx]);
     }
 
     out[num_headers] = NULL;
@@ -530,11 +528,13 @@ static edgehog_result_t ft_handle_server_to_device(
         goto exit;
     }
 
-    http_download_t http_download
-        = { .user_data = &user_data, .download_cbk = http_get_server_to_device_request_cbk };
+    edgehog_http_get_data_t http_get_data = { .url = msg->payload.server_to_device.url,
+        .header_fields = (const char **) header_fields,
+        .timeout_ms = FILE_TRANSFER_REQ_TIMEOUT_MS,
+        .response_cbk = http_get_server_to_device_request_cbk,
+        .user_data = &user_data };
 
-    eres = edgehog_http_download(msg->payload.server_to_device.url, (const char **) header_fields,
-        FILE_TRANSFER_REQ_TIMEOUT_MS, &http_download);
+    eres = edgehog_http_get(&http_get_data);
 
     switch (eres) {
         case EDGEHOG_RESULT_PARSE_URL_ERROR:

@@ -18,66 +18,102 @@
 #include <stddef.h>
 #include <stdint.h>
 
-/**
- * @brief Chunk of download from the server.
- */
+/** @brief Chunk of response from the server. */
 typedef struct
 {
-    /** @brief Start address of the chunk contained in the download buffer. */
+    /** @brief Start address of the chunk contained in the response buffer. */
     uint8_t *chunk_start_addr;
-    /** @brief Size of the chunk contained in the download buffer. */
+    /** @brief Size of the chunk contained in the response buffer. */
     size_t chunk_size;
-    /** @brief Size of the download. */
-    size_t download_size;
-    /** @brief Identify the last chunk of the download. */
+    /** @brief Size of the response. */
+    size_t response_size;
+    /** @brief Identify the last chunk of the response. */
     bool last_chunk;
-} http_download_chunk_t;
+} edgehog_http_response_chunk_t;
+
+/** @brief Chunk of payload to send to the server. */
+typedef struct
+{
+    /** @brief Start address of the chunk to send. */
+    uint8_t *chunk_start_addr;
+    /** @brief Size of the chunk to send. */
+    size_t chunk_size;
+    /** @brief Identify the last chunk of the send. */
+    bool last_chunk;
+} edgehog_http_payload_chunk_t;
 
 /**
- * @typedef http_download_payload_cbk_t
- * @brief Callback used when chunk of download is received from the server.
+ * @typedef edgehog_http_response_cbk_t
+ * @brief Callback used when chunk of response is received from the server.
  *
- * @param abort_flag Pointer to the abort flag.
- * @param download_chunk Download chunk information.
- * @param user_data User specified data specified in *http_download_t* struct.
+ * @param response_chunk Response chunk information.
+ * @param user_data User specified data.
+ * @return EDGEHOG_RESULT_OK if successful, otherwise an error code.
+ */
+typedef edgehog_result_t (*edgehog_http_response_cbk_t)(
+    edgehog_http_response_chunk_t *response_chunk, void *user_data);
+
+/**
+ * @typedef edgehog_http_payload_cbk_t
+ * @brief Callback used when a chunk of payload is requested to be sent to the server.
+ *
+ * @param payload_chunk Payload chunk information to be populated by the user.
+ * @param user_data User specified data provided in the *edgehog_http_put_data_t* struct.
  *
  * @return EDGEHOG_RESULT_OK if successful, otherwise an error code.
  */
-typedef edgehog_result_t (*http_download_payload_cbk_t)(
-    bool *abort_flag, http_download_chunk_t *download_chunk, void *user_data);
+typedef edgehog_result_t (*edgehog_http_payload_cbk_t)(
+    edgehog_http_payload_chunk_t *payload_chunk, void *user_data);
 
-/** @brief Data struct for a Http download instance. */
+/** @brief Data struct for a HTTP GET instance. */
 typedef struct
 {
-    /** @brief Callback for a chunk download event. */
-    http_download_payload_cbk_t download_cbk;
-    /** @brief User data passed to http_download_cb callback function. */
+    /** @brief URL to use for the HTTP GET request. */
+    const char *url;
+    /** @brief NULL terminated list of headers for the request. */
+    const char **header_fields;
+    /** @brief Timeout to use for the HTTP operations in ms. */
+    int32_t timeout_ms;
+    /** @brief Callback for a chunk response event. */
+    edgehog_http_response_cbk_t response_cbk;
+    /** @brief User data passed to the callback function. */
     void *user_data;
-} http_download_t;
+} edgehog_http_get_data_t;
+
+/** @brief Data struct for an HTTP PUT instance. */
+typedef struct
+{
+    /** @brief URL to use for the HTTP PUT request. */
+    const char *url;
+    /** @brief NULL terminated list of headers for the request. */
+    const char **header_fields;
+    /** @brief Timeout to use for the HTTP operations in ms. */
+    int32_t timeout_ms;
+    /** @brief Callback for a chunk payload event. */
+    edgehog_http_payload_cbk_t payload_cbk;
+    /** @brief User data passed to the callback function. */
+    void *user_data;
+} edgehog_http_put_data_t;
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 /**
- * @brief Perform a dowload file request.
+ * @brief Perform an HTTP GET file request.
  *
- * @param[in] url URL to use for the Download request.
- * @param[in] header_fields NULL terminated list of headers for the request.
- * @param[in] timeout_ms Timeout to use for the HTTP operations in ms.
- * @param[in] http_download Http Download specified data that is used for receiveing an download.
- * chunk.
+ * @param[in] data Pointer to the HTTP GET request data.
  * @return EDGEHOG_RESULT_OK if successful, otherwise an error code.
  */
-edgehog_result_t edgehog_http_download(const char *url, const char **header_fields,
-    int32_t timeout_ms, http_download_t *http_download);
+edgehog_result_t edgehog_http_get(edgehog_http_get_data_t *data);
 
 /**
- * @brief Abort a specific dowload file request.
+ * @brief Perform an HTTP PUT request.
  *
- * @param[in] abort_flag Pointer to the abort flag.
+ * @param[in] data Pointer to the HTTP PUT request data.
+ * @return EDGEHOG_RESULT_OK if successful, otherwise an error code.
  */
-void edgehog_http_download_abort(bool *abort_flag);
+edgehog_result_t edgehog_http_put(edgehog_http_put_data_t *data);
 
 #ifdef __cplusplus
 }
