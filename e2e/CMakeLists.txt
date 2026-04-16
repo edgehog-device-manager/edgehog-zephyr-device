@@ -25,6 +25,10 @@ concat_if_exists(${CMAKE_SOURCE_DIR}/private.conf EXTRA_CONF_FILE)
 find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
 project(e2e_test)
 
+if(CONFIG_FILE_SYSTEM_LITTLEFS)
+    zephyr_library_link_libraries(LITTLEFS)
+endif()
+
 # add sources and includes from the sample dir
 target_sources(app PRIVATE ${SAMPLE_DIR}/src/eth.c)
 target_include_directories(app PRIVATE ${SAMPLE_DIR}/src/include)

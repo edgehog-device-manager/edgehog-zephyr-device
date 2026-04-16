@@ -110,6 +110,8 @@ typedef enum
     EDGEHOG_RESULT_PARSE_URL_ERROR = 40,
     /** @brief An HTTP request has invalid headers. */
     EDGEHOG_RESULT_HTTP_REQUEST_INVALID_HEADERS = 41,
+    /** @brief Couldn't perform operation on file system. */
+    EDGEHOG_RESULT_FILE_SYSTEM_ERROR = 42,
 } edgehog_result_t;
 
 /**
