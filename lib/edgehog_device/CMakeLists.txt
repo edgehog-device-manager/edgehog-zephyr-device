@@ -9,5 +9,5 @@ string(TIMESTAMP BUILD_DATE_TIME UTC)
 # This define is used in the BaseImage interface
 add_compile_definitions(CMAKE_BUILD_DATE_TIME="${BUILD_DATE_TIME}")
 
-FILE(GLOB lib_sources *.c)
+FILE(GLOB lib_sources *.c file_transfer/*.c)
 zephyr_library_sources(${lib_sources})
