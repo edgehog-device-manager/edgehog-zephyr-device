@@ -1,6 +1,8 @@
 +*/include/edgehog_device/*.h
 +*/lib/edgehog_device/include/*.h
++*/lib/edgehog_device/include/file_transfer/*.h
 +*/lib/edgehog_device/*.c
++*/lib/edgehog_device/file_transfer/*.c
 +*/samples/*/include/*.h
 +*/samples/*/src/*.c
 -*
