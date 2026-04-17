@@ -44,7 +44,6 @@ static edgehog_result_t http_put_device_to_server_payload_cbk(
     const edgehog_ft_file_read_cbks_t *file_cbks = data->file_cbks;
 
     if (!payload_chunk) {
-        EDGEHOG_LOG_ERR("Unable to access payload chunk");
         data->posix_errno = EPIPE;
         data->message = "Unable to access payload chunk";
         goto error;
@@ -100,7 +99,7 @@ void edgehog_ft_handle_device_to_server(
 {
     edgehog_result_t eres = EDGEHOG_RESULT_OK;
     int posix_errno = 0;
-    char *message = "Transfer completed successfully!";
+    char *message = "Transfer completed successfully.";
 
     edgehog_ft_http_cbk_data_t *http_cbk_user_data = NULL;
     bool work_initialized = false;
@@ -110,7 +109,7 @@ void edgehog_ft_handle_device_to_server(
     if (strcmp(msg->location_type, "storage") == 0) {
         file_cbks = &file_transfer_storage_read_cbks;
     } else {
-        EDGEHOG_LOG_ERR("Unknown source type: %s", msg->location_type);
+        EDGEHOG_LOG_DBG("Source type: %s", msg->location_type);
         posix_errno = EINVAL;
         message = "Unknown or unsupported file transfer source type";
         goto exit;
@@ -120,7 +119,6 @@ void edgehog_ft_handle_device_to_server(
     void *file_cbks_ctx = NULL;
     eres = file_cbks->file_init(&file_cbks_ctx, msg->id, msg->location);
     if (eres != EDGEHOG_RESULT_OK) {
-        EDGEHOG_LOG_ERR("Failed to initialize the file backend.");
         posix_errno = EIO;
         message = "Failed to initialize the file backend";
         goto exit;
@@ -130,7 +128,6 @@ void edgehog_ft_handle_device_to_server(
     // Must be allocated on the heap since it needs to be accessed in the work thread.
     http_cbk_user_data = k_malloc(sizeof(edgehog_ft_http_cbk_data_t));
     if (!http_cbk_user_data) {
-        EDGEHOG_LOG_ERR("Out of memory in file transfer.");
         posix_errno = ENOSR;
         message = "Out of memory in file transfer.";
         goto exit;
@@ -170,7 +167,6 @@ void edgehog_ft_handle_device_to_server(
     // Complete the file transfer on the backend
     eres = file_cbks->file_complete(file_cbks_ctx);
     if (eres != EDGEHOG_RESULT_OK) {
-        EDGEHOG_LOG_ERR("Unable to finalize file transfer");
         posix_errno = EIO;
         message = "Failed to finalize file transfer";
     }

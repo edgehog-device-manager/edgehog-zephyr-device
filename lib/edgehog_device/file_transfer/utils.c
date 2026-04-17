@@ -190,6 +190,13 @@ void edgehog_ft_send_response(edgehog_device_handle_t device, const char *identi
         message = "An unknown error occurred during file transfer.";
     }
 
+    // Log the error if errno is set or if the result is not OK
+    if (posix_errno != 0) {
+        EDGEHOG_LOG_ERR("File transfer failed with error: %s", message);
+    } else {
+        EDGEHOG_LOG_INF("%s", message);
+    }
+
     astarte_object_entry_t object_entries[] = {
         { .path = "id", .data = astarte_data_from_string(identifier) },
         { .path = "type", .data = astarte_data_from_string(type) },

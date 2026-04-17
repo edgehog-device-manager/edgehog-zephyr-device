@@ -44,7 +44,6 @@ static edgehog_result_t http_get_server_to_device_request_cbk(
     const edgehog_ft_file_write_cbks_t *file_cbks = data->file_cbks;
 
     if (!response_chunk) {
-        EDGEHOG_LOG_ERR("Unable to read chunk");
         data->posix_errno = EPIPE;
         data->message = "Unable to read chunk data";
         goto error;
@@ -54,7 +53,6 @@ static edgehog_result_t http_get_server_to_device_request_cbk(
     eres = file_cbks->file_append_chunk(
         data->file_cbks_ctx, response_chunk->chunk_start_addr, response_chunk->chunk_size);
     if (eres != EDGEHOG_RESULT_OK) {
-        EDGEHOG_LOG_ERR("Unable to write chunk to file");
         data->posix_errno = EIO;
         data->message = "Failed to write chunk to file";
         goto error;
@@ -77,15 +75,11 @@ static edgehog_result_t http_get_server_to_device_request_cbk(
     if (response_chunk->last_chunk) {
         eres = file_cbks->file_complete(data->file_cbks_ctx);
         if (eres != EDGEHOG_RESULT_OK) {
-            EDGEHOG_LOG_ERR("Unable to finalize file transfer");
             data->posix_errno = EIO;
             data->message = "Failed to finalize file transfer";
             goto error;
         }
-
-        EDGEHOG_LOG_DBG("Transfer server to device completed successfully!");
-        data->posix_errno = 0;
-        data->message = "Transfer completed successfully!";
+        // posix_errno is by default 0, and the message is also by defaul a success message.
     }
 
     return EDGEHOG_RESULT_OK;
@@ -109,7 +103,7 @@ void edgehog_ft_handle_server_to_device(
 {
     edgehog_result_t eres = EDGEHOG_RESULT_OK;
     int posix_errno = 0;
-    char *message = "Transfer completed successfully!";
+    char *message = "Transfer completed successfully.";
 
     edgehog_ft_http_cbk_data_t *http_cbk_user_data = NULL;
     bool work_initialized = false;
@@ -127,7 +121,7 @@ void edgehog_ft_handle_server_to_device(
     if (strcmp(msg->location_type, "storage") == 0) {
         file_cbks = &file_transfer_storage_write_cbks;
     } else {
-        EDGEHOG_LOG_ERR("Unknown destination type: %s", msg->location_type);
+        EDGEHOG_LOG_DBG("Destination type: %s", msg->location_type);
         posix_errno = EINVAL;
         message = "Unknown or unsupported file transfer destination type";
         goto exit;
@@ -138,7 +132,6 @@ void edgehog_ft_handle_server_to_device(
     eres = file_cbks->file_init(
         &file_cbks_ctx, msg->id, msg->url, msg->file_size_bytes, msg->location);
     if (eres != EDGEHOG_RESULT_OK) {
-        EDGEHOG_LOG_ERR("Failed to initialize the storage backend.");
         posix_errno = EIO;
         message = "Failed to initialize the file backend";
         goto exit;
@@ -148,7 +141,6 @@ void edgehog_ft_handle_server_to_device(
     // Must be allocated on the heap since it needs to be accessed in the work thread.
     http_cbk_user_data = k_malloc(sizeof(edgehog_ft_http_cbk_data_t));
     if (!http_cbk_user_data) {
-        EDGEHOG_LOG_ERR("Out of memory in file transfer.");
         posix_errno = ENOSR;
         message = "Out of memory in file transfer.";
         goto exit;
