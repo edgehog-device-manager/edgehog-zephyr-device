@@ -55,12 +55,16 @@ def http_get_server_data(
     if to is not None:
         params["to"] = to.isoformat()
 
+    if not quiet:
+        logger.debug(f"Performing GET request to {url} with params {params}")
+
     res = requests.get(
         url, headers=headers, params=params, timeout=5, verify=e2e_cfg.appengine_cert
     )
-    logger.debug(curlify.to_curl(res.request))
+
     if res.status_code != 200:
         if not quiet:
+            logger.debug(curlify.to_curl(res.request))
             logger.error(res.text)
         raise requests.HTTPError(f"GET request failed. response {res}")
 
@@ -85,12 +89,14 @@ def http_post_server_data(
         "Authorization": "Bearer " + e2e_cfg.appengine_token,
         "Content-Type": "application/json",
     }
+    if not quiet:
+        logger.debug(f"Performing POST request to {url}")
     res = requests.post(
         url=url, data=json_data, headers=headers, timeout=5, verify=e2e_cfg.appengine_cert
     )
-    logger.info(curlify.to_curl(res.request))
     if res.status_code != 200:
         if not quiet:
+            logger.debug(curlify.to_curl(res.request))
             logger.error(res.text)
         raise requests.HTTPError(f"POST request failed. response {res}")
 
@@ -112,16 +118,18 @@ def http_delete_server_data(
         "Authorization": "Bearer " + e2e_cfg.appengine_token,
         "Content-Type": "application/json",
     }
+    if not quiet:
+        logger.debug(f"Performing DELETE request to {url}")
     res = requests.delete(url, headers=headers, timeout=5, verify=e2e_cfg.appengine_cert)
-    logger.info(curlify.to_curl(res.request))
     if res.status_code != 204:
         if not quiet:
+            logger.debug(curlify.to_curl(res.request))
             logger.error(res.text)
         raise requests.HTTPError("DELETE request failed.")
 
 
 def http_prepare_transmit_data(interface, path, value):
-    logger.info(f"Preparing transmit data, interface {interface}, path {path}, value {value}")
+    logger.debug(f"Preparing transmit data, interface {interface}, path {path}, value {value}")
     mapping = interface.get_mapping(path)
     if mapping.type == "binaryblob":
         return base64.b64encode(value).decode("utf-8")
@@ -131,7 +139,7 @@ def http_prepare_transmit_data(interface, path, value):
 
 
 def http_decode_received_data(interface, path, received_data):
-    logger.info(
+    logger.debug(
         f"Decoding received data, interface {interface}, path {path}, value {received_data}"
     )
     mapping = interface.get_mapping(path)

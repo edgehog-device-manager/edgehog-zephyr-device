@@ -37,7 +37,13 @@ SPDX-FileCopyrightText = "SECO Mind Srl"
 SPDX-License-Identifier = "Apache-2.0"
 
 [[annotations]]
-path = "e2e/http_server_data/test_data.txt"
+path = "e2e/http_server_data/server_to_device_test_data.txt"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "SECO Mind Srl"
+SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = "e2e/http_server_data/device_to_server_test_data.txt"
 precedence = "aggregate"
 SPDX-FileCopyrightText = "SECO Mind Srl"
 SPDX-License-Identifier = "Apache-2.0"
