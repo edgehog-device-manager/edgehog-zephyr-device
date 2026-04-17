@@ -79,7 +79,7 @@ static edgehog_result_t http_get_server_to_device_request_cbk(
             data->message = "Failed to finalize file transfer";
             goto error;
         }
-        // posix_errno is by default 0, and the message is also by defaul a success message.
+        // posix_errno is by default 0, and the message is also by default a success message.
     }
 
     return EDGEHOG_RESULT_OK;
