@@ -21,6 +21,7 @@ EDGEHOG_LOG_MODULE_REGISTER(file_transfer_utils, CONFIG_EDGEHOG_DEVICE_FILE_TRAN
  ***********************************************/
 
 // Endpoint strings used for communication with Astarte.
+#define COMMON_ENDPOINT_REQUEST "/request"
 #define ENDPOINT_ID "id"
 #define ENDPOINT_URL "url"
 #define ENDPOINT_HTTP_HEADER_KEYS "httpHeaderKeys"
@@ -151,8 +152,8 @@ void edgehog_ft_progress_work_handler(struct k_work *work)
     };
 
     astarte_result_t ares = astarte_device_send_object(data->edgehog_device->astarte_device,
-        io_edgehog_devicemanager_fileTransfer_Progress.name, "/request", object_entries,
-        ARRAY_SIZE(object_entries), NULL);
+        io_edgehog_devicemanager_fileTransfer_Progress.name, COMMON_ENDPOINT_REQUEST,
+        object_entries, ARRAY_SIZE(object_entries), NULL);
     if (ares != ASTARTE_RESULT_OK) {
         EDGEHOG_LOG_ERR("Unable to send file transfer progress");
         return;
@@ -229,8 +230,8 @@ void edgehog_ft_send_response(edgehog_device_handle_t device, const char *identi
     };
 
     astarte_result_t ares = astarte_device_send_object(device->astarte_device,
-        io_edgehog_devicemanager_fileTransfer_Response.name, "/request", object_entries,
-        ARRAY_SIZE(object_entries), NULL);
+        io_edgehog_devicemanager_fileTransfer_Response.name, COMMON_ENDPOINT_REQUEST,
+        object_entries, ARRAY_SIZE(object_entries), NULL);
 
     if (ares != ASTARTE_RESULT_OK) {
         EDGEHOG_LOG_ERR("Unable to send file transfer response: %s.", astarte_result_to_name(ares));
