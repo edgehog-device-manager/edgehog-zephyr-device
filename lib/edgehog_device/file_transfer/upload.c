@@ -178,7 +178,7 @@ exit:
     }
 
     edgehog_ft_send_response(
-        edgehog_device, msg->id, "device_to_server", posix_errno, message, eres);
+        edgehog_device, msg->id, EDGEHOG_FT_MSG_DEVICE_TO_SERVER, posix_errno, message, eres);
 
     k_free(http_cbk_user_data);
 

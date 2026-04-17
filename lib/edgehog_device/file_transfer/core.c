@@ -157,11 +157,9 @@ edgehog_result_t edgehog_ft_process_event(edgehog_device_handle_t device,
     edgehog_ft_msg_t msg = { 0 };
     int posix_errno = EPIPE;
     char *message = "Internal failure during file transfer request processing";
-    const char *type_str
-        = (type == EDGEHOG_FT_MSG_SERVER_TO_DEVICE) ? "server_to_device" : "device_to_server";
 
     if (!object_event) {
-        EDGEHOG_LOG_ERR("File transfer %s event, object event undefined", type_str);
+        EDGEHOG_LOG_ERR("File transfer event, object event undefined");
         eres = EDGEHOG_RESULT_FILE_TRANSFER_INVALID_REQUEST;
         goto failure;
     }
@@ -193,7 +191,7 @@ failure:
     // TODO: Evaluate if it's possible to offload this operation outside of this function.
     //  to avoid performing a network operation within the event handler
     if (msg.id) {
-        edgehog_ft_send_response(device, msg.id, type_str, posix_errno, message, eres);
+        edgehog_ft_send_response(device, msg.id, type, posix_errno, message, eres);
     }
     edgehog_ft_msg_destroy(&msg);
     return eres;

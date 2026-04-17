@@ -17,13 +17,32 @@
 EDGEHOG_LOG_MODULE_REGISTER(file_transfer_utils, CONFIG_EDGEHOG_DEVICE_FILE_TRANSFER_LOG_LEVEL);
 
 /************************************************
+ *        Defines, constants and typedef        *
+ ***********************************************/
+
+// Endpoint strings used for communication with Astarte.
+#define ENDPOINT_ID "id"
+#define ENDPOINT_URL "url"
+#define ENDPOINT_HTTP_HEADER_KEYS "httpHeaderKeys"
+#define ENDPOINT_HTTP_HEADER_VALUES "httpHeaderValues"
+#define ENDPOINT_PROGRESS "progress"
+#define ENDPOINT_FILE_SIZE_BYTES "fileSizeBytes"
+#define ENDPOINT_DESTINATION_TYPE "destinationType"
+#define ENDPOINT_SOURCE_TYPE "sourceType"
+#define ENDPOINT_DESTINATION "destination"
+#define ENDPOINT_SOURCE "source"
+#define ENDPOINT_TYPE "type"
+#define ENDPOINT_CODE "code"
+#define ENDPOINT_MSG "message"
+
+/************************************************
  *         Static functions declarations        *
  ***********************************************/
 
-static char **edgehog_ft_serialize_http_headers(
+static char **serialize_http_headers(
     const char *keys[], size_t keys_size, const char *values[], size_t values_size);
-static void edgehog_ft_free_http_headers(char *header_fields[]);
-static char *edgehog_ft_duplicate_string(const char *src);
+static void free_http_headers(char *header_fields[]);
+static char *duplicate_string(const char *src);
 
 /************************************************
  *         Global functions definitions         *
@@ -49,26 +68,28 @@ edgehog_result_t edgehog_ft_msg_init(astarte_object_entry_t *rx_values, size_t r
         const char *path = rx_values[i].path;
         astarte_data_t rx_value = rx_values[i].data;
 
-        if (strcmp(path, "id") == 0) {
-            tmp.id = edgehog_ft_duplicate_string((char *) rx_value.data.string);
-        } else if (strcmp(path, "url") == 0) {
-            tmp.url = edgehog_ft_duplicate_string((char *) rx_value.data.string);
-        } else if (strcmp(path, "httpHeaderKeys") == 0) {
+        if (strcmp(path, ENDPOINT_ID) == 0) {
+            tmp.id = duplicate_string((char *) rx_value.data.string);
+        } else if (strcmp(path, ENDPOINT_URL) == 0) {
+            tmp.url = duplicate_string((char *) rx_value.data.string);
+        } else if (strcmp(path, ENDPOINT_HTTP_HEADER_KEYS) == 0) {
             http_header_keys_len = rx_value.data.string_array.len;
             http_header_keys = rx_value.data.string_array.buf;
-        } else if (strcmp(path, "httpHeaderValues") == 0) {
+        } else if (strcmp(path, ENDPOINT_HTTP_HEADER_VALUES) == 0) {
             http_header_values_len = rx_value.data.string_array.len;
             http_header_values = rx_value.data.string_array.buf;
-        } else if (strcmp(path, "progress") == 0) {
+        } else if (strcmp(path, ENDPOINT_PROGRESS) == 0) {
             tmp.progress = rx_value.data.boolean;
-        } else if (is_server_to_device && strcmp(path, "fileSizeBytes") == 0) {
+        } else if (is_server_to_device && strcmp(path, ENDPOINT_FILE_SIZE_BYTES) == 0) {
             tmp.file_size_bytes = rx_value.data.longinteger;
-        } else if ((is_server_to_device && strcmp(path, "destinationType") == 0)
-            || (!is_server_to_device && strcmp(path, "sourceType") == 0)) {
-            tmp.location_type = edgehog_ft_duplicate_string((char *) rx_value.data.string);
-        } else if ((tmp.type == EDGEHOG_FT_MSG_SERVER_TO_DEVICE && strcmp(path, "destination") == 0)
-            || (tmp.type == EDGEHOG_FT_MSG_DEVICE_TO_SERVER && strcmp(path, "source") == 0)) {
-            tmp.location = edgehog_ft_duplicate_string((char *) rx_value.data.string);
+        } else if ((is_server_to_device && strcmp(path, ENDPOINT_DESTINATION_TYPE) == 0)
+            || (!is_server_to_device && strcmp(path, ENDPOINT_SOURCE_TYPE) == 0)) {
+            tmp.location_type = duplicate_string((char *) rx_value.data.string);
+        } else if ((tmp.type == EDGEHOG_FT_MSG_SERVER_TO_DEVICE
+                       && strcmp(path, ENDPOINT_DESTINATION) == 0)
+            || (tmp.type == EDGEHOG_FT_MSG_DEVICE_TO_SERVER
+                && strcmp(path, ENDPOINT_SOURCE) == 0)) {
+            tmp.location = duplicate_string((char *) rx_value.data.string);
         }
     }
 
@@ -80,7 +101,7 @@ edgehog_result_t edgehog_ft_msg_init(astarte_object_entry_t *rx_values, size_t r
     }
 
     if (http_header_keys && http_header_values) {
-        tmp.http_headers = edgehog_ft_serialize_http_headers(
+        tmp.http_headers = serialize_http_headers(
             http_header_keys, http_header_keys_len, http_header_values, http_header_values_len);
         if (!tmp.http_headers) {
             EDGEHOG_LOG_ERR("Serialization of the HTTP headers failed");
@@ -104,7 +125,7 @@ void edgehog_ft_msg_destroy(edgehog_ft_msg_t *msg)
     k_free(msg->url);
     msg->url = NULL;
     if (msg->http_headers) {
-        edgehog_ft_free_http_headers(msg->http_headers);
+        free_http_headers(msg->http_headers);
         msg->http_headers = NULL;
     }
     k_free(msg->location_type);
@@ -124,9 +145,9 @@ void edgehog_ft_progress_work_handler(struct k_work *work)
         = (data->type == EDGEHOG_FT_MSG_SERVER_TO_DEVICE) ? "server_to_device" : "device_to_server";
 
     astarte_object_entry_t object_entries[] = {
-        { .path = "id", .data = astarte_data_from_string(data->id) },
-        { .path = "type", .data = astarte_data_from_string(type_str) },
-        { .path = "progress", .data = astarte_data_from_integer(progress) },
+        { .path = ENDPOINT_ID, .data = astarte_data_from_string(data->id) },
+        { .path = ENDPOINT_TYPE, .data = astarte_data_from_string(type_str) },
+        { .path = ENDPOINT_PROGRESS, .data = astarte_data_from_integer(progress) },
     };
 
     astarte_result_t ares = astarte_device_send_object(data->edgehog_device->astarte_device,
@@ -141,9 +162,9 @@ void edgehog_ft_progress_work_handler(struct k_work *work)
 }
 
 void edgehog_ft_send_response(edgehog_device_handle_t device, const char *identifier,
-    const char *type, int in_errno, const char *in_msg, edgehog_result_t eres)
+    edgehog_ft_msg_type_t type, int in_errno, const char *in_msg, edgehog_result_t eres)
 {
-    if (!device || !identifier || !type) {
+    if (!device || !identifier) {
         EDGEHOG_LOG_ERR("Invalid parameters to send file transfer response");
         return;
     }
@@ -197,11 +218,14 @@ void edgehog_ft_send_response(edgehog_device_handle_t device, const char *identi
         EDGEHOG_LOG_INF("%s", message);
     }
 
+    const char *type_str
+        = (type == EDGEHOG_FT_MSG_SERVER_TO_DEVICE) ? "server_to_device" : "device_to_server";
+
     astarte_object_entry_t object_entries[] = {
-        { .path = "id", .data = astarte_data_from_string(identifier) },
-        { .path = "type", .data = astarte_data_from_string(type) },
-        { .path = "code", .data = astarte_data_from_longinteger(posix_errno) },
-        { .path = "message", .data = astarte_data_from_string(message) },
+        { .path = ENDPOINT_ID, .data = astarte_data_from_string(identifier) },
+        { .path = ENDPOINT_TYPE, .data = astarte_data_from_string(type_str) },
+        { .path = ENDPOINT_CODE, .data = astarte_data_from_longinteger(posix_errno) },
+        { .path = ENDPOINT_MSG, .data = astarte_data_from_string(message) },
     };
 
     astarte_result_t ares = astarte_device_send_object(device->astarte_device,
@@ -217,7 +241,7 @@ void edgehog_ft_send_response(edgehog_device_handle_t device, const char *identi
  *         Static functions definitions         *
  ***********************************************/
 
-static char **edgehog_ft_serialize_http_headers(
+static char **serialize_http_headers(
     const char *keys[], size_t keys_size, const char *values[], size_t values_size)
 {
     if (!keys || !values) {
@@ -247,7 +271,7 @@ static char **edgehog_ft_serialize_http_headers(
     for (size_t i = 0; i < num_headers; i++) {
         if (!keys[i] || !values[i]) {
             EDGEHOG_LOG_WRN("Null pointer encountered in header keys or values");
-            edgehog_ft_free_http_headers(out);
+            free_http_headers(out);
             return NULL;
         }
 
@@ -256,7 +280,7 @@ static char **edgehog_ft_serialize_http_headers(
         out[i] = k_malloc(needed);
         if (!out[i]) {
             EDGEHOG_LOG_WRN("Failed to allocate memory for file transfer http headers");
-            edgehog_ft_free_http_headers(out);
+            free_http_headers(out);
             return NULL;
         }
 
@@ -268,7 +292,7 @@ static char **edgehog_ft_serialize_http_headers(
     return out;
 }
 
-static void edgehog_ft_free_http_headers(char *header_fields[])
+static void free_http_headers(char *header_fields[])
 {
     if (header_fields) {
         for (size_t i = 0; header_fields[i] != NULL; i++) {
@@ -278,7 +302,7 @@ static void edgehog_ft_free_http_headers(char *header_fields[])
     k_free((void *) header_fields);
 }
 
-static char *edgehog_ft_duplicate_string(const char *src)
+static char *duplicate_string(const char *src)
 {
     if (!src) {
         return NULL;
