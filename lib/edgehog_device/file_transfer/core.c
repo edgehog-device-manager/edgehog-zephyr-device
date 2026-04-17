@@ -43,12 +43,11 @@ static void thread_entry_point(void *device_ptr, void *unused1, void *unused2);
 edgehog_ft_t *edgehog_ft_new()
 {
     // Allocate space for the file transfer internal struct
-    edgehog_ft_t *file_transfer = k_malloc(sizeof(edgehog_ft_t));
+    edgehog_ft_t *file_transfer = k_calloc(1, sizeof(edgehog_ft_t));
     if (!file_transfer) {
         EDGEHOG_LOG_ERR("Out of memory %s: %d", __FILE__, __LINE__);
         return NULL;
     }
-    memset(file_transfer, 0, sizeof(edgehog_ft_t));
 
     return file_transfer;
 }

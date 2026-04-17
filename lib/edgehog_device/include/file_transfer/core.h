@@ -51,9 +51,9 @@ typedef struct
 {
     /** @brief Message queue used to pass transfer requests to the service thread. */
     struct k_msgq msgq;
-    /** @brief Telemetry service thread, peeks the msgq and performs transfers if present. */
+    /** @brief File transfer service thread, peeks the msgq and performs transfers if present. */
     struct k_thread thread;
-    /** @brief Run state for the telemetry service thread. */
+    /** @brief Run state for the file transfer service thread. */
     atomic_t thread_state;
 } edgehog_ft_t;
 

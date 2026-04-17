@@ -55,8 +55,8 @@ typedef struct
  * @param msg Pointer to the file transfer message struct to initialize.
  * @return EDGEHOG_RESULT_OK on successful initialization, otherwise an error code.
  */
-edgehog_result_t edgehog_ft_msg_init(astarte_object_entry_t *rx_values,
-    size_t rx_values_size, edgehog_ft_msg_type_t type, edgehog_ft_msg_t *msg);
+edgehog_result_t edgehog_ft_msg_init(astarte_object_entry_t *rx_values, size_t rx_values_size,
+    edgehog_ft_msg_type_t type, edgehog_ft_msg_t *msg);
 
 /**
  * @brief Destroys a file transfer message and frees all dynamically allocated memory.

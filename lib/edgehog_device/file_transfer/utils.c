@@ -256,12 +256,11 @@ static char **serialize_http_headers(
     size_t num_headers = values_size;
 
     // Dynamically allocate the array of string pointers (+1 for the NULL terminator)
-    char **out = (char **) k_malloc((num_headers + 1) * sizeof(char *));
+    char **out = (char **) k_calloc(num_headers + 1, sizeof(char *));
     if (!out) {
         EDGEHOG_LOG_WRN("Failed to allocate memory for HTTP headers array");
         return NULL;
     }
-    memset((void *) out, 0, (num_headers + 1) * sizeof(char *));
 
     // If empty array
     if (num_headers == 0) {
@@ -278,7 +277,7 @@ static char **serialize_http_headers(
 
         // Calculate required output string size (key + value + ": " + "\r\n" + NULL)
         size_t needed = strlen(keys[i]) + strlen(values[i]) + sizeof(": \r\n");
-        out[i] = k_malloc(needed);
+        out[i] = k_calloc(needed, sizeof(char));
         if (!out[i]) {
             EDGEHOG_LOG_WRN("Failed to allocate memory for file transfer http headers");
             free_http_headers(out);

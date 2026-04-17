@@ -126,13 +126,12 @@ void edgehog_ft_handle_device_to_server(
 
     // Initialize the user data for the HTTP callback
     // Must be allocated on the heap since it needs to be accessed in the work thread.
-    http_cbk_user_data = k_malloc(sizeof(edgehog_ft_http_cbk_data_t));
+    http_cbk_user_data = k_calloc(1, sizeof(edgehog_ft_http_cbk_data_t));
     if (!http_cbk_user_data) {
         posix_errno = ENOSR;
         message = "Out of memory in file transfer.";
         goto exit;
     }
-    memset(http_cbk_user_data, 0, sizeof(edgehog_ft_http_cbk_data_t));
 
     http_cbk_user_data->edgehog_device = edgehog_device;
     http_cbk_user_data->id = msg->id;
