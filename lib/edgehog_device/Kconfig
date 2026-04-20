@@ -90,6 +90,15 @@ config EDGEHOG_DEVICE_ADVANCED_HTTP_RCV_BUFFER_SIZE
 	  Use this option to increase/decrease the receive buffer size for http requests.
 	  This buffer will be allocated at runtime on the heap.
 
+config EDGEHOG_DEVICE_ADVANCED_FILE_TRANSFER_QUEUE_SIZE
+	int "File transfer message queue size"
+	depends on EDGEHOG_DEVICE
+	default 10
+	help
+	  Use this option to increase/decrease the file transfer message queue size.
+	  This queue will be allocated at runtime on the heap and will determine the maximum number of
+	  pending file transfer operations accepted by the device.
+
 endmenu
 
 menu "Logging options"
@@ -192,6 +201,11 @@ source "subsys/logging/Kconfig.template.log_config"
 module = EDGEHOG_DEVICE_FILE_TRANSFER
 module-str = Log level for Edgehog device file transfer utilities.
 module-help = Sets log level for Edgehog device file transfer utilities.
+source "subsys/logging/Kconfig.template.log_config"
+
+module = EDGEHOG_DEVICE_FILE_TRANSFER_STORAGE
+module-str = Log level for Edgehog device file transfer storage utilities.
+module-help = Sets log level for Edgehog device file transfer storage utilities.
 source "subsys/logging/Kconfig.template.log_config"
 
 endmenu

@@ -4,3 +4,4 @@
 
 curlify
 python-dotenv
+lz4

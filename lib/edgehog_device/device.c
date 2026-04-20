@@ -10,6 +10,8 @@
 #include "command.h"
 #include "edgehog_device/result.h"
 #include "edgehog_private.h"
+#include "file_transfer/download.h"
+#include "file_transfer/upload.h"
 #include "generated_interfaces.h"
 #include "hardware_info.h"
 #include "led.h"
@@ -136,11 +138,11 @@ static void astarte_datastream_object_cbk(astarte_device_datastream_object_event
     if (strcmp(base_event.interface_name,
             io_edgehog_devicemanager_fileTransfer_posix_ServerToDevice.name)
         == 0) {
-        EDGEHOG_LOG_INF("Received File Transfer server to device event");
+        EDGEHOG_LOG_INF("Received file transfer server to device event");
 
         if (strcmp(base_event.path, FT_REQUEST_PATH) != 0) {
             EDGEHOG_LOG_ERR(
-                "Received File Transfer request on incorrect common path: '%s'", base_event.path);
+                "Received file transfer request on incorrect common path: '%s'", base_event.path);
             return;
         }
 
@@ -154,11 +156,11 @@ static void astarte_datastream_object_cbk(astarte_device_datastream_object_event
 
     if (strcmp(base_event.interface_name, io_edgehog_devicemanager_fileTransfer_DeviceToServer.name)
         == 0) {
-        EDGEHOG_LOG_INF("Received File Transfer device to server event");
+        EDGEHOG_LOG_INF("Received file transfer device to server event");
 
         if (strcmp(base_event.path, FT_REQUEST_PATH) != 0) {
             EDGEHOG_LOG_ERR(
-                "Received File Transfer request on incorrect common path: '%s'", base_event.path);
+                "Received file transfer request on incorrect common path: '%s'", base_event.path);
             return;
         }
 
@@ -306,7 +308,7 @@ edgehog_result_t edgehog_device_new(
 
     // Step 7: Initialize the file transfer for the Edgehog device
     // TODO: use the `config` struct to populate the file transfer
-    edgehog_file_transfer_t *file_transfer = edgehog_ft_new();
+    edgehog_ft_t *file_transfer = edgehog_ft_new();
     if (!file_transfer) {
         EDGEHOG_LOG_ERR("Unable to create edgehog file transfer");
         goto failure;
@@ -398,8 +400,9 @@ edgehog_result_t edgehog_device_poll(edgehog_device_handle_t edgehog_device)
             }
         }
 
-        edgehog_file_transfer_t *file_transfer = edgehog_device->file_transfer;
+        edgehog_ft_t *file_transfer = edgehog_device->file_transfer;
         if (!edgehog_ft_is_running(file_transfer)) {
+            EDGEHOG_LOG_DBG("Starting the file transfer service.");
             eres = edgehog_ft_start(edgehog_device);
             if (eres != EDGEHOG_RESULT_OK) {
                 EDGEHOG_LOG_ERR("Unable to start Edgehog telemetry service");
