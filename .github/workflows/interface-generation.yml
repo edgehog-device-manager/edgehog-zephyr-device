@@ -7,9 +7,6 @@ name: Interfaces
 on:
   workflow_call:
 
-env:
-  EDGEHOG_INTERFACES_REF: 1707969570a7121a130c97df914a025d5232c70e
-
 jobs:
   interface-check:
     runs-on: ubuntu-latest
@@ -24,12 +21,6 @@ jobs:
       - name: Set CI manifest as defaults
         working-directory: edgehog-zephyr-device
         run: mv west-ci-reference.yml west.yml
-      - name: Checkout Edgehog interfaces
-        uses: actions/checkout@v6
-        with:
-          repository: edgehog-device-manager/edgehog-astarte-interfaces
-          ref: ${{ env.EDGEHOG_INTERFACES_REF }}
-          path: edgehog-astarte-interfaces
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
