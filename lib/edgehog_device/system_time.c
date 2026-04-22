@@ -23,7 +23,7 @@ edgehog_result_t system_time_current_ms(int64_t *timestamp_ms)
         return EDGEHOG_RESULT_INTERNAL_ERROR;
     }
 
-    *timestamp_ms = (int64_t) tspec.tv_sec * MSEC_PER_SEC + (tspec.tv_nsec / NSEC_PER_MSEC);
+    *timestamp_ms = ((int64_t) tspec.tv_sec * MSEC_PER_SEC) + (tspec.tv_nsec / NSEC_PER_MSEC);
 
     return EDGEHOG_RESULT_OK;
 }
