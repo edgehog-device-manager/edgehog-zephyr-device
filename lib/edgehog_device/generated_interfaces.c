@@ -552,6 +552,44 @@ const astarte_interface_t io_edgehog_devicemanager_config_Telemetry = {
 };
 
 /** @brief Automatically generated mapping definition. */
+static const astarte_mapping_t io_edgehog_devicemanager_fileTransfer_Capabilities_mappings[3] = {
+
+    {
+        .endpoint = "/encodings",
+        .type = ASTARTE_MAPPING_TYPE_STRINGARRAY,
+        .reliability = ASTARTE_MAPPING_RELIABILITY_UNIQUE,
+        .explicit_timestamp = false,
+        .allow_unset = false,
+    },
+    {
+        .endpoint = "/unixPermissions",
+        .type = ASTARTE_MAPPING_TYPE_BOOLEAN,
+        .reliability = ASTARTE_MAPPING_RELIABILITY_UNIQUE,
+        .explicit_timestamp = false,
+        .allow_unset = false,
+    },
+    {
+        .endpoint = "/targets",
+        .type = ASTARTE_MAPPING_TYPE_STRINGARRAY,
+        .reliability = ASTARTE_MAPPING_RELIABILITY_UNIQUE,
+        .explicit_timestamp = false,
+        .allow_unset = false,
+    },
+};
+
+/** @brief Automatically generated interface definition. */
+const astarte_interface_t io_edgehog_devicemanager_fileTransfer_Capabilities = {
+    .name = "io.edgehog.devicemanager.fileTransfer.Capabilities",
+    .major_version = 0,
+    .minor_version = 1,
+    .type = ASTARTE_INTERFACE_TYPE_PROPERTIES,
+    .ownership = ASTARTE_INTERFACE_OWNERSHIP_DEVICE,
+    .aggregation = ASTARTE_INTERFACE_AGGREGATION_INDIVIDUAL,
+    .mappings = io_edgehog_devicemanager_fileTransfer_Capabilities_mappings,
+    .mappings_length = 3U,
+};
+
+/** @brief Automatically generated mapping definition. */
 static const astarte_mapping_t io_edgehog_devicemanager_fileTransfer_DeviceToServer_mappings[8] = {
 
     {
@@ -583,7 +621,7 @@ static const astarte_mapping_t io_edgehog_devicemanager_fileTransfer_DeviceToSer
         .allow_unset = false,
     },
     {
-        .endpoint = "/request/compression",
+        .endpoint = "/request/encoding",
         .type = ASTARTE_MAPPING_TYPE_STRING,
         .reliability = ASTARTE_MAPPING_RELIABILITY_GUARANTEED,
         .explicit_timestamp = false,
@@ -625,7 +663,7 @@ const astarte_interface_t io_edgehog_devicemanager_fileTransfer_DeviceToServer =
 };
 
 /** @brief Automatically generated mapping definition. */
-static const astarte_mapping_t io_edgehog_devicemanager_fileTransfer_Progress_mappings[3] = {
+static const astarte_mapping_t io_edgehog_devicemanager_fileTransfer_Progress_mappings[4] = {
 
     {
         .endpoint = "/request/id",
@@ -642,8 +680,15 @@ static const astarte_mapping_t io_edgehog_devicemanager_fileTransfer_Progress_ma
         .allow_unset = false,
     },
     {
-        .endpoint = "/request/progress",
-        .type = ASTARTE_MAPPING_TYPE_INTEGER,
+        .endpoint = "/request/bytes",
+        .type = ASTARTE_MAPPING_TYPE_LONGINTEGER,
+        .reliability = ASTARTE_MAPPING_RELIABILITY_UNRELIABLE,
+        .explicit_timestamp = false,
+        .allow_unset = false,
+    },
+    {
+        .endpoint = "/request/totalBytes",
+        .type = ASTARTE_MAPPING_TYPE_LONGINTEGER,
         .reliability = ASTARTE_MAPPING_RELIABILITY_UNRELIABLE,
         .explicit_timestamp = false,
         .allow_unset = false,
@@ -659,7 +704,7 @@ const astarte_interface_t io_edgehog_devicemanager_fileTransfer_Progress = {
     .ownership = ASTARTE_INTERFACE_OWNERSHIP_DEVICE,
     .aggregation = ASTARTE_INTERFACE_AGGREGATION_OBJECT,
     .mappings = io_edgehog_devicemanager_fileTransfer_Progress_mappings,
-    .mappings_length = 3U,
+    .mappings_length = 4U,
 };
 
 /** @brief Automatically generated mapping definition. */
@@ -708,7 +753,7 @@ const astarte_interface_t io_edgehog_devicemanager_fileTransfer_Response = {
 };
 
 /** @brief Automatically generated mapping definition. */
-static const astarte_mapping_t io_edgehog_devicemanager_fileTransfer_posix_ServerToDevice_mappings[15] = {
+static const astarte_mapping_t io_edgehog_devicemanager_fileTransfer_ServerToDevice_mappings[14] = {
 
     {
         .endpoint = "/request/id",
@@ -739,7 +784,7 @@ static const astarte_mapping_t io_edgehog_devicemanager_fileTransfer_posix_Serve
         .allow_unset = false,
     },
     {
-        .endpoint = "/request/compression",
+        .endpoint = "/request/encoding",
         .type = ASTARTE_MAPPING_TYPE_STRING,
         .reliability = ASTARTE_MAPPING_RELIABILITY_GUARANTEED,
         .explicit_timestamp = false,
@@ -761,13 +806,6 @@ static const astarte_mapping_t io_edgehog_devicemanager_fileTransfer_posix_Serve
     },
     {
         .endpoint = "/request/digest",
-        .type = ASTARTE_MAPPING_TYPE_STRING,
-        .reliability = ASTARTE_MAPPING_RELIABILITY_GUARANTEED,
-        .explicit_timestamp = false,
-        .allow_unset = false,
-    },
-    {
-        .endpoint = "/request/fileName",
         .type = ASTARTE_MAPPING_TYPE_STRING,
         .reliability = ASTARTE_MAPPING_RELIABILITY_GUARANTEED,
         .explicit_timestamp = false,
@@ -818,15 +856,46 @@ static const astarte_mapping_t io_edgehog_devicemanager_fileTransfer_posix_Serve
 };
 
 /** @brief Automatically generated interface definition. */
-const astarte_interface_t io_edgehog_devicemanager_fileTransfer_posix_ServerToDevice = {
-    .name = "io.edgehog.devicemanager.fileTransfer.posix.ServerToDevice",
+const astarte_interface_t io_edgehog_devicemanager_fileTransfer_ServerToDevice = {
+    .name = "io.edgehog.devicemanager.fileTransfer.ServerToDevice",
     .major_version = 0,
     .minor_version = 1,
     .type = ASTARTE_INTERFACE_TYPE_DATASTREAM,
     .ownership = ASTARTE_INTERFACE_OWNERSHIP_SERVER,
     .aggregation = ASTARTE_INTERFACE_AGGREGATION_OBJECT,
-    .mappings = io_edgehog_devicemanager_fileTransfer_posix_ServerToDevice_mappings,
-    .mappings_length = 15U,
+    .mappings = io_edgehog_devicemanager_fileTransfer_ServerToDevice_mappings,
+    .mappings_length = 14U,
+};
+
+/** @brief Automatically generated mapping definition. */
+static const astarte_mapping_t io_edgehog_devicemanager_storage_File_mappings[2] = {
+
+    {
+        .endpoint = "/%{requestId}/pathOnDevice",
+        .type = ASTARTE_MAPPING_TYPE_STRING,
+        .reliability = ASTARTE_MAPPING_RELIABILITY_UNIQUE,
+        .explicit_timestamp = false,
+        .allow_unset = false,
+    },
+    {
+        .endpoint = "/%{requestId}/sizeBytes",
+        .type = ASTARTE_MAPPING_TYPE_LONGINTEGER,
+        .reliability = ASTARTE_MAPPING_RELIABILITY_UNIQUE,
+        .explicit_timestamp = false,
+        .allow_unset = false,
+    },
+};
+
+/** @brief Automatically generated interface definition. */
+const astarte_interface_t io_edgehog_devicemanager_storage_File = {
+    .name = "io.edgehog.devicemanager.storage.File",
+    .major_version = 0,
+    .minor_version = 1,
+    .type = ASTARTE_INTERFACE_TYPE_PROPERTIES,
+    .ownership = ASTARTE_INTERFACE_OWNERSHIP_DEVICE,
+    .aggregation = ASTARTE_INTERFACE_AGGREGATION_INDIVIDUAL,
+    .mappings = io_edgehog_devicemanager_storage_File_mappings,
+    .mappings_length = 2U,
 };
 
 // NOLINTEND(readability-identifier-naming)

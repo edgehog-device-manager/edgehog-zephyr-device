@@ -22,8 +22,6 @@ typedef struct
         size_t expected_file_size, char *destination);
     /** @brief Appends a chunk of data to the storage backend. */
     edgehog_result_t (*file_append_chunk)(void *ctx, const uint8_t *chunk_data, size_t chunk_size);
-    /** @brief Calculates current progress (0-100). */
-    edgehog_result_t (*file_get_progress)(void *ctx, int32_t *progress);
     /** @brief Finalizes and closes the file transfer successfully. */
     edgehog_result_t (*file_complete)(void *ctx);
     /** @brief Aborts the transfer and cleans up resources (e.g., deletes partial file). */

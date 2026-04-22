@@ -51,10 +51,12 @@ jobs:
             io.edgehog.devicemanager.WiFiScanResults.json \
             io.edgehog.devicemanager.BatteryStatus.json \
             io.edgehog.devicemanager.config.Telemetry.json \
+            io.edgehog.devicemanager.fileTransfer.Capabilities.json \
             io.edgehog.devicemanager.fileTransfer.DeviceToServer.json \
             io.edgehog.devicemanager.fileTransfer.Response.json \
             io.edgehog.devicemanager.fileTransfer.Progress.json \
-            io.edgehog.devicemanager.fileTransfer.posix.ServerToDevice.json \
+            io.edgehog.devicemanager.fileTransfer.ServerToDevice.json \
+            io.edgehog.devicemanager.storage.File.json \
             ../edgehog-zephyr-device/interfaces
       - name: Generate interface reference code
         working-directory: edgehog-zephyr-device

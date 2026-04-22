@@ -35,6 +35,8 @@ EDGEHOG_LOG_MODULE_REGISTER(file_transfer_utils, CONFIG_EDGEHOG_DEVICE_FILE_TRAN
 #define ENDPOINT_TYPE "type"
 #define ENDPOINT_CODE "code"
 #define ENDPOINT_MSG "message"
+#define ENDPOINT_BYTES "bytes"
+#define ENDPOINT_TOTAL_BYTES "totalBytes"
 
 #define CONTENT_TYPE_SERVER_TO_DEVICE "server_to_device"
 #define CONTENT_TYPE_DEVICE_TO_SERVER "device_to_server"
@@ -143,7 +145,8 @@ void edgehog_ft_progress_work_handler(struct k_work *work)
     edgehog_ft_http_cbk_data_t *data
         = CONTAINER_OF(work, edgehog_ft_http_cbk_data_t, progress_work);
 
-    int32_t progress = (int32_t) atomic_get(&data->current_progress);
+    int64_t bytes = (int64_t) atomic_get(&data->last_reported_bytes);
+    int64_t total_bytes = (int64_t) data->total_bytes;
 
     const char *type_str = (data->type == EDGEHOG_FT_TYPE_SERVER_TO_DEVICE)
         ? CONTENT_TYPE_SERVER_TO_DEVICE
@@ -152,7 +155,8 @@ void edgehog_ft_progress_work_handler(struct k_work *work)
     astarte_object_entry_t object_entries[] = {
         { .path = ENDPOINT_ID, .data = astarte_data_from_string(data->id) },
         { .path = ENDPOINT_TYPE, .data = astarte_data_from_string(type_str) },
-        { .path = ENDPOINT_PROGRESS, .data = astarte_data_from_integer(progress) },
+        { .path = ENDPOINT_BYTES, .data = astarte_data_from_longinteger(bytes) },
+        { .path = ENDPOINT_TOTAL_BYTES, .data = astarte_data_from_longinteger(total_bytes) },
     };
 
     astarte_result_t ares = astarte_device_send_object(data->edgehog_device->astarte_device,
@@ -163,7 +167,8 @@ void edgehog_ft_progress_work_handler(struct k_work *work)
         return;
     }
 
-    EDGEHOG_LOG_INF("File transfer ID %s progress: %d/100", data->id, progress);
+    EDGEHOG_LOG_INF(
+        "File transfer ID %s progress: %lld / %lld bytes", data->id, bytes, total_bytes);
 }
 
 void edgehog_ft_send_response(edgehog_device_handle_t device, const char *identifier,

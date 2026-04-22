@@ -11,7 +11,7 @@ from datetime import datetime, timezone
 from configuration import Configuration
 from http_requests import http_post_server_data, http_get_server_data
 
-interface_ft_server_to_device = "io.edgehog.devicemanager.fileTransfer.posix.ServerToDevice"
+interface_ft_server_to_device = "io.edgehog.devicemanager.fileTransfer.ServerToDevice"
 interface_ft_device_to_server = "io.edgehog.devicemanager.fileTransfer.DeviceToServer"
 interface_ft_response = "io.edgehog.devicemanager.fileTransfer.Response"
 interface_ft_progress = "io.edgehog.devicemanager.fileTransfer.Progress"

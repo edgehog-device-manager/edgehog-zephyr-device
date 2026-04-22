@@ -48,13 +48,17 @@ extern const astarte_interface_t io_edgehog_devicemanager_WiFiScanResults;
 /** @brief Automatically generated interface declaration. */
 extern const astarte_interface_t io_edgehog_devicemanager_config_Telemetry;
 /** @brief Automatically generated interface declaration. */
+extern const astarte_interface_t io_edgehog_devicemanager_fileTransfer_Capabilities;
+/** @brief Automatically generated interface declaration. */
 extern const astarte_interface_t io_edgehog_devicemanager_fileTransfer_DeviceToServer;
 /** @brief Automatically generated interface declaration. */
 extern const astarte_interface_t io_edgehog_devicemanager_fileTransfer_Progress;
 /** @brief Automatically generated interface declaration. */
 extern const astarte_interface_t io_edgehog_devicemanager_fileTransfer_Response;
 /** @brief Automatically generated interface declaration. */
-extern const astarte_interface_t io_edgehog_devicemanager_fileTransfer_posix_ServerToDevice;
+extern const astarte_interface_t io_edgehog_devicemanager_fileTransfer_ServerToDevice;
+/** @brief Automatically generated interface declaration. */
+extern const astarte_interface_t io_edgehog_devicemanager_storage_File;
 // NOLINTEND(readability-identifier-naming)
 
 #endif /* GENERATED_INTERFACES_H */

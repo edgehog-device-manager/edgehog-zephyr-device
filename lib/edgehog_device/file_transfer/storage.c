@@ -40,17 +40,6 @@ static edgehog_result_t dummy_write_file_append_chunk(
     return EDGEHOG_RESULT_OK;
 }
 
-static edgehog_result_t dummy_write_file_get_progress(void * /*ctx*/, int32_t *progress)
-{
-    EDGEHOG_LOG_INF("FT Dummy Progress - Progress requested");
-
-    if (progress) {
-        *progress = DUMMY_PROGRESS;
-    }
-
-    return EDGEHOG_RESULT_OK;
-}
-
 static edgehog_result_t dummy_write_file_complete(void * /*ctx*/)
 {
     EDGEHOG_LOG_INF("FT Dummy Complete - File transfer finalized successfully");
@@ -65,7 +54,6 @@ static void dummy_write_file_abort(void * /*ctx*/)
 const edgehog_ft_file_write_cbks_t file_transfer_storage_write_cbks
     = { .file_init = dummy_write_file_init,
           .file_append_chunk = dummy_write_file_append_chunk,
-          .file_get_progress = dummy_write_file_get_progress,
           .file_complete = dummy_write_file_complete,
           .file_abort = dummy_write_file_abort };
 
@@ -154,24 +142,6 @@ static edgehog_result_t dummy_read_file_read_chunk(
     return EDGEHOG_RESULT_OK;
 }
 
-static edgehog_result_t dummy_read_file_get_progress(void *ctx, int32_t *progress)
-{
-    if (!ctx) {
-        return EDGEHOG_RESULT_INVALID_PARAM;
-    }
-
-    dummy_read_ctx_t *read_ctx = (dummy_read_ctx_t *) ctx;
-
-    if (progress) {
-        *progress = (read_ctx->total_size == 0)
-            ? FULL_DOWNLOAD_PERCENTAGE
-            : (int32_t) ((read_ctx->offset * FULL_DOWNLOAD_PERCENTAGE) / read_ctx->total_size);
-    }
-
-    EDGEHOG_LOG_INF("FT Dummy Read Progress - %d%%", progress ? *progress : 0);
-    return EDGEHOG_RESULT_OK;
-}
-
 static edgehog_result_t dummy_read_file_complete(void *ctx)
 {
     EDGEHOG_LOG_INF("FT Dummy Read Complete - Transfer finished, cleaning up context");
@@ -192,6 +162,5 @@ static void dummy_read_file_abort(void *ctx)
 const edgehog_ft_file_read_cbks_t file_transfer_storage_read_cbks
     = { .file_init = dummy_read_file_init,
           .file_read_chunk = dummy_read_file_read_chunk,
-          .file_get_progress = dummy_read_file_get_progress,
           .file_complete = dummy_read_file_complete,
           .file_abort = dummy_read_file_abort };
