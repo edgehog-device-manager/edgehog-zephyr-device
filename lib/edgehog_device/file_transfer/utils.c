@@ -36,6 +36,9 @@ EDGEHOG_LOG_MODULE_REGISTER(file_transfer_utils, CONFIG_EDGEHOG_DEVICE_FILE_TRAN
 #define ENDPOINT_CODE "code"
 #define ENDPOINT_MSG "message"
 
+#define CONTENT_TYPE_SERVER_TO_DEVICE "server_to_device"
+#define CONTENT_TYPE_DEVICE_TO_SERVER "device_to_server"
+
 /************************************************
  *         Static functions declarations        *
  ***********************************************/
@@ -50,11 +53,11 @@ static char *duplicate_string(const char *src);
  ***********************************************/
 
 edgehog_result_t edgehog_ft_msg_init(astarte_object_entry_t *rx_values, size_t rx_values_size,
-    edgehog_ft_msg_type_t type, edgehog_ft_msg_t *msg)
+    edgehog_ft_type_t type, edgehog_ft_msg_t *msg)
 {
     edgehog_result_t eres = EDGEHOG_RESULT_OK;
     edgehog_ft_msg_t tmp = { 0 };
-    bool is_server_to_device = (type == EDGEHOG_FT_MSG_SERVER_TO_DEVICE);
+    bool is_server_to_device = (type == EDGEHOG_FT_TYPE_SERVER_TO_DEVICE);
 
     size_t http_header_keys_len = 0;
     const char **http_header_keys = NULL;
@@ -86,9 +89,9 @@ edgehog_result_t edgehog_ft_msg_init(astarte_object_entry_t *rx_values, size_t r
         } else if ((is_server_to_device && strcmp(path, ENDPOINT_DESTINATION_TYPE) == 0)
             || (!is_server_to_device && strcmp(path, ENDPOINT_SOURCE_TYPE) == 0)) {
             tmp.location_type = duplicate_string((char *) rx_value.data.string);
-        } else if ((tmp.type == EDGEHOG_FT_MSG_SERVER_TO_DEVICE
+        } else if ((tmp.type == EDGEHOG_FT_TYPE_SERVER_TO_DEVICE
                        && strcmp(path, ENDPOINT_DESTINATION) == 0)
-            || (tmp.type == EDGEHOG_FT_MSG_DEVICE_TO_SERVER
+            || (tmp.type == EDGEHOG_FT_TYPE_DEVICE_TO_SERVER
                 && strcmp(path, ENDPOINT_SOURCE) == 0)) {
             tmp.location = duplicate_string((char *) rx_value.data.string);
         }
@@ -142,8 +145,9 @@ void edgehog_ft_progress_work_handler(struct k_work *work)
 
     int32_t progress = (int32_t) atomic_get(&data->current_progress);
 
-    const char *type_str
-        = (data->type == EDGEHOG_FT_MSG_SERVER_TO_DEVICE) ? "server_to_device" : "device_to_server";
+    const char *type_str = (data->type == EDGEHOG_FT_TYPE_SERVER_TO_DEVICE)
+        ? CONTENT_TYPE_SERVER_TO_DEVICE
+        : CONTENT_TYPE_DEVICE_TO_SERVER;
 
     astarte_object_entry_t object_entries[] = {
         { .path = ENDPOINT_ID, .data = astarte_data_from_string(data->id) },
@@ -163,7 +167,7 @@ void edgehog_ft_progress_work_handler(struct k_work *work)
 }
 
 void edgehog_ft_send_response(edgehog_device_handle_t device, const char *identifier,
-    edgehog_ft_msg_type_t type, int in_errno, const char *in_msg, edgehog_result_t eres)
+    edgehog_ft_type_t type, int in_errno, const char *in_msg, edgehog_result_t eres)
 {
     if (!device || !identifier) {
         EDGEHOG_LOG_ERR("Invalid parameters to send file transfer response");
@@ -219,8 +223,9 @@ void edgehog_ft_send_response(edgehog_device_handle_t device, const char *identi
         EDGEHOG_LOG_INF("%s", message);
     }
 
-    const char *type_str
-        = (type == EDGEHOG_FT_MSG_SERVER_TO_DEVICE) ? "server_to_device" : "device_to_server";
+    const char *type_str = (type == EDGEHOG_FT_TYPE_SERVER_TO_DEVICE)
+        ? CONTENT_TYPE_SERVER_TO_DEVICE
+        : CONTENT_TYPE_DEVICE_TO_SERVER;
 
     astarte_object_entry_t object_entries[] = {
         { .path = ENDPOINT_ID, .data = astarte_data_from_string(identifier) },

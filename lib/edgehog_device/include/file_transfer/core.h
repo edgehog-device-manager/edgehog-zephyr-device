@@ -16,15 +16,6 @@
 
 #include <zephyr/kernel.h>
 
-/** @brief Identifies the type of the file transfer message. */
-typedef enum
-{
-    /** @brief indicates a file download from the server to the device. */
-    EDGEHOG_FT_MSG_SERVER_TO_DEVICE = 0,
-    /** @brief indicates a file upload from the device to the server. */
-    EDGEHOG_FT_MSG_DEVICE_TO_SERVER = 1,
-} edgehog_ft_msg_type_t;
-
 /** @brief Wrapper for file transfer messages sent through the message queue. */
 typedef struct
 {
@@ -41,7 +32,7 @@ typedef struct
     /** @brief Location-specific information on how to perform the storage. */
     char *location;
     /** @brief The type of the message, indicating which payload to read. */
-    edgehog_ft_msg_type_t type;
+    edgehog_ft_type_t type;
     /** @brief Total expected decompressed file size in bytes (server-to-device transfers). */
     int64_t file_size_bytes;
 } edgehog_ft_msg_t;
@@ -100,6 +91,6 @@ bool edgehog_ft_is_running(edgehog_ft_t *file_transfer);
  * @return EDGEHOG_RESULT_OK if successfully processed and enqueued, otherwise an error code.
  */
 edgehog_result_t edgehog_ft_process_event(edgehog_device_handle_t device,
-    astarte_device_datastream_object_event_t *object_event, edgehog_ft_msg_type_t type);
+    astarte_device_datastream_object_event_t *object_event, edgehog_ft_type_t type);
 
 #endif // FILE_TRANSFER_PRIVATE_H

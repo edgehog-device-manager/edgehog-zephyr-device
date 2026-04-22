@@ -13,8 +13,8 @@ EDGEHOG_LOG_MODULE_REGISTER(file_transfer_storage, CONFIG_EDGEHOG_DEVICE_FILE_TR
 
 #define DUMMY_PROGRESS 50
 
-static edgehog_result_t dummy_write_file_init(
-    void **ctx, char *identifier, char *url, size_t expected_file_size, char *destination)
+static edgehog_result_t dummy_write_file_init(void **ctx, edgehog_ft_cbks_t * /*cbks*/,
+    char *identifier, char *url, size_t expected_file_size, char *destination)
 {
     EDGEHOG_LOG_INF("FT Dummy Init - ID: %s, URL: %s, Size: %zu, Dest: %s",
         identifier ? identifier : "N/A", url ? url : "N/A", expected_file_size,
@@ -93,7 +93,8 @@ typedef struct
     size_t total_size;
 } dummy_read_ctx_t;
 
-static edgehog_result_t dummy_read_file_init(void **ctx, char *identifier, char *source)
+static edgehog_result_t dummy_read_file_init(
+    void **ctx, edgehog_ft_cbks_t * /*cbks*/, char *identifier, char *source)
 {
     EDGEHOG_LOG_INF("FT Dummy Read Init - ID: %s, Source: %s", identifier ? identifier : "N/A",
         source ? source : "N/A");

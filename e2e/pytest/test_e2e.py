@@ -10,6 +10,7 @@ import pytest
 from configuration import Configuration
 from http_server import start_server, stop_server
 from telemetry import validate_initial_telemetry, validate_telemetry_frequency
+from file_transfer import validate_file_transfer_loopback
 from file_transfer import validate_file_transfer_server_to_device, validate_file_transfer_device_to_server
 
 logger = logging.getLogger(__name__)
@@ -63,5 +64,6 @@ def test_device(e2e_device_env):
 
     validate_file_transfer_server_to_device(cfg)
     validate_file_transfer_device_to_server(cfg)
+    validate_file_transfer_loopback(cfg)
 
     time.sleep(1)

@@ -145,3 +145,87 @@ def validate_file_transfer_device_to_server(e2e_cfg: Configuration):
     assert ft_res["request"][0]["id"] == ft_data["id"]
 
     logger.info("File transfer test (device to server) completed successfully")
+
+def _wait_for_astarte_response(e2e_cfg, start_time, transfer_id, timeout=30):
+    logger.info(f"Waiting {timeout} seconds for file transfer response from device")
+    start_polling = time.time()
+    ft_res = {}
+
+    while time.time() - start_polling < timeout:
+        ft_res = http_get_server_data(
+            e2e_cfg,
+            interface_ft_response,
+            limit=1,
+            since_after=start_time,
+            quiet=True
+        )
+
+        if "request" in ft_res and len(ft_res["request"]) > 0:
+            if ft_res["request"][0]["id"] == transfer_id:
+                break
+
+        time.sleep(2)
+
+    assert "request" in ft_res, "No response received from device"
+    assert ft_res["request"][0]["code"] == '0', f"Transfer failed with code {ft_res['request'][0]['code']}"
+    return ft_res
+
+def validate_file_transfer_loopback(e2e_cfg: Configuration):
+    logger.info("Testing stream loopback: Server -> Device -> Server")
+
+    # Generate roughly 8KB of test data (fits well within the 16KB pipe)
+    test_payload = "Zephyr Infinite RAM Loopback Test Payload! " * 200
+    download_filename = "loopback_download.txt"
+    upload_filename = "loopback_upload.txt"
+
+    download_file_path = Path(e2e_cfg.http_server_data_dir) / download_filename
+    download_file_path.write_text(test_payload)
+
+    # ---------------------------------------------------------
+    # PHASE 1: DOWNLOAD (Server to Device)
+    # ---------------------------------------------------------
+    dl_data = {
+        "url": f"https://192.0.2.2:8443/{download_filename}",
+        "id": "550e8400-e29b-41d4-a716-446655440000",
+        "progress": True,
+        "fileSizeBytes": len(test_payload),
+        "httpHeaderKeys": ["Content-Type"],
+        "httpHeaderValues": ["text/plain"],
+        "destinationType": "stream",
+        "destination": "loopback",
+    }
+
+    dl_start_time = datetime.now(timezone.utc)
+    http_post_server_data(e2e_cfg, interface_ft_server_to_device, "/request", dl_data)
+
+    _wait_for_astarte_response(e2e_cfg, dl_start_time, dl_data["id"])
+    logger.info("Download to device RAM complete. Initiating upload...")
+
+    # ---------------------------------------------------------
+    # PHASE 2: UPLOAD (Device to Server)
+    # ---------------------------------------------------------
+    ul_data = {
+        "url": f"https://192.0.2.2:8443/{upload_filename}",
+        "id": "770e8400-e29b-41d4-a716-446655441111",
+        "progress": True,
+        "httpHeaderKeys": ["Content-Type"],
+        "httpHeaderValues": ["text/plain"],
+        "sourceType": "stream",
+        "source": "loopback",
+    }
+
+    ul_start_time = datetime.now(timezone.utc)
+    http_post_server_data(e2e_cfg, interface_ft_device_to_server, "/request", ul_data)
+
+    _wait_for_astarte_response(e2e_cfg, ul_start_time, ul_data["id"])
+
+    # ---------------------------------------------------------
+    # PHASE 3: VERIFICATION
+    # ---------------------------------------------------------
+    uploaded_file_path = Path(e2e_cfg.http_server_data_dir) / upload_filename
+    assert uploaded_file_path.exists(), "The device failed to upload the file back to the server"
+
+    actual_payload = uploaded_file_path.read_text()
+    assert actual_payload == test_payload, "Data corruption! The uploaded file does not match the downloaded file."
+
+    logger.info("Loopback test completed perfectly. Data integrity verified.")
