@@ -22,7 +22,7 @@ EDGEHOG_LOG_MODULE_REGISTER(storage_usage, CONFIG_EDGEHOG_DEVICE_STORAGE_USAGE_L
 void publish_storage_usage(edgehog_device_handle_t edgehog_device)
 {
     EDGEHOG_LOG_DBG("Publishing Edgehog device storage usage");
-#if defined(CONFIG_SETTINGS_NVS)
+#ifdef CONFIG_SETTINGS_NVS
     const char *path = "/" NVS_PARTITION_LABEL;
     size_t total_space = NVS_PARTITION_SIZE;
     size_t free_space = 0;
