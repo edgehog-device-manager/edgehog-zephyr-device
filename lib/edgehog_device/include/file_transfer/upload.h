@@ -23,8 +23,6 @@ typedef struct
     /** @brief Reads a chunk of data from the storage backend. */
     edgehog_result_t (*file_read_chunk)(
         void *ctx, uint8_t **chunk_data, size_t *chunk_size, bool *last_chunk);
-    /** @brief Calculates current progress (0-100). */
-    edgehog_result_t (*file_get_progress)(void *ctx, int32_t *progress);
     /** @brief Finalizes and closes the file transfer successfully. */
     edgehog_result_t (*file_complete)(void *ctx);
     /** @brief Aborts the transfer and cleans up resources. */

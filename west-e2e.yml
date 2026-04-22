@@ -32,4 +32,4 @@ manifest:
       import: true
     - name: edgehog-astarte-interfaces
       remote: edgehog-device-manager
-      revision: 1707969570a7121a130c97df914a025d5232c70e
+      revision: 98418bd3b8b354e8e0950d4d1d7366f908ecba08

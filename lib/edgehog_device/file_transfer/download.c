@@ -24,8 +24,9 @@ EDGEHOG_LOG_MODULE_REGISTER(file_transfer_download, CONFIG_EDGEHOG_DEVICE_FILE_T
  *        Defines, constants and typedef        *
  ***********************************************/
 
-#define PROGRESS_REPORT_INTERVAL 5
-#define PROGRESS_MAXIMUM 100
+#define PROGRESS_REPORT_INTERVAL_PERCENT 5
+#define PROGRESS_REPORT_INTERVAL_BYTES (256 * 1024)
+#define PROGRESS_ONE_HUNDRED_PERCENT 100
 
 /************************************************
  *     Callbacks definition and declaration     *
@@ -61,14 +62,31 @@ static edgehog_result_t http_get_server_to_device_request_cbk(
 
     // Transmit progress if enabled
     if (data->progress) {
-        int32_t progress = 0;
-        file_cbks->file_get_progress(data->file_cbks_ctx, &progress);
+        size_t last_reported_bytes = atomic_get(&data->last_reported_bytes);
+        data->transferred_bytes = data->transferred_bytes + response_chunk->chunk_size;
 
-        // Only send the progress at meaningful intervals (5%)
-        if (progress >= data->last_reported_progress + PROGRESS_REPORT_INTERVAL
-            || progress == PROGRESS_MAXIMUM) {
-            atomic_set(&data->current_progress, progress);
-            data->last_reported_progress = progress;
+        bool should_report = false;
+        if (data->total_bytes > 0) {
+            // If total size is known, report based on percentage intervals
+            size_t current_percent
+                = (data->transferred_bytes * PROGRESS_ONE_HUNDRED_PERCENT) / data->total_bytes;
+            size_t last_percent
+                = (last_reported_bytes * PROGRESS_ONE_HUNDRED_PERCENT) / data->total_bytes;
+
+            if (current_percent >= last_percent + PROGRESS_REPORT_INTERVAL_PERCENT
+                || response_chunk->last_chunk) {
+                should_report = true;
+            }
+        } else {
+            // If total size is unknown, report based on byte intervals
+            if (data->transferred_bytes >= last_reported_bytes + PROGRESS_REPORT_INTERVAL_BYTES
+                || response_chunk->last_chunk) {
+                should_report = true;
+            }
+        }
+
+        if (should_report) {
+            atomic_set(&data->last_reported_bytes, (atomic_val_t) data->transferred_bytes);
             k_work_submit(&data->progress_work);
         }
     }
@@ -147,8 +165,9 @@ void edgehog_ft_handle_server_to_device(
     http_cbk_user_data->file_cbks_ctx = file_cbks_ctx;
     http_cbk_user_data->posix_errno = posix_errno;
     http_cbk_user_data->message = message;
-    http_cbk_user_data->last_reported_progress = 0;
-    http_cbk_user_data->current_progress = ATOMIC_INIT(0);
+    http_cbk_user_data->transferred_bytes = 0;
+    http_cbk_user_data->total_bytes = msg->file_size_bytes;
+    http_cbk_user_data->last_reported_bytes = ATOMIC_INIT(0);
 
     // Initialize the worker for progress updates
     k_work_init(&http_cbk_user_data->progress_work, edgehog_ft_progress_work_handler);

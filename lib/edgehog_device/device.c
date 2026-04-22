@@ -135,8 +135,7 @@ static void astarte_datastream_object_cbk(astarte_device_datastream_object_event
         return;
     }
 
-    if (strcmp(base_event.interface_name,
-            io_edgehog_devicemanager_fileTransfer_posix_ServerToDevice.name)
+    if (strcmp(base_event.interface_name, io_edgehog_devicemanager_fileTransfer_ServerToDevice.name)
         == 0) {
         EDGEHOG_LOG_INF("Received file transfer server to device event");
 
@@ -475,7 +474,7 @@ static edgehog_result_t add_interfaces(astarte_device_handle_t astarte_device)
         &io_edgehog_devicemanager_WiFiScanResults,
 #endif
         &io_edgehog_devicemanager_config_Telemetry,
-        &io_edgehog_devicemanager_fileTransfer_posix_ServerToDevice,
+        &io_edgehog_devicemanager_fileTransfer_ServerToDevice,
         &io_edgehog_devicemanager_fileTransfer_Response,
         &io_edgehog_devicemanager_fileTransfer_Progress,
         &io_edgehog_devicemanager_fileTransfer_DeviceToServer,

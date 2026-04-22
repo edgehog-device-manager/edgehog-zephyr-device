@@ -40,10 +40,12 @@ typedef struct
     char *message;
     /** @brief Worker to handle progress updates */
     struct k_work progress_work;
-    /** @brief Tracks the last reported progress to ensure meaningful intervals */
-    int32_t last_reported_progress;
-    /** @brief The current progress to be sent to the work handler (in zephyr this is 32 bits) */
-    atomic_t current_progress;
+    /** @brief The number of received bytes to be transmitted as progress */
+    size_t transferred_bytes;
+    /** @brief The total expected bytes to be processed */
+    size_t total_bytes;
+    /** @brief The number of bytes at the last progress report */
+    atomic_t last_reported_bytes;
 } edgehog_ft_http_cbk_data_t;
 
 /**
