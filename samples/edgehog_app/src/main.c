@@ -28,7 +28,7 @@ LOG_MODULE_REGISTER(edgehog_app, CONFIG_APP_LOG_LEVEL); // NOLINT
 #include <edgehog_device/device.h>
 #include <edgehog_device/telemetry.h>
 
-#if defined(CONFIG_WIFI)
+#ifdef CONFIG_WIFI
 #include "wifi.h"
 #else
 #include "eth.h"
@@ -123,7 +123,7 @@ int main(void)
     LOG_INF("Edgehog device sample"); // NOLINT
     LOG_INF("Board: %s", CONFIG_BOARD); // NOLINT
 
-#if defined(CONFIG_WIFI)
+#ifdef CONFIG_WIFI
     LOG_INF("Initializing WiFi driver."); // NOLINT
     app_wifi_init();
     k_sleep(K_SECONDS(5));
@@ -149,7 +149,7 @@ int main(void)
         astarte_ca_certificate_root, sizeof(astarte_ca_certificate_root));
 #endif
     // Add TLS certificate for Edgehog if required
-#if !defined(CONFIG_EDGEHOG_DEVICE_DEVELOP_USE_NON_TLS_HTTP)
+#ifndef CONFIG_EDGEHOG_DEVICE_DEVELOP_USE_NON_TLS_HTTP
     tls_credential_add(CONFIG_EDGEHOG_DEVICE_OTA_HTTPS_CA_CERT_TAG, TLS_CREDENTIAL_CA_CERTIFICATE,
         edgehog_ota_ca_certificate_root, sizeof(edgehog_ota_ca_certificate_root));
     tls_credential_add(CONFIG_EDGEHOG_DEVICE_FT_HTTPS_CA_CERT_TAG, TLS_CREDENTIAL_CA_CERTIFICATE,
@@ -168,7 +168,7 @@ int main(void)
     k_timepoint_t finish_timepoint = sys_timepoint_calc(K_SECONDS(CONFIG_SAMPLE_DURATION_SECONDS));
     while (!K_TIMEOUT_EQ(sys_timepoint_timeout(finish_timepoint), K_NO_WAIT)) {
         k_timepoint_t timepoint = sys_timepoint_calc(K_MSEC(MAIN_THREAD_PERIOD_MS));
-#if !defined(CONFIG_WIFI)
+#ifndef CONFIG_WIFI
         if (eth_poll() != 0) {
             LOG_ERR("Failed polling Ethernet."); // NOLINT
         }

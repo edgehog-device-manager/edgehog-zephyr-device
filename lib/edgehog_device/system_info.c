@@ -53,7 +53,7 @@ void publish_system_info(edgehog_device_handle_t edgehog_device)
 
 static void publish_serial_number(edgehog_device_handle_t edgehog_device)
 {
-#if defined(CONFIG_EDGEHOG_DEVICE_SERIAL_NUMBER)
+#ifdef CONFIG_EDGEHOG_DEVICE_SERIAL_NUMBER
     if (strcmp(CONFIG_EDGEHOG_DEVICE_SERIAL_NUMBER, "") == 0) {
         EDGEHOG_LOG_WRN("The property '%s' of interface '%s' is empty", SERIAL_NUMBER_PROP,
             io_edgehog_devicemanager_SystemInfo.name);
@@ -73,7 +73,7 @@ static void publish_serial_number(edgehog_device_handle_t edgehog_device)
 
 static void publish_part_number(edgehog_device_handle_t edgehog_device)
 {
-#if defined(CONFIG_EDGEHOG_DEVICE_PART_NUMBER)
+#ifdef CONFIG_EDGEHOG_DEVICE_PART_NUMBER
     if (strcmp(CONFIG_EDGEHOG_DEVICE_PART_NUMBER, "") == 0) {
         EDGEHOG_LOG_WRN("The property '%s' of interface '%s' is empty", PART_NUMBER_PROP,
             io_edgehog_devicemanager_SystemInfo.name);
