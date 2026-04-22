@@ -10,6 +10,7 @@
 #include "file_transfer/download.h"
 #include "file_transfer/upload.h"
 #include "file_transfer/utils.h"
+#include "generated_interfaces.h"
 #include "log.h"
 
 #include <stdio.h>
@@ -39,6 +40,43 @@ static void thread_entry_point(void *device_ptr, void *unused1, void *unused2);
 /************************************************
  *         Global functions definitions         *
  ***********************************************/
+
+void edgeghog_ft_publish_capabilities(edgehog_device_handle_t edgehog_device)
+{
+    EDGEHOG_LOG_DBG("Publishing Edgehog file transfer capabilities");
+
+    // TODO: add support for missign encodings and update the list accordingly
+    // Possible values: [gz, lz4, tar, tar.gz, tar.lz4]
+    const char **supported_encodings = NULL;
+    size_t supported_encodings_len = 0;
+    astarte_result_t res = astarte_device_set_property(edgehog_device->astarte_device,
+        io_edgehog_devicemanager_fileTransfer_Capabilities.name, "/encodings",
+        astarte_data_from_string_array(supported_encodings, supported_encodings_len));
+    if (res != ASTARTE_RESULT_OK) {
+        EDGEHOG_LOG_ERR("Unable to publish capability: /encodings");
+        return;
+    }
+
+    // Unix permissions are not supported on this plaform
+    res = astarte_device_set_property(edgehog_device->astarte_device,
+        io_edgehog_devicemanager_fileTransfer_Capabilities.name, "/unixPermissions",
+        astarte_data_from_boolean(false));
+    if (res != ASTARTE_RESULT_OK) {
+        EDGEHOG_LOG_ERR("Unable to publish capability: /unixPermissions");
+        return;
+    }
+
+    // Possible values: [storage, streaming, filesystem]
+    const char *supported_targets[] = { "streaming" };
+    size_t supported_targets_len = ARRAY_SIZE(supported_targets);
+    res = astarte_device_set_property(edgehog_device->astarte_device,
+        io_edgehog_devicemanager_fileTransfer_Capabilities.name, "/targets",
+        astarte_data_from_string_array(supported_targets, supported_targets_len));
+    if (res != ASTARTE_RESULT_OK) {
+        EDGEHOG_LOG_ERR("Unable to publish capability: /targets");
+        return;
+    }
+}
 
 edgehog_ft_t *edgehog_ft_new()
 {
