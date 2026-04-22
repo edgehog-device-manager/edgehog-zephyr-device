@@ -329,6 +329,7 @@ edgehog_result_t edgehog_device_new(
         .user_cbk_user_data = user_cbk_user_data,
         .telemetry = telemetry,
         .file_transfer = file_transfer,
+        .ft_cbks = config->file_transfer_cbks,
     };
 
     k_sem_init(&edgehog_device->sync_ota_ft_sem, 1, 1);

@@ -150,7 +150,7 @@ bool edgehog_ft_is_running(edgehog_ft_t *file_transfer)
 }
 
 edgehog_result_t edgehog_ft_process_event(edgehog_device_handle_t device,
-    astarte_device_datastream_object_event_t *object_event, edgehog_ft_msg_type_t type)
+    astarte_device_datastream_object_event_t *object_event, edgehog_ft_type_t type)
 {
     edgehog_result_t eres = EDGEHOG_RESULT_OK;
     edgehog_ft_msg_t msg = { 0 };
@@ -230,10 +230,10 @@ static void thread_entry_point(void *device_ptr, void *unused1, void *unused2)
             }
 
             // Proceed with the transfer since we hold the semaphore
-            if (msg_rcv.type == EDGEHOG_FT_MSG_SERVER_TO_DEVICE) {
+            if (msg_rcv.type == EDGEHOG_FT_TYPE_SERVER_TO_DEVICE) {
                 EDGEHOG_LOG_DBG("Server to device file transfer: %s", msg_rcv.id);
                 edgehog_ft_handle_server_to_device(edgehog_device, &msg_rcv);
-            } else if (msg_rcv.type == EDGEHOG_FT_MSG_DEVICE_TO_SERVER) {
+            } else if (msg_rcv.type == EDGEHOG_FT_TYPE_DEVICE_TO_SERVER) {
                 EDGEHOG_LOG_DBG("Device to server file transfer: %s", msg_rcv.id);
                 edgehog_ft_handle_device_to_server(edgehog_device, &msg_rcv);
             }

@@ -9,6 +9,7 @@
 #include "edgehog_private.h"
 #include "file_transfer/core.h"
 #include "file_transfer/storage.h"
+#include "file_transfer/stream.h"
 #include "file_transfer/utils.h"
 #include "http.h"
 #include "log.h"
@@ -72,16 +73,6 @@ static edgehog_result_t http_get_server_to_device_request_cbk(
         }
     }
 
-    if (response_chunk->last_chunk) {
-        eres = file_cbks->file_complete(data->file_cbks_ctx);
-        if (eres != EDGEHOG_RESULT_OK) {
-            data->posix_errno = EIO;
-            data->message = "Failed to finalize file transfer";
-            goto error;
-        }
-        // posix_errno is by default 0, and the message is also by default a success message.
-    }
-
     return EDGEHOG_RESULT_OK;
 
 error:
@@ -95,7 +86,7 @@ error:
 edgehog_result_t edgehog_ft_server_to_device_event(
     edgehog_device_handle_t device, astarte_device_datastream_object_event_t *object_event)
 {
-    return edgehog_ft_process_event(device, object_event, EDGEHOG_FT_MSG_SERVER_TO_DEVICE);
+    return edgehog_ft_process_event(device, object_event, EDGEHOG_FT_TYPE_SERVER_TO_DEVICE);
 }
 
 void edgehog_ft_handle_server_to_device(
@@ -120,6 +111,8 @@ void edgehog_ft_handle_server_to_device(
     const edgehog_ft_file_write_cbks_t *file_cbks = NULL;
     if (strcmp(msg->location_type, "storage") == 0) {
         file_cbks = &file_transfer_storage_write_cbks;
+    } else if (strcmp(msg->location_type, "stream") == 0) {
+        file_cbks = &edgehog_ft_stream_write_cbks;
     } else {
         EDGEHOG_LOG_DBG("Destination type: %s", msg->location_type);
         posix_errno = EINVAL;
@@ -129,8 +122,8 @@ void edgehog_ft_handle_server_to_device(
 
     // Initialize file context
     void *file_cbks_ctx = NULL;
-    eres = file_cbks->file_init(
-        &file_cbks_ctx, msg->id, msg->url, msg->file_size_bytes, msg->location);
+    eres = file_cbks->file_init(&file_cbks_ctx, &edgehog_device->ft_cbks, msg->id, msg->url,
+        msg->file_size_bytes, msg->location);
     if (eres != EDGEHOG_RESULT_OK) {
         posix_errno = EIO;
         message = "Failed to initialize the file backend";
@@ -175,6 +168,13 @@ void edgehog_ft_handle_server_to_device(
         posix_errno = http_cbk_user_data->posix_errno;
         message = http_cbk_user_data->message;
         file_cbks->file_abort(file_cbks_ctx);
+        goto exit;
+    }
+
+    eres = file_cbks->file_complete(file_cbks_ctx);
+    if (eres != EDGEHOG_RESULT_OK) {
+        posix_errno = EIO;
+        message = "Failed to finalize file transfer";
     }
 
 exit:
@@ -184,7 +184,7 @@ exit:
     }
 
     edgehog_ft_send_response(
-        edgehog_device, msg->id, EDGEHOG_FT_MSG_SERVER_TO_DEVICE, posix_errno, message, eres);
+        edgehog_device, msg->id, EDGEHOG_FT_TYPE_SERVER_TO_DEVICE, posix_errno, message, eres);
 
     k_free(http_cbk_user_data);
 

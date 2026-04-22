@@ -29,7 +29,7 @@ typedef struct
     /** @brief Flag to enable the progress reporting of the transfer. */
     bool progress;
     /** @brief The type of the file transfer, indicating which callbacks to use. */
-    edgehog_ft_msg_type_t type;
+    edgehog_ft_type_t type;
     /** @brief Generic file callbacks, used to manage file operations */
     const void *file_cbks;
     /** @brief File callbacks context */
@@ -56,7 +56,7 @@ typedef struct
  * @return EDGEHOG_RESULT_OK on successful initialization, otherwise an error code.
  */
 edgehog_result_t edgehog_ft_msg_init(astarte_object_entry_t *rx_values, size_t rx_values_size,
-    edgehog_ft_msg_type_t type, edgehog_ft_msg_t *msg);
+    edgehog_ft_type_t type, edgehog_ft_msg_t *msg);
 
 /**
  * @brief Destroys a file transfer message and frees all dynamically allocated memory.
@@ -83,6 +83,6 @@ void edgehog_ft_progress_work_handler(struct k_work *work);
  * @param eres The edgehog result code to use as fallback if no errno is available.
  */
 void edgehog_ft_send_response(edgehog_device_handle_t device, const char *identifier,
-    edgehog_ft_msg_type_t type, int in_errno, const char *in_msg, edgehog_result_t eres);
+    edgehog_ft_type_t type, int in_errno, const char *in_msg, edgehog_result_t eres);
 
 #endif // FILE_TRANSFER_UTILS_H

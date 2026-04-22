@@ -47,3 +47,15 @@ path = "e2e/http_server_data/device_to_server_test_data.txt"
 precedence = "aggregate"
 SPDX-FileCopyrightText = "SECO Mind Srl"
 SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = "e2e/http_server_data/loopback_download.txt"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "SECO Mind Srl"
+SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = "e2e/http_server_data/loopback_upload.txt"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "SECO Mind Srl"
+SPDX-License-Identifier = "Apache-2.0"

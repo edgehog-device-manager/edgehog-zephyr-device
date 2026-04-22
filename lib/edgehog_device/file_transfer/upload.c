@@ -9,6 +9,7 @@
 #include "edgehog_private.h"
 #include "file_transfer/core.h"
 #include "file_transfer/storage.h"
+#include "file_transfer/stream.h"
 #include "file_transfer/utils.h"
 #include "http.h"
 #include "log.h"
@@ -91,7 +92,7 @@ error:
 edgehog_result_t edgehog_ft_device_to_server_event(
     edgehog_device_handle_t device, astarte_device_datastream_object_event_t *object_event)
 {
-    return edgehog_ft_process_event(device, object_event, EDGEHOG_FT_MSG_DEVICE_TO_SERVER);
+    return edgehog_ft_process_event(device, object_event, EDGEHOG_FT_TYPE_DEVICE_TO_SERVER);
 }
 
 void edgehog_ft_handle_device_to_server(
@@ -108,6 +109,8 @@ void edgehog_ft_handle_device_to_server(
     const edgehog_ft_file_read_cbks_t *file_cbks = NULL;
     if (strcmp(msg->location_type, "storage") == 0) {
         file_cbks = &file_transfer_storage_read_cbks;
+    } else if (strcmp(msg->location_type, "stream") == 0) {
+        file_cbks = &edgehog_ft_stream_read_cbks;
     } else {
         EDGEHOG_LOG_DBG("Source type: %s", msg->location_type);
         posix_errno = EINVAL;
@@ -117,7 +120,7 @@ void edgehog_ft_handle_device_to_server(
 
     // Initialize file context on the first chunk
     void *file_cbks_ctx = NULL;
-    eres = file_cbks->file_init(&file_cbks_ctx, msg->id, msg->location);
+    eres = file_cbks->file_init(&file_cbks_ctx, &edgehog_device->ft_cbks, msg->id, msg->location);
     if (eres != EDGEHOG_RESULT_OK) {
         posix_errno = EIO;
         message = "Failed to initialize the file backend";
@@ -177,7 +180,7 @@ exit:
     }
 
     edgehog_ft_send_response(
-        edgehog_device, msg->id, EDGEHOG_FT_MSG_DEVICE_TO_SERVER, posix_errno, message, eres);
+        edgehog_device, msg->id, EDGEHOG_FT_TYPE_DEVICE_TO_SERVER, posix_errno, message, eres);
 
     k_free(http_cbk_user_data);
 

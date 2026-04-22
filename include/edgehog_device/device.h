@@ -20,6 +20,7 @@
 
 #include <zephyr/sys_clock.h>
 
+#include "edgehog_device/file_transfer.h"
 #include "edgehog_device/result.h"
 #include "edgehog_device/telemetry.h"
 
@@ -64,6 +65,12 @@ typedef struct
     edgehog_telemetry_config_t *telemetry_config;
     /** @brief The len of telemetries. */
     size_t telemetry_config_len;
+    /**
+     * @brief The file transfer callbacks configured by the user.
+     * @details Provides the application-level hooks needed to accept or reject
+     * incoming/outgoing file transfers.
+     */
+    edgehog_ft_cbks_t file_transfer_cbks;
 } edgehog_device_config_t;
 
 #ifdef __cplusplus
