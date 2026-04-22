@@ -66,7 +66,6 @@ typedef struct
 static edgehog_result_t write_init(void **ctx, edgehog_ft_cbks_t *cbks, char *identifier, char *url,
     size_t expected_file_size, char *destination);
 static edgehog_result_t write_append(void *ctx, const uint8_t *chunk_data, size_t chunk_size);
-static edgehog_result_t write_progress(void *ctx, int32_t *progress);
 static edgehog_result_t write_complete(void *ctx);
 static void write_abort(void *ctx);
 
@@ -74,7 +73,6 @@ static edgehog_result_t read_init(
     void **ctx, edgehog_ft_cbks_t *cbks, char *identifier, char *source);
 static edgehog_result_t read_chunk(
     void *ctx, uint8_t **chunk_data, size_t *chunk_size, bool *last_chunk);
-static edgehog_result_t read_progress(void *ctx, int32_t *progress);
 static edgehog_result_t read_complete(void *ctx);
 static void read_abort(void *ctx);
 
@@ -84,12 +82,10 @@ static void read_abort(void *ctx);
 
 const edgehog_ft_file_write_cbks_t edgehog_ft_stream_write_cbks = { .file_init = write_init,
     .file_append_chunk = write_append,
-    .file_get_progress = write_progress,
     .file_complete = write_complete,
     .file_abort = write_abort };
 const edgehog_ft_file_read_cbks_t edgehog_ft_stream_read_cbks = { .file_init = read_init,
     .file_read_chunk = read_chunk,
-    .file_get_progress = read_progress,
     .file_complete = read_complete,
     .file_abort = read_abort };
 
@@ -177,17 +173,6 @@ static edgehog_result_t write_append(void *ctx, const uint8_t *chunk_data, size_
     }
 
     wctx->transferred_size += total_written;
-    return EDGEHOG_RESULT_OK;
-}
-
-static edgehog_result_t write_progress(void *ctx, int32_t *progress)
-{
-    write_ctx_t *wctx = (write_ctx_t *) ctx;
-    if (wctx->total_size == 0) {
-        *progress = 0;
-    } else {
-        *progress = (int32_t) ((wctx->transferred_size * ONE_HUNDRED_PERCENT) / wctx->total_size);
-    }
     return EDGEHOG_RESULT_OK;
 }
 
@@ -297,13 +282,6 @@ static edgehog_result_t read_chunk(
         k_sleep(K_MSEC(10));
     }
 
-    return EDGEHOG_RESULT_OK;
-}
-
-static edgehog_result_t read_progress(void * /*cbks*/, int32_t *progress)
-{
-    // Cannot calculate progress for unknown size streams
-    *progress = 0;
     return EDGEHOG_RESULT_OK;
 }
 
