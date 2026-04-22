@@ -31,18 +31,6 @@ jobs:
         with:
           path: edgehog-zephyr-device
 
-      - name: Checkout Edgehog interfaces
-        uses: actions/checkout@v6
-        with:
-          repository: edgehog-device-manager/edgehog-astarte-interfaces
-          ref: ${{ env.EDGEHOG_INTERFACES_REF }}
-          path: edgehog-astarte-interfaces
-
-      - name: Install interface
-        timeout-minutes: 3
-        run: |
-          ./edgehog-zephyr-device/.github/install_interfaces.sh ./edgehog-astarte-interfaces
-
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
@@ -63,6 +51,11 @@ jobs:
         with:
           app-path: edgehog-zephyr-device
           toolchains: x86_64-zephyr-elf
+
+      - name: Install interface
+        timeout-minutes: 3
+        run: |
+          ./edgehog-zephyr-device/.github/install_interfaces.sh ./edgehog-astarte-interfaces
 
       - name: Setup e2e application configuration values
         working-directory: edgehog-zephyr-device/e2e/

@@ -11,6 +11,8 @@ manifest:
       url-base: https://github.com/astarte-platform
     - name: secomind
       url-base: https://github.com/secomind
+    - name: edgehog-device-manager
+      url-base: https://github.com/edgehog-device-manager
 
   projects:
     - name: zephyr
@@ -28,3 +30,6 @@ manifest:
       remote: astarte-platform
       revision: master
       import: true
+    - name: edgehog-astarte-interfaces
+      remote: edgehog-device-manager
+      revision: 1707969570a7121a130c97df914a025d5232c70e
