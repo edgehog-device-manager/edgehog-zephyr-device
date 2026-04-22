@@ -29,6 +29,8 @@ extern "C" {
 #define EDGEHOG_FT_EOF_EVENT_FLAG (1U << 0U)
 /** @brief Event flag indicating an acknowledgement in the file transfer stream. */
 #define EDGEHOG_FT_ACK_EVENT_FLAG (1U << 1U)
+/** @brief Event flag indicating an error in the file transfer stream. */
+#define EDGEHOG_FT_ERROR_EVENT_FLAG (1U << 2U)
 
 /** @brief Direction of the file transfer */
 typedef enum

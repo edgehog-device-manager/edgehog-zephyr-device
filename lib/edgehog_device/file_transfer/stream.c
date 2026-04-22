@@ -139,19 +139,44 @@ static edgehog_result_t write_init(void **ctx, edgehog_ft_cbks_t *cbks, char * /
 static edgehog_result_t write_append(void *ctx, const uint8_t *chunk_data, size_t chunk_size)
 {
     write_ctx_t *wctx = (write_ctx_t *) ctx;
+    int64_t start_time = k_uptime_get();
+    size_t total_written = 0;
 
-    // Block until all bytes in the chunk are written to the pipe or timeout occurs
-    int ret = k_pipe_write(&wctx->pipe, chunk_data, chunk_size, K_MSEC(PIPE_TIMEOUT_MS));
-    if (ret == -EAGAIN) {
-        EDGEHOG_LOG_ERR("Timeout writing to pipe - user application is too slow to read");
-        return EDGEHOG_RESULT_INTERNAL_ERROR;
-    }
-    if (ret < 0) {
-        EDGEHOG_LOG_ERR("Error writing to pipe: %d", ret);
-        return EDGEHOG_RESULT_INTERNAL_ERROR;
+    // Loop until the entire chunk is written
+    while (total_written < chunk_size) {
+
+        // Check if the application signaled an error before we attempt to write
+        uint32_t events = k_event_test(&wctx->eof_event, EDGEHOG_FT_ERROR_EVENT_FLAG);
+        if (events & EDGEHOG_FT_ERROR_EVENT_FLAG) {
+            EDGEHOG_LOG_ERR("Application signaled an error during stream write");
+            return EDGEHOG_RESULT_INTERNAL_ERROR;
+        }
+
+        // Try to write data without blocking
+        size_t remaining = chunk_size - total_written;
+        int ret = k_pipe_write(&wctx->pipe, chunk_data + total_written, remaining, K_NO_WAIT);
+        if (ret > 0) {
+            total_written += (size_t) ret;
+            // Reset timeout timer since we made progress
+            start_time = k_uptime_get();
+        } else if (ret < 0 && ret != -EAGAIN) {
+            EDGEHOG_LOG_ERR("Error writing to pipe: %d", ret);
+            return EDGEHOG_RESULT_INTERNAL_ERROR;
+        }
+
+        // Timeout check
+        if ((k_uptime_get() - start_time) >= PIPE_TIMEOUT_MS) {
+            EDGEHOG_LOG_ERR("Timeout writing to pipe - user application is too slow to read");
+            return EDGEHOG_RESULT_INTERNAL_ERROR;
+        }
+
+        // Yield briefly if we still have data to write
+        if (total_written < chunk_size) {
+            k_sleep(K_MSEC(10));
+        }
     }
 
-    wctx->transferred_size += (size_t) ret;
+    wctx->transferred_size += total_written;
     return EDGEHOG_RESULT_OK;
 }
 
@@ -248,8 +273,13 @@ static edgehog_result_t read_chunk(
             return EDGEHOG_RESULT_INTERNAL_ERROR;
         }
 
-        // The pipe is empty (-EAGAIN). Check if the writer signaled EOF.
-        uint32_t events = k_event_test(&rctx->eof_event, EDGEHOG_FT_EOF_EVENT_FLAG);
+        // The pipe is empty (-EAGAIN). Check if the writer signaled something.
+        uint32_t events = k_event_test(
+            &rctx->eof_event, EDGEHOG_FT_EOF_EVENT_FLAG | EDGEHOG_FT_ERROR_EVENT_FLAG);
+        if (events & EDGEHOG_FT_ERROR_EVENT_FLAG) {
+            EDGEHOG_LOG_ERR("Application signaled an error during stream read");
+            return EDGEHOG_RESULT_INTERNAL_ERROR;
+        }
         if (events & EDGEHOG_FT_EOF_EVENT_FLAG) {
             *chunk_data = NULL;
             *chunk_size = 0;

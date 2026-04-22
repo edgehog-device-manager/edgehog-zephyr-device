@@ -243,16 +243,19 @@ static void download_thread_entry_point(void *unused1, void *unused2, void *unus
 
         // Read progressively from the pipe provided by Edgehog
         int ret = k_pipe_read(current_loopback_pipe, chunk, sizeof(chunk), K_MSEC(100));
-
         if (ret > 0) {
             if (loopback_file_size + ret <= MAX_LOOPBACK_FILE_SIZE) {
                 memcpy(loopback_file_buffer + loopback_file_size, chunk, ret);
                 loopback_file_size += ret;
             } else {
                 LOG_ERR("Loopback buffer overflow! Max size is %d", MAX_LOOPBACK_FILE_SIZE);
+                k_event_post(current_loopback_event, EDGEHOG_FT_ERROR_EVENT_FLAG);
+                return;
             }
         } else if (ret < 0 && ret != -EAGAIN) {
             LOG_ERR("Failed to read from loopback pipe");
+            k_event_post(current_loopback_event, EDGEHOG_FT_ERROR_EVENT_FLAG);
+            return;
         }
 
         // Check if Edgehog posted the EOF flag indicating download completion
