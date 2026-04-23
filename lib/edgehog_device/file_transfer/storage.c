@@ -45,6 +45,27 @@ typedef struct
     size_t current_file_size;
 } storage_ctx_t;
 
+/**
+ * @brief check if there is enough space in the storage.
+ * @param required_bytes the size of the file to store.
+ * @return true if there is enough space, false otherwise
+ */
+bool has_enough_space(size_t required_bytes)
+{
+    struct fs_statvfs stat;
+
+    int err = fs_statvfs(mountpoint->mnt_point, &stat);
+    if (err < 0) {
+        EDGEHOG_LOG_ERR(
+            "FT couldn't retrieve file system stats for %s: %d", mountpoint->mnt_point, err);
+        return false;
+    }
+
+    uint32_t free_space_bytes = stat.f_bfree * stat.f_frsize;
+
+    return free_space_bytes >= required_bytes;
+}
+
 static edgehog_result_t write_file_init(void **ctx, edgehog_ft_cbks_t * /*cbks*/, char *identifier,
     char * /*url*/, size_t expected_file_size, char * /*destination*/)
 {
@@ -55,6 +76,11 @@ static edgehog_result_t write_file_init(void **ctx, edgehog_ft_cbks_t * /*cbks*/
     if (*ctx) {
         EDGEHOG_LOG_DBG("FT storage context already initialized");
         return EDGEHOG_RESULT_OK;
+    }
+
+    if (!has_enough_space(expected_file_size)) {
+        EDGEHOG_LOG_ERR("FT not enough space left in storage.");
+        return EDGEHOG_RESULT_OUT_OF_MEMORY;
     }
 
     *ctx = k_malloc(sizeof(storage_ctx_t));
