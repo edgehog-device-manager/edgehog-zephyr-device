@@ -151,20 +151,6 @@ exit:
     return eres;
 }
 
-static edgehog_result_t write_file_complete(void *ctx)
-{
-    storage_ctx_t *storage_ctx = (storage_ctx_t *) ctx;
-
-    if (storage_ctx->expected_file_size != storage_ctx->current_file_size) {
-        EDGEHOG_LOG_ERR("FT download data size differs from the expected one.");
-        return EDGEHOG_RESULT_HTTP_REQUEST_ABORTED;
-    }
-
-    EDGEHOG_LOG_DBG("Download completed successfully!");
-
-    return EDGEHOG_RESULT_OK;
-}
-
 static void write_file_abort(void *ctx)
 {
     EDGEHOG_LOG_DBG("FT aborted, cleaning up");
@@ -174,6 +160,21 @@ static void write_file_abort(void *ctx)
         k_free(storage_ctx->file_name);
         k_free(storage_ctx);
     }
+}
+
+static edgehog_result_t write_file_complete(void *ctx)
+{
+    storage_ctx_t *storage_ctx = (storage_ctx_t *) ctx;
+
+    if (storage_ctx->expected_file_size != storage_ctx->current_file_size) {
+        EDGEHOG_LOG_ERR("FT download data size differs from the expected one.");
+        write_file_abort(ctx);
+        return EDGEHOG_RESULT_HTTP_REQUEST_ABORTED;
+    }
+
+    EDGEHOG_LOG_DBG("Download completed successfully!");
+
+    return EDGEHOG_RESULT_OK;
 }
 
 const edgehog_ft_file_write_cbks_t file_transfer_storage_write_cbks
