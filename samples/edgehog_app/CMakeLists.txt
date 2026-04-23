@@ -20,10 +20,6 @@ concat_if_exists(${CMAKE_CURRENT_LIST_DIR}/private.conf EXTRA_CONF_FILE)
 find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
 project(edgehog_app)
 
-if(CONFIG_FILE_SYSTEM_LITTLEFS)
-    zephyr_library_link_libraries(LITTLEFS)
-endif()
-
 FILE(GLOB app_sources ${CMAKE_CURRENT_LIST_DIR}/src/*.c)
 if(NOT CONFIG_WIFI)
     LIST(REMOVE_ITEM app_sources ${CMAKE_CURRENT_LIST_DIR}/src/wifi.c)

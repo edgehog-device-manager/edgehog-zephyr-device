@@ -5,10 +5,6 @@
 zephyr_library()
 zephyr_library_include_directories(include)
 
-if(CONFIG_FILE_SYSTEM_LITTLEFS)
-    zephyr_library_link_libraries(LITTLEFS)
-endif()
-
 string(TIMESTAMP BUILD_DATE_TIME UTC)
 # This define is used in the BaseImage interface
 add_compile_definitions(CMAKE_BUILD_DATE_TIME="${BUILD_DATE_TIME}")

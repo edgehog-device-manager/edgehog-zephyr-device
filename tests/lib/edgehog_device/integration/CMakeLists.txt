@@ -6,10 +6,6 @@ cmake_minimum_required(VERSION 3.20.0)
 find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
 project(edgehog_device_integration)
 
-if(CONFIG_FILE_SYSTEM_LITTLEFS)
-    zephyr_library_link_libraries(LITTLEFS)
-endif()
-
 target_include_directories(app PRIVATE
         ${ZEPHYR_BASE}/../edgehog-zephyr-device/lib/edgehog_device/include
 )
