@@ -10,7 +10,6 @@
 #include <stddef.h>
 
 #include <zephyr/fs/fs.h>
-#include <zephyr/fs/littlefs.h>
 
 EDGEHOG_LOG_MODULE_REGISTER(file_transfer_storage, CONFIG_EDGEHOG_DEVICE_FILE_TRANSFER_LOG_LEVEL);
 
