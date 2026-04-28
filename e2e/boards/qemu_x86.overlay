@@ -4,15 +4,36 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+/ {
+    fstab {
+        compatible = "zephyr,fstab";
+        lfs1: lfs1 {
+            compatible = "zephyr,fstab,littlefs";
+            mount-point = "/lfs1";
+            partition = <&file_transfer_partition>;
+            automount;
+            read-size = <16>;
+            prog-size = <16>;
+            cache-size = <64>;
+            lookahead-size = <32>;
+            block-cycles = <512>;
+        };
+    };
+};
+
 &flash_sim0 {
-	partitions {
-		astarte_partition: partition@41000 {
-			label = "astarte";
-			reg = <0x00041000 0x00010000>;
-		};
-		edgehog_partition: partition@51000 {
-			label = "edgehog";
-			reg = <0x00051000 0x00010000>;
-		};
-	};
+    partitions {
+        astarte_partition: partition@41000 {
+            label = "astarte";
+            reg = <0x00041000 0x00010000>;
+        };
+        edgehog_partition: partition@51000 {
+            label = "edgehog";
+            reg = <0x00051000 0x00010000>;
+        };
+        file_transfer_partition: partition@61000 {
+            label = "file_transfer";
+            reg = <0x00061000 0x00080000>;
+        };
+    };
 };

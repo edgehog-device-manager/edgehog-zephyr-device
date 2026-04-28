@@ -36,9 +36,12 @@ def validate_file_transfer_server_to_device(e2e_cfg: Configuration):
 
     logger.info("Testing file transfer: server to device")
 
+    transfer_id = "770e8400-e29b-41d4-a716-446655441111"
+    destination_filename = "server_to_device_test_data.txt"
+
     ft_data = {
-        "url": "https://192.0.2.2:8443/server_to_device_test_data.txt",
-        "id": "550e8400-e29b-41d4-a716-446655440000",
+        "url": f"https://192.0.2.2:8443/{destination_filename}",
+        "id": transfer_id,
         "progress": True,
         "fileSizeBytes": 10000,
         "httpHeaderKeys": ["Content-Type", "foo"],

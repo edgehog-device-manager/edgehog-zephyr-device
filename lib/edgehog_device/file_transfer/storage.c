@@ -9,53 +9,204 @@
 
 #include <stddef.h>
 
+#include <zephyr/fs/fs.h>
+
 EDGEHOG_LOG_MODULE_REGISTER(file_transfer_storage, CONFIG_EDGEHOG_DEVICE_FILE_TRANSFER_LOG_LEVEL);
 
-#define DUMMY_PROGRESS 50
+#define MAX_FILE_NAME_LEN 255
+#define FILE_PERCENTAGE 100
+#define MAX_FT_FILE_SIZE (64 * 1024 * 1024)
+#define PARTITION_NODE DT_NODELABEL(lfs1)
 
-static edgehog_result_t dummy_write_file_init(void **ctx, edgehog_ft_cbks_t * /*cbks*/,
-    char *identifier, char *url, size_t expected_file_size, char *destination)
+#if DT_NODE_EXISTS(PARTITION_NODE)
+// NOLINTNEXTLINE(cppcoreguidelines-avoid-non-const-global-variables)
+FS_FSTAB_DECLARE_ENTRY(PARTITION_NODE);
+#else /* PARTITION_NODE */
+#error "Could not find the littlefs partition!"
+#endif /* PARTITION_NODE */
+
+static struct fs_mount_t *const mountpoint = &FS_FSTAB_ENTRY(PARTITION_NODE); // NOLINT
+
+/**
+ * @brief Context structure for file transfer storage.
+ */
+typedef struct
 {
-    EDGEHOG_LOG_INF("FT Dummy Init - ID: %s, URL: %s, Size: %zu, Dest: %s",
-        identifier ? identifier : "N/A", url ? url : "N/A", expected_file_size,
-        destination ? destination : "N/A");
+    /** The file handle. */
+    struct fs_file_t file;
+    /** Pointer to the file name. */
+    char *file_name;
+    /** Length of the file name. */
+    size_t file_name_size;
+    /** The total expected size of the file being transferred. */
+    size_t expected_file_size;
+    /** The amount of data written to the file so far. */
+    size_t current_file_size;
+} storage_ctx_t;
 
-    // We don't have a real context to maintain, so we just set it to NULL
-    if (ctx) {
-        *ctx = NULL;
+/**
+ * @brief check if there is enough space in the storage.
+ * @param required_bytes the size of the file to store.
+ * @return true if there is enough space, false otherwise
+ */
+bool has_enough_space(size_t required_bytes)
+{
+    struct fs_statvfs stat;
+
+    int err = fs_statvfs(mountpoint->mnt_point, &stat);
+    if (err < 0) {
+        EDGEHOG_LOG_ERR(
+            "FT couldn't retrieve file system stats for %s: %d", mountpoint->mnt_point, err);
+        return false;
+    }
+
+    uint32_t free_space_bytes = stat.f_bfree * stat.f_frsize;
+
+    return free_space_bytes >= required_bytes;
+}
+
+static edgehog_result_t write_file_init(void **ctx, edgehog_ft_cbks_t * /*cbks*/, char *identifier,
+    char * /*url*/, size_t expected_file_size, char * /*destination*/)
+{
+    if (!ctx) {
+        return EDGEHOG_RESULT_FILE_TRANSFER_START_FAIL;
+    }
+
+    if (*ctx) {
+        EDGEHOG_LOG_DBG("FT storage context already initialized");
+        return EDGEHOG_RESULT_OK;
+    }
+
+    if (!has_enough_space(expected_file_size)) {
+        EDGEHOG_LOG_ERR("FT not enough space left in storage.");
+        return EDGEHOG_RESULT_OUT_OF_MEMORY;
+    }
+
+    *ctx = k_malloc(sizeof(storage_ctx_t));
+    if (!*ctx) {
+        EDGEHOG_LOG_ERR("FT failed to initialize memory for storage ctx");
+        return EDGEHOG_RESULT_OUT_OF_MEMORY;
+    }
+
+    edgehog_result_t eres = EDGEHOG_RESULT_OUT_OF_MEMORY;
+
+    storage_ctx_t *storage_ctx = (storage_ctx_t *) *ctx;
+
+    struct fs_file_t file;
+    fs_file_t_init(&file);
+
+    storage_ctx->file = file;
+    storage_ctx->expected_file_size = expected_file_size;
+    storage_ctx->current_file_size = 0;
+    storage_ctx->file_name_size = mountpoint->mountp_len + sizeof("/\0") + strlen(identifier);
+    storage_ctx->file_name = k_malloc(storage_ctx->file_name_size);
+    if (!storage_ctx->file_name) {
+        EDGEHOG_LOG_ERR("FT failed to allocate memory for the file name");
+        goto error;
+    }
+    int ret = snprintf(storage_ctx->file_name, storage_ctx->file_name_size, "%s/%s",
+        mountpoint->mnt_point, identifier);
+    if (ret < 0 || ret >= storage_ctx->file_name_size) {
+        EDGEHOG_LOG_ERR("FT failed to create filename: %d", ret); // NOLINT
+        eres = EDGEHOG_RESULT_FILE_SYSTEM_ERROR;
+        goto error;
     }
 
     return EDGEHOG_RESULT_OK;
+
+error:
+
+    k_free(storage_ctx->file_name);
+    k_free(*ctx);
+
+    return eres;
 }
 
-static edgehog_result_t dummy_write_file_append_chunk(
-    void * /*ctx*/, const uint8_t *chunk_data, size_t chunk_size)
+static edgehog_result_t write_file_append_chunk(
+    void *ctx, const uint8_t *chunk_data, size_t chunk_size)
 {
-    EDGEHOG_LOG_INF("FT Dummy Append - Received chunk of size: %zu bytes", chunk_size);
+    edgehog_result_t eres = EDGEHOG_RESULT_HTTP_REQUEST_ABORTED;
+
+    storage_ctx_t *storage_ctx = (storage_ctx_t *) ctx;
+
+    EDGEHOG_LOG_DBG("FT received chunk of size: %zu bytes", chunk_size);
 
     if (chunk_data && chunk_size > 0) {
-        EDGEHOG_LOG_INF("Chunk data as string: %.*s", (int) chunk_size, (const char *) chunk_data);
+        EDGEHOG_LOG_DBG("Chunk data as string: %.*s", (int) chunk_size, (const char *) chunk_data);
+
+        if (storage_ctx->current_file_size + chunk_size > storage_ctx->expected_file_size) {
+            EDGEHOG_LOG_WRN(
+                "Potential buffer overflow, the received chunk exceed declared dimensions");
+            return eres;
+        }
+
+        // NOLINTNEXTLINE(hicpp-signed-bitwise)
+        fs_mode_t flags = FS_O_CREATE | FS_O_READ | FS_O_WRITE | FS_O_APPEND;
+        int ret = fs_open(&storage_ctx->file, storage_ctx->file_name, flags);
+        if (ret < 0) {
+            EDGEHOG_LOG_ERR("FT failed to open file %s: %d", storage_ctx->file_name, ret);
+            eres = EDGEHOG_RESULT_FILE_SYSTEM_ERROR;
+            goto exit;
+        }
+
+        EDGEHOG_LOG_INF("FT file %s opened successfully", storage_ctx->file_name);
+
+        ret = fs_write(&storage_ctx->file, chunk_data, chunk_size);
+        if (ret < 0 || (ret == 0 && ret != chunk_size)) {
+            EDGEHOG_LOG_ERR("FT failed to write to file %s: %d", storage_ctx->file_name, ret);
+            eres = EDGEHOG_RESULT_FILE_SYSTEM_ERROR;
+            goto exit;
+        }
+
+        EDGEHOG_LOG_DBG(
+            "FT downloaded %d bytes and written to file %s", ret, storage_ctx->file_name);
+
+        storage_ctx->current_file_size += chunk_size;
     }
 
-    return EDGEHOG_RESULT_OK;
+    eres = EDGEHOG_RESULT_OK;
+
+exit:
+
+    int ret = fs_close(&storage_ctx->file);
+    if (ret != 0) {
+        EDGEHOG_LOG_ERR("FT failed to close file %s", storage_ctx->file_name);
+    }
+
+    return eres;
 }
 
-static edgehog_result_t dummy_write_file_complete(void * /*ctx*/)
+static void write_file_abort(void *ctx)
 {
-    EDGEHOG_LOG_INF("FT Dummy Complete - File transfer finalized successfully");
-    return EDGEHOG_RESULT_OK;
+    EDGEHOG_LOG_DBG("FT aborted, cleaning up");
+
+    if (ctx) {
+        storage_ctx_t *storage_ctx = (storage_ctx_t *) ctx;
+        k_free(storage_ctx->file_name);
+        k_free(storage_ctx);
+    }
 }
 
-static void dummy_write_file_abort(void * /*ctx*/)
+static edgehog_result_t write_file_complete(void *ctx)
 {
-    EDGEHOG_LOG_INF("FT Dummy Abort - File transfer aborted, cleaning up");
+    storage_ctx_t *storage_ctx = (storage_ctx_t *) ctx;
+
+    if (storage_ctx->expected_file_size != storage_ctx->current_file_size) {
+        EDGEHOG_LOG_ERR("FT download data size differs from the expected one.");
+        write_file_abort(ctx);
+        return EDGEHOG_RESULT_HTTP_REQUEST_ABORTED;
+    }
+
+    EDGEHOG_LOG_DBG("Download completed successfully!");
+
+    return EDGEHOG_RESULT_OK;
 }
 
 const edgehog_ft_file_write_cbks_t file_transfer_storage_write_cbks
-    = { .file_init = dummy_write_file_init,
-          .file_append_chunk = dummy_write_file_append_chunk,
-          .file_complete = dummy_write_file_complete,
-          .file_abort = dummy_write_file_abort };
+    = { .file_init = write_file_init,
+          .file_append_chunk = write_file_append_chunk,
+          .file_complete = write_file_complete,
+          .file_abort = write_file_abort };
 
 // Define a 100-character block of dummy text
 #define DUMMY_BLOCK                                                                                \
