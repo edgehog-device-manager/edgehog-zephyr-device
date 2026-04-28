@@ -3,6 +3,10 @@
 # SPDX-License-Identifier: Apache-2.0
 
 zephyr_library()
+
+# TODO: remove this as it's a workaroung to make available the mbedTLS crypto headers in zephyr 4.3
+zephyr_library_link_libraries(mbedTLS)
+
 zephyr_library_include_directories(include)
 
 string(TIMESTAMP BUILD_DATE_TIME UTC)
