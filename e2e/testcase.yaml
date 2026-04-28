@@ -1,16 +1,35 @@
-# (C) Copyright 2024-2025, SECO Mind Srl
+# (C) Copyright 2024-2026, SECO Mind Srl
 #
 # SPDX-License-Identifier: Apache-2.0
 
 tests:
-  edgehog_device.e2e:
+  edgehog_device.e2e.default:
     filter: CONFIG_SERIAL and dt_chosen_enabled("zephyr,shell-uart")
     harness: pytest
     harness_config:
       pytest_dut_scope: "session"
+      # only run tests marked with 'default'
+      pytest_args: ["-m", "default"]
     timeout: 300
     platform_allow: [qemu_x86, native_sim]
     integration_platforms: [native_sim]
     tags:
       - e2e
       - pytest
+
+  edgehog_device.e2e.file_transfer:
+    filter: CONFIG_SERIAL and dt_chosen_enabled("zephyr,shell-uart")
+    harness: pytest
+    harness_config:
+      pytest_dut_scope: "session"
+      # only run tests marked with 'file_transfer'
+      pytest_args: ["-m", "file_transfer"]
+    timeout: 300
+    platform_allow: [qemu_x86, native_sim]
+    integration_platforms: [native_sim]
+    tags:
+      - e2e
+      - pytest
+      - ft
+    extra_configs:
+      - CONFIG_EDGEHOG_DEVICE_FILE_TRANSFER=y

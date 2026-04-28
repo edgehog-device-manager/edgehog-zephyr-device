@@ -135,6 +135,7 @@ static void astarte_datastream_object_cbk(astarte_device_datastream_object_event
         return;
     }
 
+#ifdef CONFIG_EDGEHOG_DEVICE_FILE_TRANSFER
     if (strcmp(base_event.interface_name, io_edgehog_devicemanager_fileTransfer_ServerToDevice.name)
         == 0) {
         EDGEHOG_LOG_INF("Received file transfer server to device event");
@@ -170,6 +171,7 @@ static void astarte_datastream_object_cbk(astarte_device_datastream_object_event
 
         return;
     }
+#endif
 
     if (edgehog_device->user_datastream_object_cbk) {
         event.base_event.user_data = edgehog_device->user_cbk_user_data;
@@ -305,15 +307,16 @@ edgehog_result_t edgehog_device_new(
         goto failure;
     }
 
+#ifdef CONFIG_EDGEHOG_DEVICE_FILE_TRANSFER
     // Step 7: Initialize the file transfer for the Edgehog device
-    // TODO: use the `config` struct to populate the file transfer
     edgehog_ft_t *file_transfer = edgehog_ft_new();
     if (!file_transfer) {
         EDGEHOG_LOG_ERR("Unable to create edgehog file transfer");
         goto failure;
     }
+#endif
 
-    // Step 8: Fill in the Edgehog device struct
+    // Fill in the Edgehog device struct
     *edgehog_device = (struct edgehog_device){
         .state = EDGEHOG_DEVICE_STOPPED,
         .initial_publish = false,
@@ -327,8 +330,10 @@ edgehog_result_t edgehog_device_new(
         .user_property_unset_cbk = user_property_unset_cbk,
         .user_cbk_user_data = user_cbk_user_data,
         .telemetry = telemetry,
+#ifdef CONFIG_EDGEHOG_DEVICE_FILE_TRANSFER
         .file_transfer = file_transfer,
         .ft_cbks = config->file_transfer_cbks,
+#endif
     };
 
     k_sem_init(&edgehog_device->sync_ota_ft_sem, 1, 1);
@@ -360,7 +365,9 @@ void edgehog_device_destroy(edgehog_device_handle_t edgehog_device)
         EDGEHOG_LOG_ERR("Astarte device destroy error: %s", astarte_result_to_name(ares));
     }
     edgehog_telemetry_destroy(edgehog_device->telemetry);
+#ifdef CONFIG_EDGEHOG_DEVICE_FILE_TRANSFER
     edgehog_ft_destroy(edgehog_device->file_transfer);
+#endif
     free(edgehog_device);
 }
 
@@ -400,6 +407,7 @@ edgehog_result_t edgehog_device_poll(edgehog_device_handle_t edgehog_device)
             }
         }
 
+#ifdef CONFIG_EDGEHOG_DEVICE_FILE_TRANSFER
         edgehog_ft_t *file_transfer = edgehog_device->file_transfer;
         if (!edgehog_ft_is_running(file_transfer)) {
             EDGEHOG_LOG_DBG("Starting the file transfer service.");
@@ -408,6 +416,7 @@ edgehog_result_t edgehog_device_poll(edgehog_device_handle_t edgehog_device)
                 EDGEHOG_LOG_ERR("Unable to start Edgehog telemetry service");
             }
         }
+#endif
     }
     return eres;
 }
@@ -419,11 +428,13 @@ edgehog_result_t edgehog_device_stop(edgehog_device_handle_t edgehog_device, k_t
         EDGEHOG_LOG_ERR("Unable to stop the Edgehog device within the timeout");
         return eres;
     }
+#ifdef CONFIG_EDGEHOG_DEVICE_FILE_TRANSFER
     eres = edgehog_ft_stop(edgehog_device->file_transfer, timeout);
     if (eres != EDGEHOG_RESULT_OK) {
         EDGEHOG_LOG_ERR("Unable to stop the Edgehog device within the timeout");
         return eres;
     }
+#endif
 #ifdef CONFIG_WIFI
     eres = edgehog_wifi_scan_destroy(edgehog_device, timeout);
     if (eres != EDGEHOG_RESULT_OK) {
@@ -474,11 +485,13 @@ static edgehog_result_t add_interfaces(astarte_device_handle_t astarte_device)
         &io_edgehog_devicemanager_WiFiScanResults,
 #endif
         &io_edgehog_devicemanager_config_Telemetry,
+#ifdef CONFIG_EDGEHOG_DEVICE_FILE_TRANSFER
         &io_edgehog_devicemanager_fileTransfer_Capabilities,
         &io_edgehog_devicemanager_fileTransfer_ServerToDevice,
         &io_edgehog_devicemanager_fileTransfer_Response,
         &io_edgehog_devicemanager_fileTransfer_Progress,
         &io_edgehog_devicemanager_fileTransfer_DeviceToServer,
+#endif
     };
 
     for (int i = 0; i < ARRAY_SIZE(interfaces); i++) {
@@ -507,5 +520,7 @@ static void edgehog_initial_publish(edgehog_device_handle_t edgehog_device)
 #ifdef CONFIG_WIFI
     edgehog_wifi_scan_start(edgehog_device);
 #endif
+#ifdef CONFIG_EDGEHOG_DEVICE_FILE_TRANSFER
     edgeghog_ft_publish_capabilities(edgehog_device);
+#endif
 }

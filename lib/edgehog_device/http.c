@@ -373,7 +373,7 @@ static int create_and_connect_socket(const char *hostname, const char *port)
         // currently we are assuming both will be always present if TLS is enabled.
         sec_tag_t sec_tag_opt[] = {
             CONFIG_EDGEHOG_DEVICE_OTA_HTTPS_CA_CERT_TAG,
-            CONFIG_EDGEHOG_DEVICE_FT_HTTPS_CA_CERT_TAG,
+            CONFIG_EDGEHOG_DEVICE_FILE_TRANSFER_HTTPS_CA_CERT_TAG,
         };
         int sockopt_rc
             = zsock_setsockopt(sock, SOL_TLS, TLS_SEC_TAG_LIST, sec_tag_opt, sizeof(sec_tag_opt));

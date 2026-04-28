@@ -100,11 +100,17 @@ jobs:
           # Launch net-setup with debugging enabled
           sudo bash -xuEo pipefail ./net-setup.sh start --config nat.conf
 
-      - name: Build and run e2e test zephyr application [native_sim]
-        run: west twister -v --log-level debug --force-color --integration --inline-logs -T ./edgehog-zephyr-device/e2e
+      - name: Build and run e2e default [native_sim]
+        run: west twister -v --log-level debug --force-color --integration --inline-logs -T ./edgehog-zephyr-device/e2e --test edgehog_device.e2e.default
 
-      - name: Build and run e2e test zephyr application [qemu_x86]
-        run: west twister -v --log-level debug --force-color -p qemu_x86 --inline-logs -T ./edgehog-zephyr-device/e2e
+      - name: Build and run e2e default [qemu_x86]
+        run: west twister -v --log-level debug --force-color -p qemu_x86 --inline-logs -T ./edgehog-zephyr-device/e2e --test edgehog_device.e2e.default
+
+      - name: Build and run e2e file transfer [native_sim]
+        run: west twister -v --log-level debug --force-color --integration --inline-logs -T ./edgehog-zephyr-device/e2e --test edgehog_device.e2e.file_transfer
+
+      - name: Build and run e2e file transfer [qemu_x86]
+        run: west twister -v --log-level debug --force-color -p qemu_x86 --inline-logs -T ./edgehog-zephyr-device/e2e --test edgehog_device.e2e.file_transfer
 
       - name: Stop net-setup nat configuration
         working-directory: tools/net-tools

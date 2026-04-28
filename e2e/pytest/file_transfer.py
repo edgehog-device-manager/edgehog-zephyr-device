@@ -2,11 +2,11 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-import time
 import logging
 import hashlib
-from pathlib import Path
+import time
 
+from pathlib import Path
 from datetime import datetime, timezone
 
 from configuration import Configuration
@@ -19,6 +19,13 @@ interface_ft_response = "io.edgehog.devicemanager.fileTransfer.Response"
 interface_ft_progress = "io.edgehog.devicemanager.fileTransfer.Progress"
 
 logger = logging.getLogger(__name__)
+
+def is_file_transfer_enabled(dut, feature = "CONFIG_EDGEHOG_DEVICE_FILE_TRANSFER") -> bool:
+    """Reads the Zephyr build config from the DUT to check if FT is enabled."""
+    cfg_file = Path(dut.device_config.build_dir) / "zephyr" / ".config"
+
+    with open(cfg_file, "r") as f:
+        return f"{feature}=y" in f.read()
 
 def validate_file_transfer_capabilities(e2e_cfg: Configuration):
 

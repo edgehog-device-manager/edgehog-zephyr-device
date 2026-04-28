@@ -92,8 +92,9 @@ int main(void)
     tls_credential_add(CONFIG_EDGEHOG_DEVICE_OTA_HTTPS_CA_CERT_TAG, TLS_CREDENTIAL_CA_CERTIFICATE,
         edgehog_ota_ca_certificate_root, sizeof(edgehog_ota_ca_certificate_root));
 
-    tls_credential_add(CONFIG_EDGEHOG_DEVICE_FT_HTTPS_CA_CERT_TAG, TLS_CREDENTIAL_CA_CERTIFICATE,
-        edgehog_ft_ca_certificate_root, sizeof(edgehog_ft_ca_certificate_root));
+    tls_credential_add(CONFIG_EDGEHOG_DEVICE_FILE_TRANSFER_HTTPS_CA_CERT_TAG,
+        TLS_CREDENTIAL_CA_CERTIFICATE, edgehog_ft_ca_certificate_root,
+        sizeof(edgehog_ft_ca_certificate_root));
 
     // Enable mbedtls logging
     mbedtls_debug_set_threshold(1);

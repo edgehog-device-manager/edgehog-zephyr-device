@@ -10,8 +10,7 @@ import pytest
 from configuration import Configuration
 from http_server import start_server, stop_server
 from telemetry import validate_initial_telemetry, validate_telemetry_frequency
-from file_transfer import validate_file_transfer_loopback, validate_file_transfer_capabilities
-from file_transfer import validate_file_transfer_server_to_device, validate_file_transfer_device_to_server
+from file_transfer import is_file_transfer_enabled, validate_file_transfer_loopback, validate_file_transfer_capabilities, validate_file_transfer_server_to_device, validate_file_transfer_device_to_server
 
 logger = logging.getLogger(__name__)
 logging.getLogger("urllib3").setLevel(logging.INFO)
@@ -53,18 +52,22 @@ def e2e_device_env(end_to_end_configuration: Configuration):
     logger.info("Stopping the http server")
     stop_server()
 
-
-def test_device(e2e_device_env):
+@pytest.mark.default
+def test_telemetry(e2e_device_env):
     cfg, initial_time = e2e_device_env
-
     validate_initial_telemetry(cfg, initial_time)
     validate_telemetry_frequency(cfg)
-
     time.sleep(1)
+
+@pytest.mark.file_transfer
+def test_file_transfer(e2e_device_env):
+    cfg, _ = e2e_device_env
+
+    if not is_file_transfer_enabled(cfg.dut):
+        pytest.skip("CONFIG_EDGEHOG_DEVICE_FILE_TRANSFER is not enabled in the Zephyr build")
 
     validate_file_transfer_capabilities(cfg)
     validate_file_transfer_server_to_device(cfg)
     validate_file_transfer_device_to_server(cfg)
     validate_file_transfer_loopback(cfg)
-
     time.sleep(1)
