@@ -474,6 +474,7 @@ static edgehog_result_t add_interfaces(astarte_device_handle_t astarte_device)
         &io_edgehog_devicemanager_WiFiScanResults,
 #endif
         &io_edgehog_devicemanager_config_Telemetry,
+        &io_edgehog_devicemanager_fileTransfer_Capabilities,
         &io_edgehog_devicemanager_fileTransfer_ServerToDevice,
         &io_edgehog_devicemanager_fileTransfer_Response,
         &io_edgehog_devicemanager_fileTransfer_Progress,
@@ -506,4 +507,5 @@ static void edgehog_initial_publish(edgehog_device_handle_t edgehog_device)
 #ifdef CONFIG_WIFI
     edgehog_wifi_scan_start(edgehog_device);
 #endif
+    edgeghog_ft_publish_capabilities(edgehog_device);
 }

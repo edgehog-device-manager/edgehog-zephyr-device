@@ -11,12 +11,26 @@ from datetime import datetime, timezone
 from configuration import Configuration
 from http_requests import http_post_server_data, http_get_server_data
 
+interface_ft_capabilities = "io.edgehog.devicemanager.fileTransfer.Capabilities"
 interface_ft_server_to_device = "io.edgehog.devicemanager.fileTransfer.ServerToDevice"
 interface_ft_device_to_server = "io.edgehog.devicemanager.fileTransfer.DeviceToServer"
 interface_ft_response = "io.edgehog.devicemanager.fileTransfer.Response"
 interface_ft_progress = "io.edgehog.devicemanager.fileTransfer.Progress"
 
 logger = logging.getLogger(__name__)
+
+def validate_file_transfer_capabilities(e2e_cfg: Configuration):
+
+    logger.info("Testing file transfer: capabilities")
+
+    ft_res = http_get_server_data(e2e_cfg, interface_ft_capabilities)
+
+    assert (i in ft_res for i in ["encodings", "targets", "unixPermissions"]), "Wrong capabilities"
+    assert ft_res["encodings"] == None, "Wrong encodings"
+    assert ft_res["targets"] == ["streaming"], "Wrong targets"
+    assert not ft_res["unixPermissions"], "Wrong unix permissions"
+
+    logger.info("File transfer test (capabilities) completed successfully")
 
 def validate_file_transfer_server_to_device(e2e_cfg: Configuration):
 

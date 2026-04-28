@@ -49,6 +49,12 @@ typedef struct
 } edgehog_ft_t;
 
 /**
+ * @brief Publishes the file transfer capabilities for the Edgehog device.
+ * @param edgehog_device A valid Edgehog device handle.
+ */
+void edgeghog_ft_publish_capabilities(edgehog_device_handle_t edgehog_device);
+
+/**
  * @brief Allocates and initializes a new file transfer context.
  * @return A pointer to the newly created context, or NULL on failure.
  */
