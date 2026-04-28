@@ -4,6 +4,7 @@
 
 import time
 import logging
+import hashlib
 from pathlib import Path
 
 from datetime import datetime, timezone
@@ -36,10 +37,21 @@ def validate_file_transfer_server_to_device(e2e_cfg: Configuration):
 
     logger.info("Testing file transfer: server to device")
 
+    # Generate deterministic test data to calculate exact size and hash
+    test_payload = "Server to Device Test Payload! " * 300
+    test_bytes = test_payload.encode('utf-8')
+    file_digest = f"sha256:{hashlib.sha256(test_bytes).hexdigest()}"
+
+    # Write the file to the HTTP server's data directory so it's available for download
+    file_name = "server_to_device_test_data.txt"
+    file_path = Path(e2e_cfg.http_server_data_dir) / file_name
+    file_path.write_bytes(test_bytes)
+
     ft_data = {
-        "url": "https://192.0.2.2:8443/server_to_device_test_data.txt",
+        "url": f"https://192.0.2.2:8443/{file_name}",
         "id": "550e8400-e29b-41d4-a716-446655440000",
         "progress": True,
+        "digest": file_digest,
         "fileSizeBytes": 10000,
         "httpHeaderKeys": ["Content-Type", "foo"],
         "httpHeaderValues": ["application/json", "bar"],
@@ -189,11 +201,14 @@ def validate_file_transfer_loopback(e2e_cfg: Configuration):
 
     # Generate roughly 8KB of test data (fits well within the 16KB pipe)
     test_payload = "Zephyr Infinite RAM Loopback Test Payload! " * 200
+    test_bytes = test_payload.encode('utf-8')
+    file_digest = f"sha256:{hashlib.sha256(test_bytes).hexdigest()}"
     download_filename = "loopback_download.txt"
     upload_filename = "loopback_upload.txt"
 
+    # Write the file to the HTTP server's data directory so it's available for download
     download_file_path = Path(e2e_cfg.http_server_data_dir) / download_filename
-    download_file_path.write_text(test_payload)
+    download_file_path.write_bytes(test_bytes)
 
     # ---------------------------------------------------------
     # PHASE 1: DOWNLOAD (Server to Device)
@@ -202,6 +217,7 @@ def validate_file_transfer_loopback(e2e_cfg: Configuration):
         "url": f"https://192.0.2.2:8443/{download_filename}",
         "id": "550e8400-e29b-41d4-a716-446655440000",
         "progress": True,
+        "digest": file_digest,
         "fileSizeBytes": len(test_payload),
         "httpHeaderKeys": ["Content-Type"],
         "httpHeaderValues": ["text/plain"],

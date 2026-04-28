@@ -14,6 +14,9 @@
 #include "http.h"
 #include "log.h"
 
+#include <psa/crypto.h>
+#include <zephyr/sys/util.h>
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -24,9 +27,17 @@ EDGEHOG_LOG_MODULE_REGISTER(file_transfer_download, CONFIG_EDGEHOG_DEVICE_FILE_T
  *        Defines, constants and typedef        *
  ***********************************************/
 
-#define PROGRESS_REPORT_INTERVAL_PERCENT 5
-#define PROGRESS_REPORT_INTERVAL_BYTES (256 * 1024)
-#define PROGRESS_ONE_HUNDRED_PERCENT 100
+#define DIGEST_PREFIX "sha256:"
+#define DIGEST_PREFIX_LEN (sizeof(DIGEST_PREFIX) - 1)
+#define SHA256_BYTES_LEN 32
+#define SHA256_HEX_STR_LEN (SHA256_BYTES_LEN * 2)
+
+/************************************************
+ *         Static functions declarations        *
+ ***********************************************/
+
+static edgehog_result_t setup_digest(edgehog_ft_http_cbk_data_t *data);
+static int verify_digest(edgehog_ft_http_cbk_data_t *data, const char *expected_digest);
 
 /************************************************
  *     Callbacks definition and declaration     *
@@ -43,7 +54,8 @@ static edgehog_result_t http_get_server_to_device_request_cbk(
     }
 
     data = (edgehog_ft_http_cbk_data_t *) user_data;
-    const edgehog_ft_file_write_cbks_t *file_cbks = data->file_cbks;
+    const edgehog_ft_file_write_cbks_t *file_cbks
+        = (const edgehog_ft_file_write_cbks_t *) data->file_cbks;
 
     if (!response_chunk) {
         data->posix_errno = EPIPE;
@@ -60,36 +72,18 @@ static edgehog_result_t http_get_server_to_device_request_cbk(
         goto error;
     }
 
-    // Transmit progress if enabled
-    if (data->progress) {
-        size_t last_reported_bytes = atomic_get(&data->last_reported_bytes);
-        data->transferred_bytes = data->transferred_bytes + response_chunk->chunk_size;
-
-        bool should_report = false;
-        if (data->total_bytes > 0) {
-            // If total size is known, report based on percentage intervals
-            size_t current_percent
-                = (data->transferred_bytes * PROGRESS_ONE_HUNDRED_PERCENT) / data->total_bytes;
-            size_t last_percent
-                = (last_reported_bytes * PROGRESS_ONE_HUNDRED_PERCENT) / data->total_bytes;
-
-            if (current_percent >= last_percent + PROGRESS_REPORT_INTERVAL_PERCENT
-                || response_chunk->last_chunk) {
-                should_report = true;
-            }
-        } else {
-            // If total size is unknown, report based on byte intervals
-            if (data->transferred_bytes >= last_reported_bytes + PROGRESS_REPORT_INTERVAL_BYTES
-                || response_chunk->last_chunk) {
-                should_report = true;
-            }
-        }
-
-        if (should_report) {
-            atomic_set(&data->last_reported_bytes, (atomic_val_t) data->transferred_bytes);
-            k_work_submit(&data->progress_work);
+    // Stream the new chunk into the SHA-256 hash operation
+    if (data->expected_digest) {
+        psa_status_t status = psa_hash_update(
+            &data->hash_operation, response_chunk->chunk_start_addr, response_chunk->chunk_size);
+        if (status != PSA_SUCCESS) {
+            data->posix_errno = EIO;
+            data->message = "Failed to update file digest";
+            goto error;
         }
     }
+
+    edgehog_ft_update_progress(data, response_chunk->chunk_size, response_chunk->last_chunk);
 
     return EDGEHOG_RESULT_OK;
 
@@ -113,9 +107,7 @@ void edgehog_ft_handle_server_to_device(
     edgehog_result_t eres = EDGEHOG_RESULT_OK;
     int posix_errno = 0;
     char *message = "Transfer completed successfully.";
-
     edgehog_ft_http_cbk_data_t *http_cbk_user_data = NULL;
-    bool work_initialized = false;
 
     // Check that file size does not exceeds the max size contained in a size_t
     if ((msg->file_size_bytes < 0) || (msg->file_size_bytes > SIZE_MAX)) {
@@ -148,30 +140,27 @@ void edgehog_ft_handle_server_to_device(
         goto exit;
     }
 
+    // TODO: initialize also digest, posix errno and message int the `_new` function
     // Initialize the user data for the HTTP callback
     // Must be allocated on the heap since it needs to be accessed in the work thread.
-    http_cbk_user_data = k_calloc(1, sizeof(edgehog_ft_http_cbk_data_t));
+    http_cbk_user_data
+        = edgehog_ft_http_cbk_data_new(edgehog_device, msg, file_cbks, file_cbks_ctx);
     if (!http_cbk_user_data) {
         posix_errno = ENOSR;
         message = "Out of memory in file transfer.";
         goto exit;
     }
-
-    http_cbk_user_data->edgehog_device = edgehog_device;
-    http_cbk_user_data->id = msg->id;
-    http_cbk_user_data->progress = msg->progress;
-    http_cbk_user_data->type = msg->type;
-    http_cbk_user_data->file_cbks = file_cbks;
-    http_cbk_user_data->file_cbks_ctx = file_cbks_ctx;
     http_cbk_user_data->posix_errno = posix_errno;
     http_cbk_user_data->message = message;
-    http_cbk_user_data->transferred_bytes = 0;
-    http_cbk_user_data->total_bytes = msg->file_size_bytes;
-    http_cbk_user_data->last_reported_bytes = ATOMIC_INIT(0);
+    http_cbk_user_data->expected_digest = msg->digest;
 
-    // Initialize the worker for progress updates
-    k_work_init(&http_cbk_user_data->progress_work, edgehog_ft_progress_work_handler);
-    work_initialized = true;
+    if (setup_digest(http_cbk_user_data) != EDGEHOG_RESULT_OK) {
+        posix_errno = EIO;
+        message = "Failed to initialize crypto subsystem";
+        file_cbks->file_abort(file_cbks_ctx);
+        goto exit;
+    }
+
     // Initialize the HTTP get msg
     edgehog_http_get_data_t http_get_data = {
         .url = msg->url,
@@ -181,6 +170,7 @@ void edgehog_ft_handle_server_to_device(
         .user_data = http_cbk_user_data,
     };
     // Perform the HTTP get request to fetch the file
+
     eres = edgehog_http_get(&http_get_data);
     if (eres != EDGEHOG_RESULT_OK) {
         EDGEHOG_LOG_ERR("File transfer HTTP get failure: %d.", eres);
@@ -190,6 +180,17 @@ void edgehog_ft_handle_server_to_device(
         goto exit;
     }
 
+    // Finalize and verify the digest before completing the file
+    if (msg->digest) {
+        int verify_res = verify_digest(http_cbk_user_data, msg->digest);
+        if (verify_res != 0) {
+            posix_errno = verify_res;
+            message = (verify_res == EINVAL) ? "File digest mismatch"
+                                             : "Failed to finalize file digest";
+            goto exit;
+        }
+    }
+
     eres = file_cbks->file_complete(file_cbks_ctx);
     if (eres != EDGEHOG_RESULT_OK) {
         posix_errno = EIO;
@@ -197,15 +198,75 @@ void edgehog_ft_handle_server_to_device(
     }
 
 exit:
-    if (work_initialized) {
-        struct k_work_sync sync;
-        k_work_cancel_sync(&http_cbk_user_data->progress_work, &sync);
+    if (http_cbk_user_data && msg->digest && posix_errno != 0) {
+        psa_hash_abort(&http_cbk_user_data->hash_operation);
     }
 
+    edgehog_ft_http_cbk_data_destroy(http_cbk_user_data);
     edgehog_ft_send_response(
         edgehog_device, msg->id, EDGEHOG_FT_TYPE_SERVER_TO_DEVICE, posix_errno, message, eres);
-
-    k_free(http_cbk_user_data);
-
     edgehog_ft_msg_destroy(msg);
+}
+
+/************************************************
+ *         Static functions definitions         *
+ ***********************************************/
+
+static edgehog_result_t setup_digest(edgehog_ft_http_cbk_data_t *data)
+{
+    if (!data->expected_digest) {
+        return EDGEHOG_RESULT_OK;
+    }
+
+    // initialize PSA
+    psa_status_t status = psa_crypto_init();
+    if (status != PSA_SUCCESS) {
+        EDGEHOG_LOG_ERR("psa_crypto_init returned %d", status);
+        return EDGEHOG_RESULT_INTERNAL_ERROR;
+    }
+
+    data->hash_operation = psa_hash_operation_init();
+    status = psa_hash_setup(&data->hash_operation, PSA_ALG_SHA_256);
+    if (status != PSA_SUCCESS) {
+        EDGEHOG_LOG_ERR("Failed to initialize PSA hash operation");
+        return EDGEHOG_RESULT_INTERNAL_ERROR;
+    }
+    return EDGEHOG_RESULT_OK;
+}
+
+static int verify_digest(edgehog_ft_http_cbk_data_t *data, const char *expected_digest)
+{
+    // Verify the expected_digest has the correct prefix and length
+    if (strncmp(expected_digest, DIGEST_PREFIX, DIGEST_PREFIX_LEN) != 0) {
+        EDGEHOG_LOG_ERR("Invalid digest prefix. Expected: %s", DIGEST_PREFIX);
+        return EINVAL;
+    }
+
+    const char *expected_hex = expected_digest + DIGEST_PREFIX_LEN;
+    if (strlen(expected_hex) != SHA256_HEX_STR_LEN) {
+        EDGEHOG_LOG_ERR("Invalid digest length.");
+        return EINVAL;
+    }
+
+    // Convert the expected hex string to binary bytes
+    uint8_t expected_hash_bytes[SHA256_BYTES_LEN];
+    size_t ret = hex2bin(
+        expected_hex, SHA256_HEX_STR_LEN, expected_hash_bytes, sizeof(expected_hash_bytes));
+    if (ret != sizeof(expected_hash_bytes)) {
+        EDGEHOG_LOG_ERR("Failed to parse expected digest hex string %d.", ret);
+        return EINVAL;
+    }
+
+    // Let the PSA cryptography API securely verify the digest
+    psa_status_t status
+        = psa_hash_verify(&data->hash_operation, expected_hash_bytes, sizeof(expected_hash_bytes));
+    if (status == PSA_ERROR_INVALID_SIGNATURE) {
+        EDGEHOG_LOG_ERR("Digest mismatch.");
+        return EINVAL;
+    }
+    if (status != PSA_SUCCESS) {
+        EDGEHOG_LOG_ERR("PSA Hash Verify failed with internal error: %d", status);
+        return EIO;
+    }
+    return 0;
 }

@@ -27,6 +27,7 @@ EDGEHOG_LOG_MODULE_REGISTER(file_transfer_utils, CONFIG_EDGEHOG_DEVICE_FILE_TRAN
 #define ENDPOINT_HTTP_HEADER_KEYS "httpHeaderKeys"
 #define ENDPOINT_HTTP_HEADER_VALUES "httpHeaderValues"
 #define ENDPOINT_PROGRESS "progress"
+#define ENDPOINT_DIGEST "digest"
 #define ENDPOINT_FILE_SIZE_BYTES "fileSizeBytes"
 #define ENDPOINT_DESTINATION_TYPE "destinationType"
 #define ENDPOINT_SOURCE_TYPE "sourceType"
@@ -41,10 +42,33 @@ EDGEHOG_LOG_MODULE_REGISTER(file_transfer_utils, CONFIG_EDGEHOG_DEVICE_FILE_TRAN
 #define CONTENT_TYPE_SERVER_TO_DEVICE "server_to_device"
 #define CONTENT_TYPE_DEVICE_TO_SERVER "device_to_server"
 
+#define PROGRESS_REPORT_INTERVAL_PERCENT 5
+#define PROGRESS_REPORT_INTERVAL_BYTES (256 * 1024)
+#define PROGRESS_ONE_HUNDRED_PERCENT 100
+
+/**
+ * @brief Temporary structure to hold parsed HTTP headers.
+ * @details Used during the parsing of Astarte endpoints to keep track of the HTTP header keys,
+ * values, and their respective lengths before they are serialized into a single array.
+ */
+typedef struct
+{
+    /** @brief Array of HTTP header key strings. */
+    const char **keys;
+    /** @brief Number of elements in the keys array. */
+    size_t keys_len;
+    /** @brief Array of HTTP header value strings. */
+    const char **values;
+    /** @brief Number of elements in the values array. */
+    size_t values_len;
+} parsed_http_headers_t;
+
 /************************************************
  *         Static functions declarations        *
  ***********************************************/
 
+static void parse_endpoint_value(const char *path, const astarte_data_t *rx_value,
+    edgehog_ft_msg_t *tmp, parsed_http_headers_t *headers);
 static char **serialize_http_headers(
     const char *keys[], size_t keys_size, const char *values[], size_t values_size);
 static void free_http_headers(char *header_fields[]);
@@ -59,56 +83,31 @@ edgehog_result_t edgehog_ft_msg_init(astarte_object_entry_t *rx_values, size_t r
 {
     edgehog_result_t eres = EDGEHOG_RESULT_OK;
     edgehog_ft_msg_t tmp = { 0 };
-    bool is_server_to_device = (type == EDGEHOG_FT_TYPE_SERVER_TO_DEVICE);
 
-    size_t http_header_keys_len = 0;
-    const char **http_header_keys = NULL;
-    size_t http_header_values_len = 0;
-    const char **http_header_values = NULL;
+    parsed_http_headers_t parsed_http_headers = { 0 };
 
-    // Store the type
     tmp.type = type;
 
-    // Fill all the other fields
     for (size_t i = 0; i < rx_values_size; i++) {
-        const char *path = rx_values[i].path;
-        astarte_data_t rx_value = rx_values[i].data;
-
-        if (strcmp(path, ENDPOINT_ID) == 0) {
-            tmp.id = duplicate_string((char *) rx_value.data.string);
-        } else if (strcmp(path, ENDPOINT_URL) == 0) {
-            tmp.url = duplicate_string((char *) rx_value.data.string);
-        } else if (strcmp(path, ENDPOINT_HTTP_HEADER_KEYS) == 0) {
-            http_header_keys_len = rx_value.data.string_array.len;
-            http_header_keys = rx_value.data.string_array.buf;
-        } else if (strcmp(path, ENDPOINT_HTTP_HEADER_VALUES) == 0) {
-            http_header_values_len = rx_value.data.string_array.len;
-            http_header_values = rx_value.data.string_array.buf;
-        } else if (strcmp(path, ENDPOINT_PROGRESS) == 0) {
-            tmp.progress = rx_value.data.boolean;
-        } else if (is_server_to_device && strcmp(path, ENDPOINT_FILE_SIZE_BYTES) == 0) {
-            tmp.file_size_bytes = rx_value.data.longinteger;
-        } else if ((is_server_to_device && strcmp(path, ENDPOINT_DESTINATION_TYPE) == 0)
-            || (!is_server_to_device && strcmp(path, ENDPOINT_SOURCE_TYPE) == 0)) {
-            tmp.location_type = duplicate_string((char *) rx_value.data.string);
-        } else if ((tmp.type == EDGEHOG_FT_TYPE_SERVER_TO_DEVICE
-                       && strcmp(path, ENDPOINT_DESTINATION) == 0)
-            || (tmp.type == EDGEHOG_FT_TYPE_DEVICE_TO_SERVER
-                && strcmp(path, ENDPOINT_SOURCE) == 0)) {
-            tmp.location = duplicate_string((char *) rx_value.data.string);
-        }
+        parse_endpoint_value(rx_values[i].path, &rx_values[i].data, &tmp, &parsed_http_headers);
     }
 
-    // Check all the required entries where present
     if (!tmp.id || !tmp.url || !tmp.location_type || !tmp.location) {
         EDGEHOG_LOG_ERR("Missing required entries for transfer data");
         eres = EDGEHOG_RESULT_FILE_TRANSFER_INVALID_REQUEST;
         goto failure;
     }
 
-    if (http_header_keys && http_header_values) {
-        tmp.http_headers = serialize_http_headers(
-            http_header_keys, http_header_keys_len, http_header_values, http_header_values_len);
+    if ((type == EDGEHOG_FT_TYPE_SERVER_TO_DEVICE) && !tmp.digest) {
+        EDGEHOG_LOG_ERR("Missing required digest for transfer data");
+        eres = EDGEHOG_RESULT_FILE_TRANSFER_INVALID_REQUEST;
+        goto failure;
+    }
+
+    if (parsed_http_headers.keys && parsed_http_headers.values) {
+        tmp.http_headers
+            = serialize_http_headers(parsed_http_headers.keys, parsed_http_headers.keys_len,
+                parsed_http_headers.values, parsed_http_headers.values_len);
         if (!tmp.http_headers) {
             EDGEHOG_LOG_ERR("Serialization of the HTTP headers failed");
             eres = EDGEHOG_RESULT_FILE_TRANSFER_INVALID_REQUEST;
@@ -130,6 +129,8 @@ void edgehog_ft_msg_destroy(edgehog_ft_msg_t *msg)
     msg->id = NULL;
     k_free(msg->url);
     msg->url = NULL;
+    k_free(msg->digest);
+    msg->digest = NULL;
     if (msg->http_headers) {
         free_http_headers(msg->http_headers);
         msg->http_headers = NULL;
@@ -138,6 +139,70 @@ void edgehog_ft_msg_destroy(edgehog_ft_msg_t *msg)
     msg->location_type = NULL;
     k_free(msg->location);
     msg->location = NULL;
+}
+
+edgehog_ft_http_cbk_data_t *edgehog_ft_http_cbk_data_new(edgehog_device_handle_t edgehog_device,
+    edgehog_ft_msg_t *msg, const void *file_cbks, void *file_cbks_ctx)
+{
+    edgehog_ft_http_cbk_data_t *data = k_calloc(1, sizeof(edgehog_ft_http_cbk_data_t));
+    if (!data) {
+        return NULL;
+    }
+
+    data->edgehog_device = edgehog_device;
+    data->id = msg->id;
+    data->progress = msg->progress;
+    data->type = msg->type;
+    data->file_cbks = file_cbks;
+    data->file_cbks_ctx = file_cbks_ctx;
+    data->transferred_bytes = 0;
+    data->total_bytes = msg->file_size_bytes;
+    data->last_reported_bytes = ATOMIC_INIT(0);
+
+    k_work_init(&data->progress_work, edgehog_ft_progress_work_handler);
+    return data;
+}
+
+void edgehog_ft_http_cbk_data_destroy(edgehog_ft_http_cbk_data_t *data)
+{
+    if (data) {
+        struct k_work_sync sync;
+        k_work_cancel_sync(&data->progress_work, &sync);
+    }
+    k_free(data);
+}
+
+void edgehog_ft_update_progress(
+    edgehog_ft_http_cbk_data_t *data, size_t chunk_size, bool last_chunk)
+{
+    if (!data->progress) {
+        return;
+    }
+
+    size_t last_reported_bytes = atomic_get(&data->last_reported_bytes);
+    data->transferred_bytes += chunk_size;
+    bool should_report = false;
+
+    if (data->total_bytes > 0) {
+        size_t current_percent
+            = (data->transferred_bytes * PROGRESS_ONE_HUNDRED_PERCENT) / data->total_bytes;
+        size_t last_percent
+            = (last_reported_bytes * PROGRESS_ONE_HUNDRED_PERCENT) / data->total_bytes;
+
+        if (current_percent >= last_percent + PROGRESS_REPORT_INTERVAL_PERCENT || last_chunk) {
+            should_report = true;
+        }
+    } else {
+        if (data->transferred_bytes >= last_reported_bytes + PROGRESS_REPORT_INTERVAL_BYTES
+            || last_chunk) {
+            should_report = true;
+        }
+    }
+
+    if (should_report) {
+        atomic_set(&data->last_reported_bytes, (atomic_val_t) data->transferred_bytes);
+        k_work_submit(&data->progress_work);
+    }
 }
 
 void edgehog_ft_progress_work_handler(struct k_work *work)
@@ -251,6 +316,53 @@ void edgehog_ft_send_response(edgehog_device_handle_t device, const char *identi
 /************************************************
  *         Static functions definitions         *
  ***********************************************/
+
+static void parse_endpoint_value(const char *path, const astarte_data_t *rx_value,
+    edgehog_ft_msg_t *tmp, parsed_http_headers_t *headers)
+{
+    bool is_server_to_device = (tmp->type == EDGEHOG_FT_TYPE_SERVER_TO_DEVICE);
+
+    if (strcmp(path, ENDPOINT_ID) == 0) {
+        tmp->id = duplicate_string((char *) rx_value->data.string);
+        return;
+    }
+    if (strcmp(path, ENDPOINT_URL) == 0) {
+        tmp->url = duplicate_string((char *) rx_value->data.string);
+        return;
+    }
+    if (strcmp(path, ENDPOINT_HTTP_HEADER_KEYS) == 0) {
+        headers->keys_len = rx_value->data.string_array.len;
+        headers->keys = rx_value->data.string_array.buf;
+        return;
+    }
+    if (strcmp(path, ENDPOINT_HTTP_HEADER_VALUES) == 0) {
+        headers->values_len = rx_value->data.string_array.len;
+        headers->values = rx_value->data.string_array.buf;
+        return;
+    }
+    if (strcmp(path, ENDPOINT_PROGRESS) == 0) {
+        tmp->progress = rx_value->data.boolean;
+        return;
+    }
+    if (strcmp(path, ENDPOINT_DIGEST) == 0) {
+        tmp->digest = duplicate_string((char *) rx_value->data.string);
+        return;
+    }
+    if (is_server_to_device && strcmp(path, ENDPOINT_FILE_SIZE_BYTES) == 0) {
+        tmp->file_size_bytes = rx_value->data.longinteger;
+        return;
+    }
+    if ((is_server_to_device && strcmp(path, ENDPOINT_DESTINATION_TYPE) == 0)
+        || (!is_server_to_device && strcmp(path, ENDPOINT_SOURCE_TYPE) == 0)) {
+        tmp->location_type = duplicate_string((char *) rx_value->data.string);
+        return;
+    }
+    if ((tmp->type == EDGEHOG_FT_TYPE_SERVER_TO_DEVICE && strcmp(path, ENDPOINT_DESTINATION) == 0)
+        || (tmp->type == EDGEHOG_FT_TYPE_DEVICE_TO_SERVER && strcmp(path, ENDPOINT_SOURCE) == 0)) {
+        tmp->location = duplicate_string((char *) rx_value->data.string);
+        return;
+    }
+}
 
 static char **serialize_http_headers(
     const char *keys[], size_t keys_size, const char *values[], size_t values_size)
