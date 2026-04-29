@@ -21,14 +21,6 @@
 EDGEHOG_LOG_MODULE_REGISTER(file_transfer_upload, CONFIG_EDGEHOG_DEVICE_FILE_TRANSFER_LOG_LEVEL);
 
 /************************************************
- *        Defines, constants and typedef        *
- ***********************************************/
-
-#define PROGRESS_REPORT_INTERVAL_PERCENT 5
-#define PROGRESS_REPORT_INTERVAL_BYTES (256 * 1024)
-#define PROGRESS_ONE_HUNDRED_PERCENT 100
-
-/************************************************
  *     Callbacks definition and declaration     *
  ***********************************************/
 
@@ -43,7 +35,8 @@ static edgehog_result_t http_put_device_to_server_payload_cbk(
     }
 
     data = (edgehog_ft_http_cbk_data_t *) user_data;
-    const edgehog_ft_file_read_cbks_t *file_cbks = data->file_cbks;
+    const edgehog_ft_file_read_cbks_t *file_cbks
+        = (const edgehog_ft_file_read_cbks_t *) data->file_cbks;
 
     if (!payload_chunk) {
         data->posix_errno = EPIPE;
@@ -62,35 +55,7 @@ static edgehog_result_t http_put_device_to_server_payload_cbk(
         goto error;
     }
 
-    // Transmit progress if enabled
-    if (data->progress) {
-        size_t last_reported_bytes = atomic_get(&data->last_reported_bytes);
-        data->transferred_bytes = data->transferred_bytes + chunk_size;
-
-        bool should_report = false;
-        if (data->total_bytes > 0) {
-            // If total size is known, report based on percentage intervals
-            size_t current_percent
-                = (data->transferred_bytes * PROGRESS_ONE_HUNDRED_PERCENT) / data->total_bytes;
-            size_t last_percent
-                = (last_reported_bytes * PROGRESS_ONE_HUNDRED_PERCENT) / data->total_bytes;
-
-            if (current_percent >= last_percent + PROGRESS_REPORT_INTERVAL_PERCENT || last_chunk) {
-                should_report = true;
-            }
-        } else {
-            // If total size is unknown, report based on byte intervals
-            if (data->transferred_bytes >= last_reported_bytes + PROGRESS_REPORT_INTERVAL_BYTES
-                || last_chunk) {
-                should_report = true;
-            }
-        }
-
-        if (should_report) {
-            atomic_set(&data->last_reported_bytes, (atomic_val_t) data->transferred_bytes);
-            k_work_submit(&data->progress_work);
-        }
-    }
+    edgehog_ft_update_progress(data, chunk_size, last_chunk);
 
     payload_chunk->chunk_start_addr = chunk_data;
     payload_chunk->chunk_size = chunk_size;
@@ -118,9 +83,7 @@ void edgehog_ft_handle_device_to_server(
     edgehog_result_t eres = EDGEHOG_RESULT_OK;
     int posix_errno = 0;
     char *message = "Transfer completed successfully.";
-
     edgehog_ft_http_cbk_data_t *http_cbk_user_data = NULL;
-    bool work_initialized = false;
 
     // Assign the proper callbacks depending on the source type
     const edgehog_ft_file_read_cbks_t *file_cbks = NULL;
@@ -144,31 +107,19 @@ void edgehog_ft_handle_device_to_server(
         goto exit;
     }
 
+    // TODO: add also errno and message in the `_new` function
     // Initialize the user data for the HTTP callback
     // Must be allocated on the heap since it needs to be accessed in the work thread.
-    http_cbk_user_data = k_calloc(1, sizeof(edgehog_ft_http_cbk_data_t));
+    http_cbk_user_data
+        = edgehog_ft_http_cbk_data_new(edgehog_device, msg, file_cbks, file_cbks_ctx);
     if (!http_cbk_user_data) {
         posix_errno = ENOSR;
         message = "Out of memory in file transfer.";
         goto exit;
     }
-
-    http_cbk_user_data->edgehog_device = edgehog_device;
-    http_cbk_user_data->id = msg->id;
-    http_cbk_user_data->progress = msg->progress;
-    http_cbk_user_data->type = msg->type;
-    http_cbk_user_data->file_cbks = file_cbks;
-    http_cbk_user_data->file_cbks_ctx = file_cbks_ctx;
     http_cbk_user_data->posix_errno = posix_errno;
     http_cbk_user_data->message = message;
-    http_cbk_user_data->transferred_bytes = 0;
-    http_cbk_user_data->total_bytes = msg->file_size_bytes;
-    http_cbk_user_data->last_reported_bytes = ATOMIC_INIT(0);
 
-    k_work_init(&http_cbk_user_data->progress_work, edgehog_ft_progress_work_handler);
-    work_initialized = true;
-
-    // Initialize the HTTP put data
     edgehog_http_put_data_t http_put_data = { .url = msg->url,
         .header_fields = (const char **) msg->http_headers,
         .timeout_ms = EDGEHOG_FT_HTTP_REQ_TIMEOUT_MS,
@@ -192,15 +143,8 @@ void edgehog_ft_handle_device_to_server(
     }
 
 exit:
-    if (work_initialized) {
-        struct k_work_sync sync;
-        k_work_cancel_sync(&http_cbk_user_data->progress_work, &sync);
-    }
-
+    edgehog_ft_http_cbk_data_destroy(http_cbk_user_data);
     edgehog_ft_send_response(
         edgehog_device, msg->id, EDGEHOG_FT_TYPE_DEVICE_TO_SERVER, posix_errno, message, eres);
-
-    k_free(http_cbk_user_data);
-
     edgehog_ft_msg_destroy(msg);
 }

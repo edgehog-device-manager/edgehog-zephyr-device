@@ -55,6 +55,7 @@ class Configuration:
 
         server_data_path: str = self._get_config_value(prj_config, "CONFIG_E2E_HTTP_SERVER_DATA_DIR")
         self.http_server_data_dir = end_to_end_root_path / server_data_path
+        self.http_server_data_dir.mkdir(parents=True, exist_ok=True)
         server_cert_path: str = self._get_config_value(prj_config, "CONFIG_E2E_HTTP_SERVER_CERT_DIR")
         self.http_server_cert = end_to_end_root_path / server_cert_path / "192.0.2.2.pem"
         self.http_server_key = end_to_end_root_path / server_cert_path / "192.0.2.2.key"

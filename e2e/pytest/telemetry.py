@@ -54,7 +54,7 @@ def validate_telemetry_frequency(e2e_cfg):
     logger.info("Validating telemetry frequency")
 
     telemetry_period = 10
-    test_duration = 60 + (telemetry_period / 10)
+    test_duration = 60 + (telemetry_period / 2)
 
     logger.info(f"Enabling telemetry on interface {interface_storage_usage} with a period of {telemetry_period} seconds")
 

@@ -27,6 +27,8 @@ typedef struct
     char **http_headers;
     /** @brief Flag to enable the progress reporting of the transfer. */
     bool progress;
+    /** @brief A SHA-256 hash for the file to transfer, prefixed by "sha256:". */
+    char *digest;
     /** @brief Location for the file (storage, streaming, filesystem). */
     char *location_type;
     /** @brief Location-specific information on how to perform the storage. */

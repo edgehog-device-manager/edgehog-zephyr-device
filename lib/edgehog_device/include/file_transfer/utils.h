@@ -14,6 +14,8 @@
 
 #include "edgehog_device/device.h"
 
+#include <psa/crypto.h>
+
 #include "file_transfer/core.h"
 
 /** @brief HTTP request timeout duration in milliseconds. */
@@ -46,6 +48,10 @@ typedef struct
     size_t total_bytes;
     /** @brief The number of bytes at the last progress report */
     atomic_t last_reported_bytes;
+    /** @brief The expected digest string for verification (e.g., "sha256:...") */
+    const char *expected_digest;
+    /** @brief The hash operation context for streaming digest calculation */
+    psa_hash_operation_t hash_operation;
 } edgehog_ft_http_cbk_data_t;
 
 /**
@@ -66,6 +72,43 @@ edgehog_result_t edgehog_ft_msg_init(astarte_object_entry_t *rx_values, size_t r
  * @param msg Pointer to the file transfer message to destroy.
  */
 void edgehog_ft_msg_destroy(edgehog_ft_msg_t *msg);
+
+/**
+ * @brief Allocates and initializes a new HTTP callback data structure.
+ * @details This function allocates a new context for HTTP callbacks, initializing it with the
+ * provided device handle, file transfer message, and callback parameters.
+ *
+ * @param edgehog_device The Edgehog device handle.
+ * @param msg Pointer to the file transfer message containing initial transfer data.
+ * @param file_cbks Pointer to the generic file operations callbacks.
+ * @param file_cbks_ctx Pointer to the context to be passed to the file callbacks.
+ * @return A pointer to the newly allocated edgehog_ft_http_cbk_data_t structure,
+ * or NULL if memory allocation fails.
+ */
+edgehog_ft_http_cbk_data_t *edgehog_ft_http_cbk_data_new(edgehog_device_handle_t edgehog_device,
+    edgehog_ft_msg_t *msg, const void *file_cbks, void *file_cbks_ctx);
+
+/**
+ * @brief Destroys the HTTP callback data structure.
+ * @details Safely cleans up the callback data by canceling any pending progress
+ * reporting work queues synchronously and freeing the allocated memory.
+ *
+ * @param data Pointer to the callback data structure to destroy.
+ */
+void edgehog_ft_http_cbk_data_destroy(edgehog_ft_http_cbk_data_t *data);
+
+/**
+ * @brief Updates the file transfer progress and triggers a report if necessary.
+ * @details Increments the transferred bytes count and evaluates whether a progress report should
+ * be sent to the server. A report is submitted to the work queue if the transferred amount exceeds
+ * predefined percentage/byte thresholds, or if it is the final data chunk.
+ *
+ * @param data Pointer to the HTTP callback data structure managing the transfer.
+ * @param chunk_size The size in bytes of the most recently processed chunk.
+ * @param last_chunk Boolean indicating whether this is the final chunk of the transfer.
+ */
+void edgehog_ft_update_progress(
+    edgehog_ft_http_cbk_data_t *data, size_t chunk_size, bool last_chunk);
 
 /**
  * @brief Work queue handler for reporting file transfer progress to the server.
