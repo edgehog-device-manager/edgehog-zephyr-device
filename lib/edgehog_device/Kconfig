@@ -36,14 +36,6 @@ config EDGEHOG_DEVICE_OTA_HTTPS_CA_CERT_TAG
 	  The CA certificate should be added by the user with the tls_credential_add function.
 	  This configuration option should be set to the tag used when adding the CA certificate.
 
-config EDGEHOG_DEVICE_FT_HTTPS_CA_CERT_TAG
-	int "CA root certificate TLS security tag for the file transfer download URL"
-	depends on EDGEHOG_DEVICE
-	depends on !EDGEHOG_DEVICE_DEVELOP_USE_NON_TLS_HTTP
-	help
-	  The CA certificate should be added by the user with the tls_credential_add function.
-	  This configuration option should be set to the tag used when adding the CA certificate.
-
 config EDGEHOG_DEVICE_USE_EDGEHOG_PARTITION
 	bool "Enable edgehog_partition NVS partition label for edgehog storage"
 	depends on EDGEHOG_DEVICE
@@ -89,6 +81,33 @@ config EDGEHOG_DEVICE_ADVANCED_HTTP_RCV_BUFFER_SIZE
 	help
 	  Use this option to increase/decrease the receive buffer size for http requests.
 	  This buffer will be allocated at runtime on the heap.
+
+endmenu
+
+menu "File transfer"
+
+config EDGEHOG_DEVICE_FILE_TRANSFER
+	bool "Enable file transfer functionality"
+	depends on EDGEHOG_DEVICE
+	default false
+	help
+	  Enable the file transfer functionality
+
+config EDGEHOG_DEVICE_FILE_TRANSFER_COMPRESSION
+	bool "Enable file transfer compression functionality"
+	depends on EDGEHOG_DEVICE
+	depends on EDGEHOG_DEVICE_FILE_TRANSFER
+	default false
+	help
+	  Enable the possibility to compress and decompress files
+
+config EDGEHOG_DEVICE_FILE_TRANSFER_HTTPS_CA_CERT_TAG
+	int "CA root certificate TLS security tag for the file transfer download URL"
+	depends on EDGEHOG_DEVICE
+	depends on !EDGEHOG_DEVICE_DEVELOP_USE_NON_TLS_HTTP
+	help
+	  The CA certificate should be added by the user with the tls_credential_add function.
+	  This configuration option should be set to the tag used when adding the CA certificate.
 
 config EDGEHOG_DEVICE_ADVANCED_FILE_TRANSFER_QUEUE_SIZE
 	int "File transfer message queue size"
