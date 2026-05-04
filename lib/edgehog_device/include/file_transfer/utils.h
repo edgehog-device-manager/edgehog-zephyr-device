@@ -111,13 +111,6 @@ void edgehog_ft_update_progress(
     edgehog_ft_http_cbk_data_t *data, size_t chunk_size, bool last_chunk);
 
 /**
- * @brief Work queue handler for reporting file transfer progress to the server.
- *
- * @param work Pointer to the zephyr work structure embedded in the context.
- */
-void edgehog_ft_progress_work_handler(struct k_work *work);
-
-/**
  * @brief Send the final response or error result for a file transfer operation.
  *
  * @param device A valid Edgehog device handle.

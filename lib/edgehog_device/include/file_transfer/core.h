@@ -13,6 +13,7 @@
  */
 
 #include "edgehog_device/device.h"
+#include "edgehog_device/file_transfer.h"
 
 #include <zephyr/kernel.h>
 
@@ -48,6 +49,12 @@ typedef struct
     struct k_thread thread;
     /** @brief Run state for the file transfer service thread. */
     atomic_t thread_state;
+    /** @brief File transfer callbacks registered by the user. */
+    edgehog_ft_cbks_t cbks;
+    /** @brief The file system partitions explicitly allowed for file transfers. */
+    edgehog_ft_filesystem_partition_t *partitions;
+    /** @brief The length of the partitions array. */
+    size_t partitions_len;
 } edgehog_ft_t;
 
 /**
@@ -57,10 +64,15 @@ typedef struct
 void edgeghog_ft_publish_capabilities(edgehog_device_handle_t edgehog_device);
 
 /**
- * @brief Allocates and initializes a new file transfer context.
- * @return A pointer to the newly created context, or NULL on failure.
+ * @brief Creates a new Edgehog file transfer instance.
+ *
+ * @param cbks File transfer callbacks registered by the user.
+ * @param partitions Pointer to the file system partitions explicitly allowed for file transfers.
+ * @param partitions_len The number of partitions in the array.
+ * @return A pointer to the newly allocated edgehog_ft_t instance, or NULL if allocation fails.
  */
-edgehog_ft_t *edgehog_ft_new();
+edgehog_ft_t *edgehog_ft_new(
+    edgehog_ft_cbks_t cbks, edgehog_ft_filesystem_partition_t *partitions, size_t partitions_len);
 
 /**
  * @brief Frees all resources associated with a file transfer context.

@@ -28,6 +28,7 @@ manifest:
           - mbedtls
           - picolibc
           - mcuboot
+          - littlefs
     - name: astarte-device-sdk-zephyr
       remote: astarte-platform
       revision: master

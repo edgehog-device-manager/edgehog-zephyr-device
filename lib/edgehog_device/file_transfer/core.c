@@ -36,6 +36,9 @@ K_THREAD_STACK_DEFINE(file_transfer_service_thread_stack_area, THREAD_STACK_SIZE
  ***********************************************/
 
 static void thread_entry_point(void *device_ptr, void *unused1, void *unused2);
+static edgehog_ft_filesystem_partition_t *duplicate_partitions(
+    edgehog_ft_filesystem_partition_t *partitions, size_t partitions_len);
+static void free_partitions(edgehog_ft_filesystem_partition_t *partitions, size_t partitions_len);
 
 /************************************************
  *         Global functions definitions         *
@@ -69,7 +72,7 @@ void edgeghog_ft_publish_capabilities(edgehog_device_handle_t edgehog_device)
     }
 
     // Possible values: [storage, streaming, filesystem]
-    const char *supported_targets[] = { "streaming" };
+    const char *supported_targets[] = { "streaming", "filesystem" };
     size_t supported_targets_len = ARRAY_SIZE(supported_targets);
     res = astarte_device_set_property(edgehog_device->astarte_device,
         io_edgehog_devicemanager_fileTransfer_Capabilities.name, "/targets",
@@ -80,20 +83,38 @@ void edgeghog_ft_publish_capabilities(edgehog_device_handle_t edgehog_device)
     }
 }
 
-edgehog_ft_t *edgehog_ft_new()
+edgehog_ft_t *edgehog_ft_new(
+    edgehog_ft_cbks_t cbks, edgehog_ft_filesystem_partition_t *partitions, size_t partitions_len)
 {
     // Allocate space for the file transfer internal struct
-    edgehog_ft_t *file_transfer = k_calloc(1, sizeof(edgehog_ft_t));
-    if (!file_transfer) {
+    edgehog_ft_t *data = k_calloc(1, sizeof(edgehog_ft_t));
+    if (!data) {
         EDGEHOG_LOG_ERR("Out of memory %s: %d", __FILE__, __LINE__);
-        return NULL;
+        goto error;
     }
 
-    return file_transfer;
+    if (partitions && partitions_len > 0) {
+        data->partitions = duplicate_partitions(partitions, partitions_len);
+        if (!data->partitions) {
+            EDGEHOG_LOG_ERR("Failed to duplicate partitions");
+            goto error;
+        }
+        data->partitions_len = partitions_len;
+    }
+    data->cbks = cbks;
+
+    return data;
+
+error:
+    k_free(data);
+    return NULL;
 }
 
 void edgehog_ft_destroy(edgehog_ft_t *file_transfer)
 {
+    if (file_transfer && file_transfer->partitions) {
+        free_partitions(file_transfer->partitions, file_transfer->partitions_len);
+    }
     k_free(file_transfer);
 }
 
@@ -164,9 +185,12 @@ edgehog_result_t edgehog_ft_stop(edgehog_ft_t *file_transfer, k_timeout_t timeou
         case 0:
             break;
         case -EAGAIN:
+            // Force stop the thread, this will likely leak memory and resources
+            k_thread_abort(&file_transfer->thread);
             eres = EDGEHOG_RESULT_FILE_TRANSFER_STOP_TIMEOUT;
             break;
         default:
+            EDGEHOG_LOG_ERR("Failed to stop file transfer thread, error %d", res);
             eres = EDGEHOG_RESULT_INTERNAL_ERROR;
     }
     // Empty the message queue from leftovers
@@ -283,4 +307,56 @@ static void thread_entry_point(void *device_ptr, void *unused1, void *unused2)
     }
 
     EDGEHOG_LOG_DBG("Exiting file transfer thread");
+}
+
+static edgehog_ft_filesystem_partition_t *duplicate_partitions(
+    edgehog_ft_filesystem_partition_t *partitions, size_t partitions_len)
+{
+    edgehog_ft_filesystem_partition_t *dup = NULL;
+    if (!partitions || (partitions_len == 0)) {
+        goto error;
+    }
+
+    // Initialize the array of partition structures
+    dup = k_calloc(partitions_len, sizeof(edgehog_ft_filesystem_partition_t));
+    if (!dup) {
+        EDGEHOG_LOG_ERR("Out of memory %s: %d", __FILE__, __LINE__);
+        goto error;
+    }
+
+    // Initialize each partition structure in the array
+    for (size_t i = 0; i < partitions_len; i++) {
+        // Deep copy the partition name string
+        size_t mount_point_size = strlen(partitions[i].mount_point) + 1;
+        char *mount_point = k_malloc(mount_point_size);
+        if (!mount_point) {
+            EDGEHOG_LOG_ERR("Out of memory %s: %d", __FILE__, __LINE__);
+            goto error;
+        }
+        dup[i].mount_point = memcpy(mount_point, partitions[i].mount_point, mount_point_size);
+        dup[i].permissions = partitions[i].permissions;
+    }
+
+    return dup;
+
+error:
+    if (dup) {
+        for (size_t i = 0; dup[i].mount_point; i++) {
+            k_free((void *) dup[i].mount_point);
+        }
+    }
+    k_free(dup);
+    return NULL;
+}
+
+static void free_partitions(edgehog_ft_filesystem_partition_t *partitions, size_t partitions_len)
+{
+    if (!partitions) {
+        return;
+    }
+
+    for (size_t i = 0; i < partitions_len; i++) {
+        k_free((void *) partitions[i].mount_point);
+    }
+    k_free(partitions);
 }

@@ -65,6 +65,10 @@ typedef struct
     edgehog_telemetry_config_t *telemetry_config;
     /** @brief The len of telemetries. */
     size_t telemetry_config_len;
+    /** @brief The file system partitions explicitly allowed for file transfers. */
+    edgehog_ft_filesystem_partition_t *file_transfer_partitions;
+    /** @brief The length of the file_transfer_partitions array. */
+    size_t file_transfer_partitions_len;
     /**
      * @brief The file transfer callbacks configured by the user.
      * @details Provides the application-level hooks needed to accept or reject

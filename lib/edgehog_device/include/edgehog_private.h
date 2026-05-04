@@ -80,8 +80,6 @@ struct edgehog_device
     /** @brief WiFi scan data struct. */
     struct wifi_scan wifi_scan_data;
 #endif
-    /** @brief File transfer callbacks registered by the user. */
-    edgehog_ft_cbks_t ft_cbks;
 };
 
 #endif // EDGEHOG_PRIVATE_H
