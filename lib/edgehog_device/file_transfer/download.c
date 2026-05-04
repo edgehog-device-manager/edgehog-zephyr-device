@@ -8,6 +8,7 @@
 
 #include "edgehog_private.h"
 #include "file_transfer/core.h"
+#include "file_transfer/filesystem.h"
 #include "file_transfer/storage.h"
 #include "file_transfer/stream.h"
 #include "file_transfer/utils.h"
@@ -36,6 +37,7 @@ EDGEHOG_LOG_MODULE_REGISTER(file_transfer_download, CONFIG_EDGEHOG_DEVICE_FILE_T
  *         Static functions declarations        *
  ***********************************************/
 
+static const edgehog_ft_file_write_cbks_t *get_callbacks(const char *destination_type);
 static edgehog_result_t setup_digest(edgehog_ft_http_cbk_data_t *data);
 static int verify_digest(edgehog_ft_http_cbk_data_t *data, const char *expected_digest);
 
@@ -108,6 +110,7 @@ void edgehog_ft_handle_server_to_device(
     int posix_errno = 0;
     char *message = "Transfer completed successfully.";
     edgehog_ft_http_cbk_data_t *http_cbk_user_data = NULL;
+    bool digest_active = false;
 
     // Check that file size does not exceeds the max size contained in a size_t
     if ((msg->file_size_bytes < 0) || (msg->file_size_bytes > SIZE_MAX)) {
@@ -117,13 +120,8 @@ void edgehog_ft_handle_server_to_device(
         goto exit;
     }
 
-    // Assign the proper callbacks depending on the destination
-    const edgehog_ft_file_write_cbks_t *file_cbks = NULL;
-    if (strcmp(msg->location_type, "storage") == 0) {
-        file_cbks = &file_transfer_storage_write_cbks;
-    } else if (strcmp(msg->location_type, "stream") == 0) {
-        file_cbks = &edgehog_ft_stream_write_cbks;
-    } else {
+    const edgehog_ft_file_write_cbks_t *file_cbks = get_callbacks(msg->location_type);
+    if (!file_cbks) {
         EDGEHOG_LOG_DBG("Destination type: %s", msg->location_type);
         posix_errno = EINVAL;
         message = "Unknown or unsupported file transfer destination type";
@@ -132,8 +130,8 @@ void edgehog_ft_handle_server_to_device(
 
     // Initialize file context
     void *file_cbks_ctx = NULL;
-    eres = file_cbks->file_init(&file_cbks_ctx, &edgehog_device->ft_cbks, msg->id, msg->url,
-        msg->file_size_bytes, msg->location);
+    eres = file_cbks->file_init(&file_cbks_ctx, &edgehog_device->file_transfer->cbks, msg->id,
+        msg->url, msg->file_size_bytes, msg->location);
     if (eres != EDGEHOG_RESULT_OK) {
         posix_errno = EIO;
         message = "Failed to initialize the file backend";
@@ -160,6 +158,7 @@ void edgehog_ft_handle_server_to_device(
         file_cbks->file_abort(file_cbks_ctx);
         goto exit;
     }
+    digest_active = true;
 
     // Initialize the HTTP get msg
     edgehog_http_get_data_t http_get_data = {
@@ -189,16 +188,18 @@ void edgehog_ft_handle_server_to_device(
                                              : "Failed to finalize file digest";
             goto exit;
         }
+        digest_active = false;
     }
 
     eres = file_cbks->file_complete(file_cbks_ctx);
     if (eres != EDGEHOG_RESULT_OK) {
         posix_errno = EIO;
         message = "Failed to finalize file transfer";
+        goto exit;
     }
 
 exit:
-    if (http_cbk_user_data && msg->digest && posix_errno != 0) {
+    if (http_cbk_user_data && msg->digest && posix_errno != 0 && digest_active) {
         psa_hash_abort(&http_cbk_user_data->hash_operation);
     }
 
@@ -269,4 +270,17 @@ static int verify_digest(edgehog_ft_http_cbk_data_t *data, const char *expected_
         return EIO;
     }
     return 0;
+}
+
+const edgehog_ft_file_write_cbks_t *get_callbacks(const char *destination_type)
+{
+    const edgehog_ft_file_write_cbks_t *file_cbks = NULL;
+    if (strcmp(destination_type, "storage") == 0) {
+        file_cbks = &file_transfer_storage_write_cbks;
+    } else if (strcmp(destination_type, "stream") == 0) {
+        file_cbks = &edgehog_ft_stream_write_cbks;
+    } else if (strcmp(destination_type, "filesystem") == 0) {
+        file_cbks = &edgehog_ft_filesystem_write_cbks;
+    }
+    return file_cbks;
 }

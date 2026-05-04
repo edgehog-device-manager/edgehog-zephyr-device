@@ -142,8 +142,8 @@ static edgehog_result_t write_append(void *ctx, const uint8_t *chunk_data, size_
     while (total_written < chunk_size) {
 
         // Check if the application signaled an error before we attempt to write
-        uint32_t events = k_event_test(&wctx->eof_event, EDGEHOG_FT_ERROR_EVENT_FLAG);
-        if (events & EDGEHOG_FT_ERROR_EVENT_FLAG) {
+        uint32_t events = k_event_test(&wctx->eof_event, EDGEHOG_FT_STREAM_ERROR_EVENT_FLAG);
+        if (events & EDGEHOG_FT_STREAM_ERROR_EVENT_FLAG) {
             EDGEHOG_LOG_ERR("Application signaled an error during stream write");
             return EDGEHOG_RESULT_INTERNAL_ERROR;
         }
@@ -182,10 +182,11 @@ static edgehog_result_t write_complete(void *ctx)
     write_ctx_t *wctx = (write_ctx_t *) ctx;
 
     // Post the EOF flag to the event object
-    k_event_post(&wctx->eof_event, EDGEHOG_FT_EOF_EVENT_FLAG);
+    k_event_post(&wctx->eof_event, EDGEHOG_FT_STREAM_EOF_EVENT_FLAG);
 
     // Synchronize teardown: wait for the app thread to acknowledge finishing reading
-    k_event_wait(&wctx->eof_event, EDGEHOG_FT_ACK_EVENT_FLAG, false, K_MSEC(EVENT_TIMEOUT_MS));
+    k_event_wait(
+        &wctx->eof_event, EDGEHOG_FT_STREAM_ACK_EVENT_FLAG, false, K_MSEC(EVENT_TIMEOUT_MS));
 
     k_free(ctx);
     return EDGEHOG_RESULT_OK;
@@ -196,8 +197,9 @@ static void write_abort(void *ctx)
     EDGEHOG_LOG_DBG("File write has been aborted.");
     write_ctx_t *wctx = (write_ctx_t *) ctx;
 
-    k_event_post(&wctx->eof_event, EDGEHOG_FT_EOF_EVENT_FLAG);
-    k_event_wait(&wctx->eof_event, EDGEHOG_FT_ACK_EVENT_FLAG, false, K_MSEC(EVENT_TIMEOUT_MS));
+    k_event_post(&wctx->eof_event, EDGEHOG_FT_STREAM_EOF_EVENT_FLAG);
+    k_event_wait(
+        &wctx->eof_event, EDGEHOG_FT_STREAM_ACK_EVENT_FLAG, false, K_MSEC(EVENT_TIMEOUT_MS));
 
     k_free(ctx);
 }
@@ -259,13 +261,13 @@ static edgehog_result_t read_chunk(
         }
 
         // The pipe is empty (-EAGAIN). Check if the writer signaled something.
-        uint32_t events = k_event_test(
-            &rctx->eof_event, EDGEHOG_FT_EOF_EVENT_FLAG | EDGEHOG_FT_ERROR_EVENT_FLAG);
-        if (events & EDGEHOG_FT_ERROR_EVENT_FLAG) {
+        uint32_t events = k_event_test(&rctx->eof_event,
+            EDGEHOG_FT_STREAM_EOF_EVENT_FLAG | EDGEHOG_FT_STREAM_ERROR_EVENT_FLAG);
+        if (events & EDGEHOG_FT_STREAM_ERROR_EVENT_FLAG) {
             EDGEHOG_LOG_ERR("Application signaled an error during stream read");
             return EDGEHOG_RESULT_INTERNAL_ERROR;
         }
-        if (events & EDGEHOG_FT_EOF_EVENT_FLAG) {
+        if (events & EDGEHOG_FT_STREAM_EOF_EVENT_FLAG) {
             *chunk_data = NULL;
             *chunk_size = 0;
             *last_chunk = true;

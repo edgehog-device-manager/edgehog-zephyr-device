@@ -249,17 +249,17 @@ static void download_thread_entry_point(void *unused1, void *unused2, void *unus
                 loopback_file_size += ret;
             } else {
                 LOG_ERR("Loopback buffer overflow! Max size is %d", MAX_LOOPBACK_FILE_SIZE);
-                k_event_post(current_loopback_event, EDGEHOG_FT_ERROR_EVENT_FLAG);
+                k_event_post(current_loopback_event, EDGEHOG_FT_STREAM_ERROR_EVENT_FLAG);
                 return;
             }
         } else if (ret < 0 && ret != -EAGAIN) {
             LOG_ERR("Failed to read from loopback pipe");
-            k_event_post(current_loopback_event, EDGEHOG_FT_ERROR_EVENT_FLAG);
+            k_event_post(current_loopback_event, EDGEHOG_FT_STREAM_ERROR_EVENT_FLAG);
             return;
         }
 
         // Check if Edgehog posted the EOF flag indicating download completion
-        if (k_event_test(current_loopback_event, EDGEHOG_FT_EOF_EVENT_FLAG)) {
+        if (k_event_test(current_loopback_event, EDGEHOG_FT_STREAM_EOF_EVENT_FLAG)) {
             download_complete = true;
         }
     }
@@ -270,7 +270,7 @@ static void download_thread_entry_point(void *unused1, void *unused2, void *unus
 
     // Acknowledge that reading is complete so the library can safely tear down memory structures
     if (current_loopback_event) {
-        k_event_post(current_loopback_event, EDGEHOG_FT_ACK_EVENT_FLAG);
+        k_event_post(current_loopback_event, EDGEHOG_FT_STREAM_ACK_EVENT_FLAG);
     }
 
     LOG_INF("Exiting download thread.");
@@ -309,12 +309,12 @@ static void upload_thread_entry_point(void *unused1, void *unused2, void *unused
 
         // Post EOF to inform Edgehog's read stream that there is no more data
         if (current_loopback_event) {
-            k_event_post(current_loopback_event, EDGEHOG_FT_EOF_EVENT_FLAG);
+            k_event_post(current_loopback_event, EDGEHOG_FT_STREAM_EOF_EVENT_FLAG);
         }
     } else {
         LOG_WRN("Loopback file size is 0. Nothing to upload.");
         if (current_loopback_event) {
-            k_event_post(current_loopback_event, EDGEHOG_FT_EOF_EVENT_FLAG);
+            k_event_post(current_loopback_event, EDGEHOG_FT_STREAM_EOF_EVENT_FLAG);
         }
     }
 

@@ -8,6 +8,7 @@
 
 #include "edgehog_private.h"
 #include "file_transfer/core.h"
+#include "file_transfer/filesystem.h"
 #include "file_transfer/storage.h"
 #include "file_transfer/stream.h"
 #include "file_transfer/utils.h"
@@ -19,6 +20,12 @@
 #include <string.h>
 
 EDGEHOG_LOG_MODULE_REGISTER(file_transfer_upload, CONFIG_EDGEHOG_DEVICE_FILE_TRANSFER_LOG_LEVEL);
+
+/************************************************
+ *         Static functions declarations        *
+ ***********************************************/
+
+static const edgehog_ft_file_read_cbks_t *get_callbacks(const char *source_type);
 
 /************************************************
  *     Callbacks definition and declaration     *
@@ -85,13 +92,8 @@ void edgehog_ft_handle_device_to_server(
     char *message = "Transfer completed successfully.";
     edgehog_ft_http_cbk_data_t *http_cbk_user_data = NULL;
 
-    // Assign the proper callbacks depending on the source type
-    const edgehog_ft_file_read_cbks_t *file_cbks = NULL;
-    if (strcmp(msg->location_type, "storage") == 0) {
-        file_cbks = &file_transfer_storage_read_cbks;
-    } else if (strcmp(msg->location_type, "stream") == 0) {
-        file_cbks = &edgehog_ft_stream_read_cbks;
-    } else {
+    const edgehog_ft_file_read_cbks_t *file_cbks = get_callbacks(msg->location_type);
+    if (!file_cbks) {
         EDGEHOG_LOG_DBG("Source type: %s", msg->location_type);
         posix_errno = EINVAL;
         message = "Unknown or unsupported file transfer source type";
@@ -100,7 +102,8 @@ void edgehog_ft_handle_device_to_server(
 
     // Initialize file context on the first chunk
     void *file_cbks_ctx = NULL;
-    eres = file_cbks->file_init(&file_cbks_ctx, &edgehog_device->ft_cbks, msg->id, msg->location);
+    eres = file_cbks->file_init(
+        &file_cbks_ctx, &edgehog_device->file_transfer->cbks, msg->id, msg->location);
     if (eres != EDGEHOG_RESULT_OK) {
         posix_errno = EIO;
         message = "Failed to initialize the file backend";
@@ -147,4 +150,21 @@ exit:
     edgehog_ft_send_response(
         edgehog_device, msg->id, EDGEHOG_FT_TYPE_DEVICE_TO_SERVER, posix_errno, message, eres);
     edgehog_ft_msg_destroy(msg);
+}
+
+/************************************************
+ *         Static functions definitions         *
+ ***********************************************/
+
+const edgehog_ft_file_read_cbks_t *get_callbacks(const char *source_type)
+{
+    const edgehog_ft_file_read_cbks_t *file_cbks = NULL;
+    if (strcmp(source_type, "storage") == 0) {
+        file_cbks = &file_transfer_storage_read_cbks;
+    } else if (strcmp(source_type, "stream") == 0) {
+        file_cbks = &edgehog_ft_stream_read_cbks;
+    } else if (strcmp(source_type, "filesystem") == 0) {
+        file_cbks = &edgehog_ft_filesystem_read_cbks;
+    }
+    return file_cbks;
 }

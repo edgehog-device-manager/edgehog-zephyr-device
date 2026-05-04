@@ -309,7 +309,8 @@ edgehog_result_t edgehog_device_new(
 
 #ifdef CONFIG_EDGEHOG_DEVICE_FILE_TRANSFER
     // Step 7: Initialize the file transfer for the Edgehog device
-    edgehog_ft_t *file_transfer = edgehog_ft_new();
+    edgehog_ft_t *file_transfer = edgehog_ft_new(config->file_transfer_cbks,
+        config->file_transfer_partitions, config->file_transfer_partitions_len);
     if (!file_transfer) {
         EDGEHOG_LOG_ERR("Unable to create edgehog file transfer");
         goto failure;
@@ -332,7 +333,6 @@ edgehog_result_t edgehog_device_new(
         .telemetry = telemetry,
 #ifdef CONFIG_EDGEHOG_DEVICE_FILE_TRANSFER
         .file_transfer = file_transfer,
-        .ft_cbks = config->file_transfer_cbks,
 #endif
     };
 

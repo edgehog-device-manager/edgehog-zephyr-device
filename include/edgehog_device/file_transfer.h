@@ -26,11 +26,11 @@ extern "C" {
 #endif
 
 /** @brief Event flag indicating the end of a file transfer stream. */
-#define EDGEHOG_FT_EOF_EVENT_FLAG (1U << 0U)
+#define EDGEHOG_FT_STREAM_EOF_EVENT_FLAG (1U << 0U)
 /** @brief Event flag indicating an acknowledgement in the file transfer stream. */
-#define EDGEHOG_FT_ACK_EVENT_FLAG (1U << 1U)
+#define EDGEHOG_FT_STREAM_ACK_EVENT_FLAG (1U << 1U)
 /** @brief Event flag indicating an error in the file transfer stream. */
-#define EDGEHOG_FT_ERROR_EVENT_FLAG (1U << 2U)
+#define EDGEHOG_FT_STREAM_ERROR_EVENT_FLAG (1U << 2U)
 
 /** @brief Direction of the file transfer */
 typedef enum
@@ -50,6 +50,31 @@ typedef struct
     struct k_event *event;
 } edgehog_ft_stream_t;
 
+/** @brief File transfer file system permissions for a given partition. */
+typedef enum
+{
+    /** @brief Allow reading files from this partition. */
+    EDGEHOG_FT_FILESYSTEM_PERM_READ = (1U << 0U),
+    /** @brief Allow writing files to this partition. */
+    EDGEHOG_FT_FILESYSTEM_PERM_WRITE = (1U << 1U),
+    /** @brief Allow both reading and writing. */
+    EDGEHOG_FT_FILESYSTEM_PERM_RW
+    = (EDGEHOG_FT_FILESYSTEM_PERM_READ | EDGEHOG_FT_FILESYSTEM_PERM_WRITE)
+} edgehog_ft_filesystem_permission_t;
+
+/** @brief Configuration for an allowed filesystem partition. */
+typedef struct
+{
+    /**
+     * @brief The mount point of the formatted partition.
+     * @details E.g., "/lfs1". Edgehog will verify if the file system is mounted using Zephyr's
+     * fs_stat() before operating on it.
+     */
+    const char *mount_point;
+    /** @brief Allowed transfer operations on this partition. */
+    edgehog_ft_filesystem_permission_t permissions;
+} edgehog_ft_filesystem_partition_t;
+
 /** @brief Callbacks for an Edgehog file transfer. */
 typedef struct
 {
@@ -67,6 +92,14 @@ typedef struct
      */
     bool (*on_stream_transfer_start)(const char *name, edgehog_ft_type_t type, size_t expected_size,
         edgehog_ft_stream_t *stream);
+    /**
+     * @brief Callback invoked when a filesystem transfer has been performed.
+     * @details This function notifies the application that a file transfer has been completed.
+     *
+     * @param[in] type The direction of the transfer.
+     * @param[in] file_path Path of the transferred file.
+     */
+    void (*on_filesystem_transfer_done)(edgehog_ft_type_t type, const char *file_path);
 } edgehog_ft_cbks_t;
 
 #ifdef __cplusplus
