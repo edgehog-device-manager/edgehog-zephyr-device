@@ -34,20 +34,6 @@ enum device_thread_flags
     DEVICE_THREAD_TERMINATION_FLAG,
 };
 
-/************************************************
- *         Static functions declaration         *
- ***********************************************/
-
-static void device_thread_entry_point(void *unused1, void *unused2, void *unused3);
-static void connection_callback(astarte_device_connection_event_t event);
-static void disconnection_callback(astarte_device_disconnection_event_t event);
-static void download_thread_entry_point(void *unused1, void *unused2, void *unused3);
-static void upload_thread_entry_point(void *unused1, void *unused2, void *unused3);
-
-/************************************************
- *         Global functions definition          *
- ***********************************************/
-
 // Large static buffer to hold the loopback payload in memory
 #define MAX_LOOPBACK_FILE_SIZE 32768
 static uint8_t loopback_file_buffer[MAX_LOOPBACK_FILE_SIZE];
@@ -62,6 +48,20 @@ static struct k_thread upload_thread_data;
 // Pointers to the dynamic pipe and event provided by the file transfer logic
 static struct k_pipe *current_loopback_pipe = NULL;
 static struct k_event *current_loopback_event = NULL;
+
+/************************************************
+ *         Static functions declaration         *
+ ***********************************************/
+
+static void device_thread_entry_point(void *unused1, void *unused2, void *unused3);
+static void connection_callback(astarte_device_connection_event_t event);
+static void disconnection_callback(astarte_device_disconnection_event_t event);
+static void download_thread_entry_point(void *unused1, void *unused2, void *unused3);
+static void upload_thread_entry_point(void *unused1, void *unused2, void *unused3);
+
+/************************************************
+ *     Callbacks definition and declaration     *
+ ***********************************************/
 
 static bool on_stream_transfer_start(
     const char *name, edgehog_ft_type_t type, size_t expected_size, edgehog_ft_stream_t *stream)
@@ -97,6 +97,23 @@ static bool on_stream_transfer_start(
     LOG_WRN("Rejected stream transfer for unknown path/name: %s", name);
     return false; // Reject the transfer
 }
+
+static void on_filesystem_transfer_done(edgehog_ft_type_t type, const char *file_path)
+{
+    if (type == EDGEHOG_FT_TYPE_SERVER_TO_DEVICE) {
+        LOG_INF(
+            "Filesystem transfer complete [server-to-device]: file downloaded to '%s'", file_path);
+    } else if (type == EDGEHOG_FT_TYPE_DEVICE_TO_SERVER) {
+        LOG_INF(
+            "Filesystem transfer complete [device-to-server]: file uploaded from '%s'", file_path);
+    } else {
+        LOG_WRN("Filesystem transfer complete: unknown transfer type for '%s'", file_path);
+    }
+}
+
+/************************************************
+ *         Global functions definition          *
+ ***********************************************/
 
 void setup_device()
 {
@@ -166,12 +183,17 @@ static void device_thread_entry_point(void *unused1, void *unused2, void *unused
     memcpy(astarte_device_config.cred_secr, cred_secr, sizeof(cred_secr));
     memcpy(astarte_device_config.device_id, device_id, sizeof(device_id));
 
-    edgehog_device_config_t edgehog_conf = {
-        .astarte_device_config = astarte_device_config,
+    // Define the allowed filesystem partition
+    edgehog_ft_filesystem_partition_t ft_partitions[]
+        = { { .mount_point = "/lfs1", .permissions = EDGEHOG_FT_FILESYSTEM_PERM_RW } };
+
+    edgehog_device_config_t edgehog_conf = { .astarte_device_config = astarte_device_config,
         .telemetry_config = NULL,
         .telemetry_config_len = 0,
-        .file_transfer_cbks = { .on_stream_transfer_start = on_stream_transfer_start },
-    };
+        .file_transfer_cbks = { .on_stream_transfer_start = on_stream_transfer_start,
+            .on_filesystem_transfer_done = on_filesystem_transfer_done },
+        .file_transfer_partitions = ft_partitions,
+        .file_transfer_partitions_len = ARRAY_SIZE(ft_partitions) };
     eres = edgehog_device_new(&edgehog_conf, &device_handle);
     if (eres != EDGEHOG_RESULT_OK) {
         LOG_ERR("Unable to create edgehog device handle");

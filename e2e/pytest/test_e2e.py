@@ -10,7 +10,7 @@ import pytest
 from configuration import Configuration
 from http_server import start_server, stop_server
 from telemetry import validate_initial_telemetry, validate_telemetry_frequency
-from file_transfer import is_file_transfer_enabled, validate_file_transfer_loopback, validate_file_transfer_capabilities, validate_file_transfer_server_to_device, validate_file_transfer_device_to_server
+from file_transfer import is_file_transfer_enabled, validate_file_transfer_stream, validate_file_transfer_capabilities, validate_file_transfer_filesystem
 
 logger = logging.getLogger(__name__)
 logging.getLogger("urllib3").setLevel(logging.INFO)
@@ -67,7 +67,7 @@ def test_file_transfer(e2e_device_env):
         pytest.skip("CONFIG_EDGEHOG_DEVICE_FILE_TRANSFER is not enabled in the Zephyr build")
 
     validate_file_transfer_capabilities(cfg)
-    validate_file_transfer_server_to_device(cfg)
-    validate_file_transfer_device_to_server(cfg)
-    validate_file_transfer_loopback(cfg)
+    validate_file_transfer_stream(cfg)
+    validate_file_transfer_filesystem(cfg)
+
     time.sleep(1)
