@@ -23,6 +23,8 @@
 #include "log.h"
 EDGEHOG_LOG_MODULE_REGISTER(edgehog_http, CONFIG_EDGEHOG_DEVICE_HTTP_LOG_LEVEL);
 
+#define CONTENT_LENGTH_HEADER_BUF_SIZE 64
+
 /************************************************
  *        Defines, constants and typedef        *
  ***********************************************/
@@ -189,27 +191,7 @@ static int put_payload_cbk(int sock, struct http_request * /*req*/, void *user_d
         // Format and send the chunk to the server
         if (http_payload_chunk.chunk_size > 0) {
             int sent_bytes = 0;
-            char buffer[HTTP_CHUNKED_PAYLOAD_CHUNK_LENGTH_BUFFER_SIZE] = { 0 };
-            const char crlf[] = "\r\n";
 
-            // Format chunk header
-            int snprintf_rc = snprintf(
-                buffer, ARRAY_SIZE(buffer), "%zx%s", http_payload_chunk.chunk_size, crlf);
-            if (snprintf_rc < 0 || snprintf_rc >= ARRAY_SIZE(buffer)) {
-                EDGEHOG_LOG_ERR("Failed to format chunk header: %d", snprintf_rc);
-                ctx->result = EDGEHOG_RESULT_HTTP_REQUEST_ERROR;
-                return -1;
-            }
-
-            // Send header
-            sent_bytes = send_buffer_fully(sock, buffer, snprintf_rc);
-            if (sent_bytes < 0) {
-                EDGEHOG_LOG_ERR("Failed to send chunk header: %d", sent_bytes);
-                ctx->result = EDGEHOG_RESULT_HTTP_REQUEST_ERROR;
-                return -1;
-            }
-            total_sent_bytes += sent_bytes;
-            // Send payload
             sent_bytes = send_buffer_fully(
                 sock, http_payload_chunk.chunk_start_addr, http_payload_chunk.chunk_size);
             if (sent_bytes < 0) {
@@ -218,14 +200,7 @@ static int put_payload_cbk(int sock, struct http_request * /*req*/, void *user_d
                 return -1;
             }
             total_sent_bytes += sent_bytes;
-            // Send trailing CRLF
-            sent_bytes = send_buffer_fully(sock, crlf, sizeof(crlf) - 1);
-            if (sent_bytes < 0) {
-                EDGEHOG_LOG_ERR("Failed to send trailing CRLF: %d", sent_bytes);
-                ctx->result = EDGEHOG_RESULT_HTTP_REQUEST_ERROR;
-                return -1;
-            }
-            total_sent_bytes += sent_bytes;
+
             EDGEHOG_LOG_DBG("Sent chunk of size %zu bytes", http_payload_chunk.chunk_size);
         }
     }
@@ -271,21 +246,16 @@ edgehog_result_t edgehog_http_put(edgehog_http_put_data_t *data)
     size_t user_header_fields_number = 0;
     char **header_fields = NULL;
 
-    // Search for any "Transfer-Encoding: chunked" header in the provided headers, or
-    // "Content-Length: " header.
+    // Search for any "Content-Length: " header in the provided headers
     if (data->header_fields) {
         for (size_t i = 0; data->header_fields[i] != NULL; i++) {
             const char *header = data->header_fields[i];
 
-            // Check for "Transfer-Encoding:" or "Content-Length:" headers (case-insensitive)
+            // Check for "Content-Length:" headers (case-insensitive)
             // If found, return immediately with an error to prevent conflicting upload directives.
-            char transfer_encoding[] = "Transfer-Encoding:";
-            size_t transfer_encoding_len = sizeof(transfer_encoding) - 1;
-            char content_length[] = "Content-Length:";
+            char content_length[] = "Content-Length: ";
             size_t content_length_len = sizeof(content_length) - 1;
-            if (strncmp(header, transfer_encoding, transfer_encoding_len) == 0
-                || strncmp(header, content_length, content_length_len) == 0) {
-
+            if (strncmp(header, content_length, content_length_len) == 0) {
                 EDGEHOG_LOG_ERR("Conflicting header provided by user: %s", header);
                 return EDGEHOG_RESULT_HTTP_REQUEST_INVALID_HEADERS;
             }
@@ -294,7 +264,7 @@ edgehog_result_t edgehog_http_put(edgehog_http_put_data_t *data)
         }
     }
 
-    // +2 for the "Transfer-Encoding: chunked" header and the NULL terminator
+    // +2 for the "Content-Length: " header and the NULL terminator
     size_t header_fields_size = user_header_fields_number + 2;
     header_fields = (char **) k_malloc(header_fields_size * sizeof(char *));
     if (header_fields == NULL) {
@@ -307,8 +277,15 @@ edgehog_result_t edgehog_http_put(edgehog_http_put_data_t *data)
     for (size_t i = 0; i < user_header_fields_number; i++) {
         header_fields[i] = (char *) data->header_fields[i];
     }
-    // Add the "Transfer-Encoding: chunked" header
-    header_fields[user_header_fields_number] = "Transfer-Encoding: chunked\r\n";
+    // Add the "Content-Length: " header
+    char cl_buf[CONTENT_LENGTH_HEADER_BUF_SIZE] = { 0 };
+    snprintf(cl_buf, sizeof(cl_buf), "Content-Length: %zu\r\n", data->payload_size);
+    char *cl_header = k_malloc(CONTENT_LENGTH_HEADER_BUF_SIZE);
+    if (!cl_header) {
+        return EDGEHOG_RESULT_OUT_OF_MEMORY;
+    }
+    memcpy(cl_header, cl_buf, CONTENT_LENGTH_HEADER_BUF_SIZE);
+    header_fields[user_header_fields_number] = cl_header;
     // The last element of the array is already set to NULL by memset
 
     struct request_data req_data = {
@@ -328,6 +305,7 @@ edgehog_result_t edgehog_http_put(edgehog_http_put_data_t *data)
     };
 
     edgehog_result_t result = perform_request(&req_data);
+    k_free((void *) cl_header);
     k_free((void *) header_fields);
     return result;
 }

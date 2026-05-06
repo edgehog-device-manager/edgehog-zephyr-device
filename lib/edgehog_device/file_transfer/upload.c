@@ -129,9 +129,11 @@ void edgehog_ft_handle_device_to_server(
     http_cbk_user_data->posix_errno = posix_errno;
     http_cbk_user_data->message = message;
 
+    // TODO: add content length
     edgehog_http_put_data_t http_put_data = { .url = msg->url,
         .header_fields = (const char **) msg->http_headers,
         .timeout_ms = EDGEHOG_FT_HTTP_REQ_TIMEOUT_MS,
+        .payload_size = http_cbk_user_data->total_bytes,
         .payload_cbk = http_put_device_to_server_payload_cbk,
         .user_data = http_cbk_user_data };
     // Perform the HTTP put request to upload the file
