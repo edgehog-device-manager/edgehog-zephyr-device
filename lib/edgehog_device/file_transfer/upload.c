@@ -106,10 +106,12 @@ void edgehog_ft_handle_device_to_server(
         goto exit;
     }
 
+    size_t upload_size = 0;
+
     // Initialize file context on the first chunk
     void *file_cbks_ctx = NULL;
     eres = file_cbks->file_init(
-        &file_cbks_ctx, &edgehog_device->file_transfer->cbks, msg->id, msg->location);
+        &file_cbks_ctx, &edgehog_device->file_transfer->cbks, msg->id, msg->location, &upload_size);
     if (eres != EDGEHOG_RESULT_OK) {
         posix_errno = EIO;
         message = "Failed to initialize the file backend";
@@ -129,11 +131,10 @@ void edgehog_ft_handle_device_to_server(
     http_cbk_user_data->posix_errno = posix_errno;
     http_cbk_user_data->message = message;
 
-    // TODO: add content length
     edgehog_http_put_data_t http_put_data = { .url = msg->url,
         .header_fields = (const char **) msg->http_headers,
         .timeout_ms = EDGEHOG_FT_HTTP_REQ_TIMEOUT_MS,
-        .payload_size = http_cbk_user_data->total_bytes,
+        .payload_size = upload_size,
         .payload_cbk = http_put_device_to_server_payload_cbk,
         .user_data = http_cbk_user_data };
     // Perform the HTTP put request to upload the file

@@ -85,13 +85,13 @@ typedef struct
      *
      * @param[in] name The path/name of the requested stream.
      * @param[in] type The direction of the transfer.
-     * @param[in] expected_size The size of the file (0 if unknown).
+     * @param[inout] expected_size A pointer to the size of the file (0 if unknown).
      * @param[in] stream Pointer to a struct where the library provides the allocated pipe and
      * event.
      * @return true if the application accepts the transfer, false to reject it.
      */
-    bool (*on_stream_transfer_start)(const char *name, edgehog_ft_type_t type, size_t expected_size,
-        edgehog_ft_stream_t *stream);
+    bool (*on_stream_transfer_start)(const char *name, edgehog_ft_type_t type,
+        size_t *expected_size, edgehog_ft_stream_t *stream);
     /**
      * @brief Callback invoked when a filesystem transfer has been performed.
      * @details This function notifies the application that a file transfer has been completed.

@@ -57,6 +57,8 @@ typedef struct
     struct k_event eof_event;
     /** @brief Buffer used to read chunks of data from the pipe. */
     uint8_t read_buffer[READ_BUFFER_SIZE];
+    /** @brief Total file size. */
+    size_t total_size;
 } read_ctx_t;
 
 /************************************************
@@ -70,7 +72,7 @@ static edgehog_result_t write_complete(void *ctx);
 static void write_abort(void *ctx);
 
 static edgehog_result_t read_init(
-    void **ctx, edgehog_ft_cbks_t *cbks, char *identifier, char *source);
+    void **ctx, edgehog_ft_cbks_t *cbks, char *identifier, char *source, size_t *out_file_size);
 static edgehog_result_t read_chunk(
     void *ctx, size_t max_length, uint8_t **chunk_data, size_t *chunk_size, bool *last_chunk);
 static edgehog_result_t read_complete(void *ctx);
@@ -118,7 +120,7 @@ static edgehog_result_t write_init(void **ctx, edgehog_ft_cbks_t *cbks, char * /
 
     // Trigger the callback to notify the app and provide resources
     bool accepted = cbks->on_stream_transfer_start(
-        destination, EDGEHOG_FT_TYPE_SERVER_TO_DEVICE, expected_file_size, &stream);
+        destination, EDGEHOG_FT_TYPE_SERVER_TO_DEVICE, &expected_file_size, &stream);
     if (!accepted) {
         EDGEHOG_LOG_ERR("File transfer rejected for: %s", destination);
         k_free(wctx);
@@ -205,7 +207,7 @@ static void write_abort(void *ctx)
 }
 
 static edgehog_result_t read_init(
-    void **ctx, edgehog_ft_cbks_t *cbks, char * /*identifier*/, char *source)
+    void **ctx, edgehog_ft_cbks_t *cbks, char * /*identifier*/, char *source, size_t *out_file_size)
 {
     read_ctx_t *rctx = k_malloc(sizeof(read_ctx_t));
     if (!rctx) {
@@ -225,13 +227,18 @@ static edgehog_result_t read_init(
 
     edgehog_ft_stream_t stream = { .pipe = &rctx->pipe, .event = &rctx->eof_event };
 
-    bool accepted
-        = cbks->on_stream_transfer_start(source, EDGEHOG_FT_TYPE_DEVICE_TO_SERVER, 0, &stream);
+    size_t upload_size = 0;
+    bool accepted = cbks->on_stream_transfer_start(
+        source, EDGEHOG_FT_TYPE_DEVICE_TO_SERVER, &upload_size, &stream);
 
     if (!accepted) {
         EDGEHOG_LOG_ERR("Transfer rejected for: %s", source);
         k_free(rctx);
         return EDGEHOG_RESULT_INVALID_PARAM;
+    }
+
+    if (out_file_size) {
+        *out_file_size = upload_size;
     }
 
     *ctx = rctx;

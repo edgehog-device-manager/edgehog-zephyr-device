@@ -60,7 +60,7 @@ static edgehog_result_t write_complete(void *ctx);
 static void write_abort(void *ctx);
 
 static edgehog_result_t read_init(
-    void **ctx, edgehog_ft_cbks_t *cbks, char *identifier, char *source);
+    void **ctx, edgehog_ft_cbks_t *cbks, char *identifier, char *source, size_t *out_file_size);
 static edgehog_result_t read_chunk(
     void *ctx, size_t max_length, uint8_t **chunk_data, size_t *chunk_size, bool *last_chunk);
 static edgehog_result_t read_complete(void *ctx);
@@ -181,7 +181,7 @@ static void write_abort(void *ctx)
 }
 
 static edgehog_result_t read_init(
-    void **ctx, edgehog_ft_cbks_t *cbks, char * /*identifier*/, char *source)
+    void **ctx, edgehog_ft_cbks_t *cbks, char * /*identifier*/, char *source, size_t *out_file_size)
 {
     edgehog_result_t eres = EDGEHOG_RESULT_OK;
     read_ctx_t *rctx = NULL;
@@ -196,6 +196,19 @@ static edgehog_result_t read_init(
         EDGEHOG_LOG_ERR("Permission denied or partition unavailable for read from %s", source);
         eres = EDGEHOG_RESULT_INTERNAL_ERROR;
         goto error;
+    }
+
+    // query the filesystem for the file size
+    struct fs_dirent entry;
+    int stat_res = fs_stat(source, &entry);
+    if (stat_res != 0) {
+        EDGEHOG_LOG_ERR("Failed to get file stats for %s, err %d", source, stat_res);
+        eres = EDGEHOG_RESULT_INTERNAL_ERROR;
+        goto error;
+    }
+
+    if (out_file_size) {
+        *out_file_size = entry.size; // Pass the actual file size up to HTTP!
     }
 
     rctx = k_malloc(sizeof(read_ctx_t));
