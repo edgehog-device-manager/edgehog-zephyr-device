@@ -198,6 +198,13 @@ edgehog_result_t edgehog_telemetry_start(edgehog_device_handle_t device)
         return EDGEHOG_RESULT_TELEMETRY_START_FAIL;
     }
 
+#ifdef CONFIG_THREAD_NAME
+    int ret = k_thread_name_set(thread_id, "edgehog_telemetry_thread");
+    if (ret != 0) {
+        EDGEHOG_LOG_ERR("Failed to set thread name, error %d", ret);
+    }
+#endif
+
     for (int i = 0; i < EDGEHOG_TELEMETRY_LEN; i++) {
         edgehog_telemetry_entry_t *entry = telemetry->entries[i];
         if (entry && entry->enable) {

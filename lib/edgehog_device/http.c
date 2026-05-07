@@ -11,7 +11,6 @@
 #include <zephyr/net/http/parser.h>
 #include <zephyr/net/http/status.h>
 #include <zephyr/net/socket.h>
-#include <zephyr/version.h>
 
 #if !defined(CONFIG_EDGEHOG_DEVICE_DEVELOP_USE_NON_TLS_HTTP)
 #include <zephyr/net/tls_credentials.h>
@@ -51,13 +50,8 @@ struct http_req_ctx
  *       Callbacks definition/declaration       *
  ***********************************************/
 
-#if (KERNEL_VERSION_MAJOR >= 4) && (KERNEL_VERSION_MINOR >= 2)
 static int http_download_cb(
     struct http_response *rsp, enum http_final_call final_data, void *user_data)
-#else
-static void http_download_cb(
-    struct http_response *rsp, enum http_final_call final_data, void *user_data)
-#endif
 {
     int res = 0;
 
@@ -100,11 +94,7 @@ static void http_download_cb(
     ctx->request_result = ctx->download_cbk(&ctx->abort_flag, &http_download_chunk, ctx->user_data);
 
 exit:
-#if (KERNEL_VERSION_MAJOR >= 4) && (KERNEL_VERSION_MINOR >= 2)
     return res;
-#else
-    (void) res;
-#endif
 }
 
 /************************************************

@@ -160,9 +160,17 @@ int main(void)
     system_time_init();
 
     // Spawn a new thread for the Edgehog device
-    k_thread_create(&edgehog_device_thread_data, edgehog_device_thread_stack_area,
-        K_THREAD_STACK_SIZEOF(edgehog_device_thread_stack_area), edgehog_device_thread_entry_point,
-        NULL, NULL, NULL, CONFIG_EDGEHOG_DEVICE_THREAD_PRIORITY, 0, K_NO_WAIT);
+    k_tid_t thread_id = k_thread_create(&edgehog_device_thread_data,
+        edgehog_device_thread_stack_area, K_THREAD_STACK_SIZEOF(edgehog_device_thread_stack_area),
+        edgehog_device_thread_entry_point, NULL, NULL, NULL, CONFIG_EDGEHOG_DEVICE_THREAD_PRIORITY,
+        0, K_NO_WAIT);
+
+#ifdef CONFIG_THREAD_NAME
+    int ret = k_thread_name_set(thread_id, "sample_edgehog_device_thread");
+    if (ret != 0) {
+        LOG_ERR("Failed to set thread name, error %d", ret); // NOLINT
+    }
+#endif
 
     // Wait for a predefined operational time.
     k_timepoint_t finish_timepoint = sys_timepoint_calc(K_SECONDS(CONFIG_SAMPLE_DURATION_SECONDS));
@@ -265,9 +273,16 @@ static void edgehog_device_thread_entry_point(void *arg1, void *arg2, void *arg3
 
 #ifdef CONFIG_EDGEHOG_DEVICE_ZBUS_OTA_EVENT
     // Spawn a new thread for listening on Zbus device
-    k_thread_create(&zbus_thread_data, zbus_thread_stack_area,
+    k_tid_t thread_id = k_thread_create(&zbus_thread_data, zbus_thread_stack_area,
         K_THREAD_STACK_SIZEOF(zbus_thread_stack_area), zbus_thread_entry_point, NULL, NULL, NULL,
         CONFIG_ZBUS_THREAD_PRIORITY, 0, K_NO_WAIT);
+
+#ifdef CONFIG_THREAD_NAME
+    int ret = k_thread_name_set(thread_id, "sample_zbus_ota_thread");
+    if (ret != 0) {
+        LOG_ERR("Failed to set thread name, error %d", ret); // NOLINT
+    }
+#endif
 #endif
 
     while (!atomic_test_bit(&device_threads_flags, DEVICE_THREADS_FLAGS_TERMINATION)) {

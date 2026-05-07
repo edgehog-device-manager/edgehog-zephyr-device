@@ -15,13 +15,14 @@
 #include "led.h"
 #include "ota.h"
 #include "telemetry_private.h"
-#include "uuid.h"
 
 #ifdef CONFIG_WIFI
 #include "wifi_scan.h"
 #endif
 
 #include <astarte_device_sdk/device.h>
+
+#include <zephyr/sys/uuid.h>
 
 /** @brief Possible states for the Edgehog device. */
 enum device_states
@@ -64,7 +65,7 @@ struct edgehog_device
     /** @brief Original user data for the callbacks provided by the user, might be NULL. */
     void *user_cbk_user_data;
     /** @brief UUID representing the Boot Id. */
-    char boot_id[UUID_STR_LEN + 1];
+    char boot_id[UUID_STR_LEN];
     /** @brief OTA thread data used during the OTA Update operation. */
     ota_thread_t ota_thread;
     /** @brief LED thread data used during the LED blink. */

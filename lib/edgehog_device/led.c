@@ -201,6 +201,13 @@ edgehog_result_t edgehog_led_event(
         goto fail;
     }
 
+#ifdef CONFIG_THREAD_NAME
+    int ret = k_thread_name_set(thread_id, "edgehog_led_thread");
+    if (ret != 0) {
+        EDGEHOG_LOG_ERR("Failed to set thread name, error %d", ret);
+    }
+#endif
+
     set_blink_timer(
         &edgehog_dev->led_thread.led_blink_timer, &edgehog_dev->led_thread.led_run_state);
 

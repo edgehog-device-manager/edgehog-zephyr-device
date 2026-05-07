@@ -13,6 +13,7 @@ config EDGEHOG_DEVICE
 	depends on STREAM_FLASH
 	depends on REBOOT
 	depends on ENTROPY_GENERATOR
+	depends on UUID
 	help
 	  This option enables the Edgehog device library
 
