@@ -23,7 +23,7 @@ EDGEHOG_LOG_MODULE_REGISTER(
  *        Defines, constants and typedef        *
  ***********************************************/
 
-#define FS_READ_CHUNK_SIZE 4096
+#define FS_READ_BUFFER_SIZE 4096
 
 /** @brief Context structure for write operations. */
 typedef struct
@@ -46,10 +46,10 @@ typedef struct
     /** @brief Pointer to the file transfer callback structure. */
     edgehog_ft_cbks_t *cbks;
     /** @brief Buffer used to hold the data chunks read from the file. */
-    uint8_t buffer[FS_READ_CHUNK_SIZE];
+    uint8_t buffer[FS_READ_BUFFER_SIZE];
 } read_ctx_t;
 
-/****************************************`********
+/************************************************
  *         Static functions declarations        *
  ***********************************************/
 
@@ -62,7 +62,7 @@ static void write_abort(void *ctx);
 static edgehog_result_t read_init(
     void **ctx, edgehog_ft_cbks_t *cbks, char *identifier, char *source);
 static edgehog_result_t read_chunk(
-    void *ctx, uint8_t **chunk_data, size_t *chunk_size, bool *last_chunk);
+    void *ctx, size_t max_length, uint8_t **chunk_data, size_t *chunk_size, bool *last_chunk);
 static edgehog_result_t read_complete(void *ctx);
 static void read_abort(void *ctx);
 
@@ -224,11 +224,12 @@ error:
 }
 
 static edgehog_result_t read_chunk(
-    void *ctx, uint8_t **chunk_data, size_t *chunk_size, bool *last_chunk)
+    void *ctx, size_t max_length, uint8_t **chunk_data, size_t *chunk_size, bool *last_chunk)
 {
     read_ctx_t *rctx = (read_ctx_t *) ctx;
 
-    ssize_t res = fs_read(&rctx->file, rctx->buffer, FS_READ_CHUNK_SIZE);
+    size_t bytes_to_read = MIN(FS_READ_BUFFER_SIZE, max_length);
+    ssize_t res = fs_read(&rctx->file, rctx->buffer, bytes_to_read);
     if (res < 0) {
         EDGEHOG_LOG_ERR("Failed to read chunk from file, err %zd", res);
         return EDGEHOG_RESULT_INTERNAL_ERROR;
@@ -236,7 +237,7 @@ static edgehog_result_t read_chunk(
 
     *chunk_data = rctx->buffer;
     *chunk_size = (size_t) res;
-    *last_chunk = (res < FS_READ_CHUNK_SIZE);
+    *last_chunk = (res < bytes_to_read);
 
     return EDGEHOG_RESULT_OK;
 }

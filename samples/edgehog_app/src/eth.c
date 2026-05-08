@@ -338,7 +338,7 @@ static void l4_mgmt_event_handler(
 }
 
 /************************************************
- * Global functions definition
+ *         Global functions definition          *
  ***********************************************/
 
 int eth_connect(void)

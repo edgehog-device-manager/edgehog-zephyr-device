@@ -18,7 +18,7 @@ EDGEHOG_LOG_MODULE_REGISTER(edgehog_settings, CONFIG_EDGEHOG_DEVICE_SETTINGS_LOG
 #define EGDEHOG_ID "edgehog_device"
 
 /************************************************
- * Global functions definition
+ *         Global functions definition          *
  ***********************************************/
 
 edgehog_result_t edgehog_settings_init()

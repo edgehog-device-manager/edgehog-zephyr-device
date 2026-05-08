@@ -26,3 +26,7 @@ manifest:
     - name: edgehog-astarte-interfaces
       remote: edgehog-device-manager
       revision: 98418bd3b8b354e8e0950d4d1d7366f908ecba08
+    - name: lz4
+      url: https://github.com/zephyrproject-rtos/lz4
+      revision: zephyr
+      path: modules/lib/lz4

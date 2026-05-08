@@ -20,7 +20,7 @@
 EDGEHOG_LOG_MODULE_REGISTER(base_image, CONFIG_EDGEHOG_DEVICE_BASE_IMAGE_LOG_LEVEL);
 
 /************************************************
- * Static functions declaration
+ *         Static functions declarations        *
  ***********************************************/
 
 static void publish_fingerprint(edgehog_device_handle_t edgehog_device);
@@ -32,7 +32,7 @@ static void publish_version(edgehog_device_handle_t edgehog_device);
 static void publish_build_id(edgehog_device_handle_t edgehog_device);
 
 /************************************************
- * Constants and defines
+ *             Constants and defines            *
  ***********************************************/
 
 #define FINGERPRINT_PROP "/fingerprint"
@@ -41,7 +41,7 @@ static void publish_build_id(edgehog_device_handle_t edgehog_device);
 #define BUILD_ID_PROP "/buildId"
 
 /************************************************
- * Global functions definition
+ *         Global functions definition          *
  ***********************************************/
 
 void publish_base_image(edgehog_device_handle_t edgehog_device)
@@ -54,7 +54,7 @@ void publish_base_image(edgehog_device_handle_t edgehog_device)
 }
 
 /************************************************
- * Static functions definition
+ *         Static functions definitions         *
  ***********************************************/
 
 static void publish_fingerprint(edgehog_device_handle_t edgehog_device)

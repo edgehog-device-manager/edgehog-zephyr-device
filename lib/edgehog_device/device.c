@@ -44,7 +44,7 @@ typedef edgehog_result_t (*datastream_obj_event_handler_cb_t)(
     edgehog_device_handle_t, astarte_device_datastream_object_event_t *);
 
 /************************************************
- * Static functions declaration
+ *         Static functions declarations        *
  ***********************************************/
 
 static edgehog_result_t add_interfaces(astarte_device_handle_t astarte_device);
@@ -223,7 +223,7 @@ static void astarte_property_unset_cbk(astarte_device_data_event_t event)
 }
 
 /************************************************
- * Global functions definition
+ *         Global functions definition          *
  ***********************************************/
 
 edgehog_result_t edgehog_device_new(
@@ -468,7 +468,7 @@ astarte_result_t edgehog_device_get_astarte_error(edgehog_device_handle_t edgeho
 }
 
 /************************************************
- * Static functions definition
+ *         Static functions definitions         *
  ***********************************************/
 
 static edgehog_result_t add_interfaces(astarte_device_handle_t astarte_device)

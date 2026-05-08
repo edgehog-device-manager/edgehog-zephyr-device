@@ -97,6 +97,7 @@ config EDGEHOG_DEVICE_FILE_TRANSFER_COMPRESSION
 	bool "Enable file transfer compression functionality"
 	depends on EDGEHOG_DEVICE
 	depends on EDGEHOG_DEVICE_FILE_TRANSFER
+	depends on LZ4
 	default false
 	help
 	  Enable the possibility to compress and decompress files
@@ -225,6 +226,16 @@ source "subsys/logging/Kconfig.template.log_config"
 module = EDGEHOG_DEVICE_FILE_TRANSFER_STORAGE
 module-str = Log level for Edgehog device file transfer storage utilities.
 module-help = Sets log level for Edgehog device file transfer storage utilities.
+source "subsys/logging/Kconfig.template.log_config"
+
+module = EDGEHOG_DEVICE_FILE_TRANSFER_DECOMPRESSION
+module-str = Log level for the file transfer decompression
+module-help = Sets log level for zephyr file transfer decompression
+source "subsys/logging/Kconfig.template.log_config"
+
+module = EDGEHOG_DEVICE_FILE_TRANSFER_COMPRESSION
+module-str = Log level for the file transfer compression
+module-help = Sets log level for zephyr file transfer compression
 source "subsys/logging/Kconfig.template.log_config"
 
 endmenu

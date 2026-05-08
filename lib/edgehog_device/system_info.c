@@ -22,7 +22,7 @@
 EDGEHOG_LOG_MODULE_REGISTER(system_info, CONFIG_EDGEHOG_DEVICE_SYSTEM_INFO_LOG_LEVEL);
 
 /************************************************
- * Static functions declaration
+ *         Static functions declarations        *
  ***********************************************/
 
 static void publish_serial_number(edgehog_device_handle_t edgehog_device);
@@ -30,14 +30,14 @@ static void publish_serial_number(edgehog_device_handle_t edgehog_device);
 static void publish_part_number(edgehog_device_handle_t edgehog_device);
 
 /************************************************
- * Constants and defines
+ *             Constants and defines            *
  ***********************************************/
 
 #define SERIAL_NUMBER_PROP "/serialNumber"
 #define PART_NUMBER_PROP "/partNumber"
 
 /************************************************
- * Global functions definition
+ *         Global functions definition          *
  ***********************************************/
 
 void publish_system_info(edgehog_device_handle_t edgehog_device)
@@ -48,7 +48,7 @@ void publish_system_info(edgehog_device_handle_t edgehog_device)
 }
 
 /************************************************
- * Static functions definition
+ *         Static functions definitions         *
  ***********************************************/
 
 static void publish_serial_number(edgehog_device_handle_t edgehog_device)

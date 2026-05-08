@@ -20,14 +20,14 @@
 EDGEHOG_LOG_MODULE_REGISTER(os_info, CONFIG_EDGEHOG_DEVICE_OS_INFO_LOG_LEVEL);
 
 /************************************************
- * Constants and defines
+ *             Constants and defines            *
  ***********************************************/
 
 // Version will be like: "255.255.255" resulting 11 chars.
 #define OS_VERSION_SIZE 11
 
 /************************************************
- * Global functions definition
+ *         Global functions definition          *
  ***********************************************/
 
 void publish_os_info(edgehog_device_handle_t edgehog_device)

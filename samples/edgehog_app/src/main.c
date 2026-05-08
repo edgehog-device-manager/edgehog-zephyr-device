@@ -35,7 +35,7 @@ LOG_MODULE_REGISTER(edgehog_app, CONFIG_APP_LOG_LEVEL); // NOLINT
 #endif
 
 /************************************************
- * Constants and defines
+ *             Constants and defines            *
  ***********************************************/
 
 #define MAIN_THREAD_PERIOD_MS 500
@@ -78,7 +78,7 @@ ZBUS_CHAN_ADD_OBS(edgehog_ota_chan, edgehog_ota_subscriber, EDGEHOG_OTA_OBSERVER
 // NOLINTEND(cppcoreguidelines-avoid-non-const-global-variables)
 
 /************************************************
- * Static functions declaration
+ *         Static functions declarations        *
  ***********************************************/
 
 /**
@@ -114,7 +114,7 @@ static void edgehog_listen_zbus_channel(k_timeout_t timeout);
 #endif
 
 /************************************************
- * Global functions definition
+ *         Global functions definition          *
  ***********************************************/
 
 // NOLINTNEXTLINE(hicpp-function-size)

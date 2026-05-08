@@ -71,6 +71,7 @@ static void parse_endpoint_value(const char *path, const astarte_data_t *rx_valu
     edgehog_ft_msg_t *tmp, parsed_http_headers_t *headers);
 static char **serialize_http_headers(
     const char *keys[], size_t keys_size, const char *values[], size_t values_size);
+static enum edgehog_ft_encoding parse_encoding_string(const char *string);
 static void free_http_headers(char *header_fields[]);
 static void progress_work_handler(struct k_work *work);
 static char *duplicate_string(const char *src);
@@ -116,6 +117,16 @@ edgehog_result_t edgehog_ft_msg_init(astarte_object_entry_t *rx_values, size_t r
         }
     }
 
+    if ((tmp.encoding != EDGEHOG_FT_ENCODING_NONE)
+#ifdef CONFIG_EDGEHOG_DEVICE_FILE_TRANSFER_COMPRESSION
+        && (tmp.encoding != EDGEHOG_FT_ENCODING_LZ4)
+#endif
+    ) {
+        EDGEHOG_LOG_ERR("Request with invalid encoding %d", tmp.encoding);
+        eres = EDGEHOG_RESULT_FILE_TRANSFER_INVALID_REQUEST;
+        goto failure;
+    }
+
     *msg = tmp;
     return eres;
 
@@ -154,6 +165,7 @@ edgehog_ft_http_cbk_data_t *edgehog_ft_http_cbk_data_new(edgehog_device_handle_t
     data->id = msg->id;
     data->progress = msg->progress;
     data->type = msg->type;
+    data->encoding = msg->encoding;
     data->file_cbks = file_cbks;
     data->file_cbks_ctx = file_cbks_ctx;
     data->transferred_bytes = 0;
@@ -310,6 +322,10 @@ static void parse_endpoint_value(const char *path, const astarte_data_t *rx_valu
         headers->values = rx_value->data.string_array.buf;
         return;
     }
+    if (strcmp(path, "encoding") == 0) {
+        tmp->encoding = parse_encoding_string(rx_value->data.string);
+        return;
+    }
     if (strcmp(path, ENDPOINT_PROGRESS) == 0) {
         tmp->progress = rx_value->data.boolean;
         return;
@@ -382,6 +398,23 @@ static char **serialize_http_headers(
 
     out[num_headers] = NULL;
     return out;
+}
+
+static enum edgehog_ft_encoding parse_encoding_string(const char *string)
+{
+    if (strlen(string) == 0) {
+        return EDGEHOG_FT_ENCODING_NONE;
+    }
+    if (strcmp(string, "lz4") == 0) {
+        return EDGEHOG_FT_ENCODING_LZ4;
+    }
+    if (strcmp(string, "tar") == 0) {
+        return EDGEHOG_FT_ENCODING_TAR;
+    }
+    if (strcmp(string, "tar.lz4") == 0) {
+        return EDGEHOG_FT_ENCODING_TAR_LZ4;
+    }
+    return EDGEHOG_FT_ENCODING_UNSUPPORTED;
 }
 
 static void free_http_headers(char *header_fields[])

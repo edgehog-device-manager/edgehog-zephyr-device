@@ -25,7 +25,7 @@ EDGEHOG_LOG_MODULE_REGISTER(file_transfer_stream, CONFIG_EDGEHOG_DEVICE_FILE_TRA
 /* The timeout for event operations. This assumes a reasonable delay for event operations. */
 #define EVENT_TIMEOUT_MS 2000
 /* Define an internal buffer size for chunks read from the pipe during uploads */
-#define PIPE_READ_CHUNK_SIZE 1024
+#define READ_BUFFER_SIZE 1024
 /* Buffer size for the dynamically allocated stream pipe */
 #define STREAM_PIPE_BUFFER_SIZE 1024
 /* Simple macro for 100% */
@@ -56,7 +56,7 @@ typedef struct
     /** @brief Event used to signal the end of the file/stream. */
     struct k_event eof_event;
     /** @brief Buffer used to read chunks of data from the pipe. */
-    uint8_t read_buffer[PIPE_READ_CHUNK_SIZE];
+    uint8_t read_buffer[READ_BUFFER_SIZE];
 } read_ctx_t;
 
 /************************************************
@@ -72,7 +72,7 @@ static void write_abort(void *ctx);
 static edgehog_result_t read_init(
     void **ctx, edgehog_ft_cbks_t *cbks, char *identifier, char *source);
 static edgehog_result_t read_chunk(
-    void *ctx, uint8_t **chunk_data, size_t *chunk_size, bool *last_chunk);
+    void *ctx, size_t max_length, uint8_t **chunk_data, size_t *chunk_size, bool *last_chunk);
 static edgehog_result_t read_complete(void *ctx);
 static void read_abort(void *ctx);
 
@@ -239,7 +239,7 @@ static edgehog_result_t read_init(
 }
 
 static edgehog_result_t read_chunk(
-    void *ctx, uint8_t **chunk_data, size_t *chunk_size, bool *last_chunk)
+    void *ctx, size_t max_length, uint8_t **chunk_data, size_t *chunk_size, bool *last_chunk)
 {
     read_ctx_t *rctx = (read_ctx_t *) ctx;
     int64_t start_time = k_uptime_get();
@@ -247,7 +247,8 @@ static edgehog_result_t read_chunk(
     // Loop until we read data, encounter a hard error, or detect EOF
     while (true) {
         // Try to read data from the pipe without blocking
-        int ret = k_pipe_read(&rctx->pipe, rctx->read_buffer, PIPE_READ_CHUNK_SIZE, K_NO_WAIT);
+        size_t bytes_to_read = MIN(READ_BUFFER_SIZE, max_length);
+        int ret = k_pipe_read(&rctx->pipe, rctx->read_buffer, bytes_to_read, K_NO_WAIT);
         if (ret > 0) {
             *chunk_data = rctx->read_buffer;
             *chunk_size = (size_t) ret;
