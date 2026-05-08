@@ -38,7 +38,7 @@ K_THREAD_STACK_DEFINE(wifi_scan_stack_area, WIFI_SCAN_THREAD_STACK_SIZE);
 // NOLINTEND(cppcoreguidelines-avoid-non-const-global-variables)
 
 /************************************************
- * Static functions declaration
+ *         Static functions declarations        *
  ***********************************************/
 
 /**
@@ -141,7 +141,7 @@ static void wifi_scan_thread_entry_point(void *device_ptr, void *queue_ptr, void
 }
 
 /************************************************
- * Global functions definition
+ *         Global functions definition          *
  ***********************************************/
 
 edgehog_result_t edgehog_wifi_scan_init(edgehog_device_handle_t edgehog_device)

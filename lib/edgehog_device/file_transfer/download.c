@@ -8,6 +8,7 @@
 
 #include "edgehog_private.h"
 #include "file_transfer/core.h"
+#include "file_transfer/decompression.h"
 #include "file_transfer/filesystem.h"
 #include "file_transfer/stream.h"
 #include "file_transfer/utils.h"
@@ -36,6 +37,12 @@ EDGEHOG_LOG_MODULE_REGISTER(file_transfer_download, CONFIG_EDGEHOG_DEVICE_FILE_T
  *         Static functions declarations        *
  ***********************************************/
 
+#ifdef CONFIG_EDGEHOG_DEVICE_FILE_TRANSFER_COMPRESSION
+static edgehog_result_t process_compressed_chunk(
+    edgehog_ft_http_cbk_data_t *data, const edgehog_http_response_chunk_t *response_chunk);
+#endif
+static edgehog_result_t process_uncompressed_chunk(
+    edgehog_ft_http_cbk_data_t *data, const edgehog_http_response_chunk_t *response_chunk);
 static const edgehog_ft_file_write_cbks_t *get_callbacks(const char *destination_type);
 static edgehog_result_t setup_digest(edgehog_ft_http_cbk_data_t *data);
 static int verify_digest(edgehog_ft_http_cbk_data_t *data, const char *expected_digest);
@@ -44,52 +51,63 @@ static int verify_digest(edgehog_ft_http_cbk_data_t *data, const char *expected_
  *     Callbacks definition and declaration     *
  ***********************************************/
 
+#ifdef CONFIG_EDGEHOG_DEVICE_FILE_TRANSFER_COMPRESSION
+static int decompression_write_cbk(const uint8_t *data_chunk, size_t size, void *user_data)
+{
+    edgehog_ft_http_cbk_data_t *data = (edgehog_ft_http_cbk_data_t *) user_data;
+    const edgehog_ft_file_write_cbks_t *file_cbks
+        = (const edgehog_ft_file_write_cbks_t *) data->file_cbks;
+
+    // Append the decompressed chunk to the file
+    edgehog_result_t eres = file_cbks->file_append_chunk(data->file_cbks_ctx, data_chunk, size);
+    if (eres != EDGEHOG_RESULT_OK) {
+        data->posix_errno = EIO;
+        data->message = "Failed to write decompressed chunk to file";
+        return -1;
+    }
+
+    // Stream the uncompressed chunk into the SHA-256 hash operation
+    if (data->expected_digest) {
+        psa_status_t status = psa_hash_update(&data->hash_operation, data_chunk, size);
+        if (status != PSA_SUCCESS) {
+            data->posix_errno = EIO;
+            data->message = "Failed to update file digest";
+            return -1;
+        }
+    }
+
+    // Update progress with the uncompressed size
+    edgehog_ft_update_progress(data, size, false);
+    return 0;
+}
+#endif
+
 static edgehog_result_t http_get_server_to_device_request_cbk(
     edgehog_http_response_chunk_t *response_chunk, void *user_data)
 {
-    edgehog_result_t eres = EDGEHOG_RESULT_OK;
     edgehog_ft_http_cbk_data_t *data = NULL;
+
     if (!user_data) {
         EDGEHOG_LOG_ERR("Unable to read user data context");
-        goto error;
+        return EDGEHOG_RESULT_HTTP_REQUEST_ABORTED;
     }
 
     data = (edgehog_ft_http_cbk_data_t *) user_data;
-    const edgehog_ft_file_write_cbks_t *file_cbks
-        = (const edgehog_ft_file_write_cbks_t *) data->file_cbks;
 
     if (!response_chunk) {
         data->posix_errno = EPIPE;
         data->message = "Unable to read chunk data";
-        goto error;
+        return EDGEHOG_RESULT_HTTP_REQUEST_ABORTED;
     }
 
-    // Process this chunk of the file
-    eres = file_cbks->file_append_chunk(
-        data->file_cbks_ctx, response_chunk->chunk_start_addr, response_chunk->chunk_size);
-    if (eres != EDGEHOG_RESULT_OK) {
-        data->posix_errno = EIO;
-        data->message = "Failed to write chunk to file";
-        goto error;
+#ifdef CONFIG_EDGEHOG_DEVICE_FILE_TRANSFER_COMPRESSION
+    if (data->encoding == EDGEHOG_FT_ENCODING_LZ4) {
+        return process_compressed_chunk(data, response_chunk);
     }
+#endif
 
-    // Stream the new chunk into the SHA-256 hash operation
-    if (data->expected_digest) {
-        psa_status_t status = psa_hash_update(
-            &data->hash_operation, response_chunk->chunk_start_addr, response_chunk->chunk_size);
-        if (status != PSA_SUCCESS) {
-            data->posix_errno = EIO;
-            data->message = "Failed to update file digest";
-            goto error;
-        }
-    }
-
-    edgehog_ft_update_progress(data, response_chunk->chunk_size, response_chunk->last_chunk);
-
-    return EDGEHOG_RESULT_OK;
-
-error:
-    return EDGEHOG_RESULT_HTTP_REQUEST_ABORTED;
+    // Fallthrough for uncompressed, or if compression is disabled
+    return process_uncompressed_chunk(data, response_chunk);
 }
 
 /************************************************
@@ -211,6 +229,76 @@ exit:
 /************************************************
  *         Static functions definitions         *
  ***********************************************/
+
+#ifdef CONFIG_EDGEHOG_DEVICE_FILE_TRANSFER_COMPRESSION
+static edgehog_result_t process_compressed_chunk(
+    edgehog_ft_http_cbk_data_t *data, const edgehog_http_response_chunk_t *response_chunk)
+{
+    int ret = 0;
+
+    // Initialize context on the first chunk
+    if (!file_transfer_decompression_is_initialized(&data->decomp_ctx)) {
+        ret = file_transfer_decompression_init(&data->decomp_ctx, decompression_write_cbk, data);
+        if (ret != 0) {
+            data->posix_errno = ENOMEM;
+            data->message = "Failed to initialize decompression context";
+            return EDGEHOG_RESULT_HTTP_REQUEST_ABORTED;
+        }
+    }
+
+    // Process incoming HTTP chunk
+    if (response_chunk->chunk_size > 0) {
+        ret = file_transfer_decompression_process_chunk(
+            &data->decomp_ctx, response_chunk->chunk_start_addr, response_chunk->chunk_size);
+        if (ret != 0) {
+            data->posix_errno = EIO;
+            data->message = "Decompression chunk processing failed";
+            file_transfer_decompression_free(&data->decomp_ctx);
+            return EDGEHOG_RESULT_HTTP_REQUEST_ABORTED;
+        }
+    }
+
+    // Finalize
+    if (response_chunk->last_chunk) {
+        edgehog_ft_update_progress(data, 0, true);
+        file_transfer_decompression_free(&data->decomp_ctx);
+    }
+
+    return EDGEHOG_RESULT_OK;
+}
+#endif
+
+static edgehog_result_t process_uncompressed_chunk(
+    edgehog_ft_http_cbk_data_t *data, const edgehog_http_response_chunk_t *response_chunk)
+{
+    const edgehog_ft_file_write_cbks_t *file_cbks
+        = (const edgehog_ft_file_write_cbks_t *) data->file_cbks;
+    edgehog_result_t eres = EDGEHOG_RESULT_OK;
+
+    // Process this chunk of the file
+    eres = file_cbks->file_append_chunk(
+        data->file_cbks_ctx, response_chunk->chunk_start_addr, response_chunk->chunk_size);
+    if (eres != EDGEHOG_RESULT_OK) {
+        data->posix_errno = EIO;
+        data->message = "Failed to write chunk to file";
+        return eres;
+    }
+
+    // Stream the new chunk into the SHA-256 hash operation
+    if (data->expected_digest) {
+        psa_status_t status = psa_hash_update(
+            &data->hash_operation, response_chunk->chunk_start_addr, response_chunk->chunk_size);
+        if (status != PSA_SUCCESS) {
+            data->posix_errno = EIO;
+            data->message = "Failed to update file digest";
+            return EDGEHOG_RESULT_HTTP_REQUEST_ABORTED;
+        }
+    }
+
+    edgehog_ft_update_progress(data, response_chunk->chunk_size, response_chunk->last_chunk);
+
+    return EDGEHOG_RESULT_OK;
+}
 
 static edgehog_result_t setup_digest(edgehog_ft_http_cbk_data_t *data)
 {

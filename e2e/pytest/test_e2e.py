@@ -10,7 +10,10 @@ import pytest
 from configuration import Configuration
 from http_server import start_server, stop_server
 from telemetry import validate_initial_telemetry, validate_telemetry_frequency
-from file_transfer import is_file_transfer_enabled, validate_file_transfer_stream, validate_file_transfer_capabilities, validate_file_transfer_filesystem
+from file_transfer import (
+    is_file_transfer_enabled, validate_file_transfer_stream, validate_file_transfer_capabilities,
+    validate_file_transfer_filesystem, validate_file_transfer_stream_lz4, validate_file_transfer_filesystem_lz4
+    )
 
 logger = logging.getLogger(__name__)
 logging.getLogger("urllib3").setLevel(logging.INFO)
@@ -69,5 +72,7 @@ def test_file_transfer(e2e_device_env):
     validate_file_transfer_capabilities(cfg)
     validate_file_transfer_stream(cfg)
     validate_file_transfer_filesystem(cfg)
+    validate_file_transfer_stream_lz4(cfg)
+    validate_file_transfer_filesystem_lz4(cfg)
 
     time.sleep(1)

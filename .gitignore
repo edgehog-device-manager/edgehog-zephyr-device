@@ -35,4 +35,5 @@ e2e/http_server_certs/192.0.2.2.pem
 e2e/http_server_certs/192.0.2.2.key
 
 # All data in the http_server_data folder
-e2e/http_server_data/*_test_data.txt
+e2e/http_server_data/*.txt
+e2e/http_server_data/*.lz4

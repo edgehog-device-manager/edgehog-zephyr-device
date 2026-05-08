@@ -50,10 +50,12 @@ void edgeghog_ft_publish_capabilities(edgehog_device_handle_t edgehog_device)
 
     // TODO: add support for missign encodings and update the list accordingly
     // Possible values: [gz, lz4, tar, tar.gz, tar.lz4]
-    // TODO: use EDGEHOG_DEVICE_FILE_TRANSFER_COMPRESSION kconfig option to enable
-    // or disable the compression
-    const char **supported_encodings = NULL;
-    size_t supported_encodings_len = 0;
+    const char *supported_encodings[] = {
+#ifdef CONFIG_EDGEHOG_DEVICE_FILE_TRANSFER_COMPRESSION
+        "lz4",
+#endif
+    };
+    size_t supported_encodings_len = ARRAY_SIZE(supported_encodings);
     astarte_result_t res = astarte_device_set_property(edgehog_device->astarte_device,
         io_edgehog_devicemanager_fileTransfer_Capabilities.name, "/encodings",
         astarte_data_from_string_array(supported_encodings, supported_encodings_len));

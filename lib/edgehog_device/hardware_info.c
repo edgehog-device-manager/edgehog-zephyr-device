@@ -18,11 +18,7 @@
 EDGEHOG_LOG_MODULE_REGISTER(hardware_info, CONFIG_EDGEHOG_DEVICE_HARDWARE_INFO_LOG_LEVEL);
 
 /************************************************
- * Constants and defines
- ***********************************************/
-
-/************************************************
- * Global functions definition
+ *         Global functions definition          *
  ***********************************************/
 
 void publish_hardware_info(edgehog_device_handle_t edgehog_device)

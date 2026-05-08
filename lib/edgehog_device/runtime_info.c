@@ -18,7 +18,7 @@
 EDGEHOG_LOG_MODULE_REGISTER(runtime_info, CONFIG_EDGEHOG_DEVICE_RUNTIME_INFO_LOG_LEVEL);
 
 /************************************************
- * Constants and defines
+ *             Constants and defines            *
  ***********************************************/
 
 #define RUNTIME_NAME_PROP "/name"
@@ -33,7 +33,7 @@ EDGEHOG_LOG_MODULE_REGISTER(runtime_info, CONFIG_EDGEHOG_DEVICE_RUNTIME_INFO_LOG
 #define ENVIRONMENT_SIZE 18
 
 /************************************************
- * Static functions definition
+ *         Static functions definitions         *
  ***********************************************/
 
 void publish_runtime_info(edgehog_device_handle_t edgehog_device)

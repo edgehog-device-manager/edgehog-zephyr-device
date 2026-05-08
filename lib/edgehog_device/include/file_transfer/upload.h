@@ -22,7 +22,7 @@ typedef struct
         void **ctx, edgehog_ft_cbks_t *cbks, char *identifier, char *source);
     /** @brief Reads a chunk of data from the storage backend. */
     edgehog_result_t (*file_read_chunk)(
-        void *ctx, uint8_t **chunk_data, size_t *chunk_size, bool *last_chunk);
+        void *ctx, size_t max_length, uint8_t **chunk_data, size_t *chunk_size, bool *last_chunk);
     /** @brief Finalizes and closes the file transfer successfully. */
     edgehog_result_t (*file_complete)(void *ctx);
     /** @brief Aborts the transfer and cleans up resources. */

@@ -26,6 +26,7 @@ EDGEHOG_LOG_MODULE_REGISTER(file_transfer_utils, CONFIG_EDGEHOG_DEVICE_FILE_TRAN
 #define ENDPOINT_URL "url"
 #define ENDPOINT_HTTP_HEADER_KEYS "httpHeaderKeys"
 #define ENDPOINT_HTTP_HEADER_VALUES "httpHeaderValues"
+#define ENDPOINT_ENCODING "encoding"
 #define ENDPOINT_PROGRESS "progress"
 #define ENDPOINT_DIGEST "digest"
 #define ENDPOINT_FILE_SIZE_BYTES "fileSizeBytes"
@@ -71,6 +72,7 @@ static void parse_endpoint_value(const char *path, const astarte_data_t *rx_valu
     edgehog_ft_msg_t *tmp, parsed_http_headers_t *headers);
 static char **serialize_http_headers(
     const char *keys[], size_t keys_size, const char *values[], size_t values_size);
+static enum edgehog_ft_encoding parse_encoding_string(const char *string);
 static void free_http_headers(char *header_fields[]);
 static void progress_work_handler(struct k_work *work);
 static char *duplicate_string(const char *src);
@@ -116,6 +118,16 @@ edgehog_result_t edgehog_ft_msg_init(astarte_object_entry_t *rx_values, size_t r
         }
     }
 
+    if ((tmp.encoding != EDGEHOG_FT_ENCODING_NONE)
+#ifdef CONFIG_EDGEHOG_DEVICE_FILE_TRANSFER_COMPRESSION
+        && (tmp.encoding != EDGEHOG_FT_ENCODING_LZ4)
+#endif
+    ) {
+        EDGEHOG_LOG_ERR("Request with invalid encoding %d", tmp.encoding);
+        eres = EDGEHOG_RESULT_FILE_TRANSFER_INVALID_REQUEST;
+        goto failure;
+    }
+
     *msg = tmp;
     return eres;
 
@@ -154,6 +166,7 @@ edgehog_ft_http_cbk_data_t *edgehog_ft_http_cbk_data_new(edgehog_device_handle_t
     data->id = msg->id;
     data->progress = msg->progress;
     data->type = msg->type;
+    data->encoding = msg->encoding;
     data->file_cbks = file_cbks;
     data->file_cbks_ctx = file_cbks_ctx;
     data->transferred_bytes = 0;
@@ -290,46 +303,60 @@ void edgehog_ft_send_response(edgehog_device_handle_t device, const char *identi
 static void parse_endpoint_value(const char *path, const astarte_data_t *rx_value,
     edgehog_ft_msg_t *tmp, parsed_http_headers_t *headers)
 {
-    bool is_server_to_device = (tmp->type == EDGEHOG_FT_TYPE_SERVER_TO_DEVICE);
+    const char *tmp_string = NULL;
+    bool tmp_bool = false;
+    int64_t tmp_long = 0;
 
-    if (strcmp(path, ENDPOINT_ID) == 0) {
-        tmp->id = duplicate_string((char *) rx_value->data.string);
+    bool is_ser_to_dev = (tmp->type == EDGEHOG_FT_TYPE_SERVER_TO_DEVICE);
+    const char *loc_type_key = is_ser_to_dev ? ENDPOINT_DESTINATION_TYPE : ENDPOINT_SOURCE_TYPE;
+    const char *loc_key = is_ser_to_dev ? ENDPOINT_DESTINATION : ENDPOINT_SOURCE;
+
+    if (strcmp(path, ENDPOINT_ID) == 0
+        && astarte_data_to_string(*rx_value, &tmp_string) == ASTARTE_RESULT_OK) {
+        tmp->id = duplicate_string(tmp_string);
         return;
     }
-    if (strcmp(path, ENDPOINT_URL) == 0) {
-        tmp->url = duplicate_string((char *) rx_value->data.string);
+    if (strcmp(path, ENDPOINT_URL) == 0
+        && astarte_data_to_string(*rx_value, &tmp_string) == ASTARTE_RESULT_OK) {
+        tmp->url = duplicate_string(tmp_string);
         return;
     }
     if (strcmp(path, ENDPOINT_HTTP_HEADER_KEYS) == 0) {
-        headers->keys_len = rx_value->data.string_array.len;
-        headers->keys = rx_value->data.string_array.buf;
+        astarte_data_to_string_array(*rx_value, &headers->keys, &headers->keys_len);
         return;
     }
     if (strcmp(path, ENDPOINT_HTTP_HEADER_VALUES) == 0) {
-        headers->values_len = rx_value->data.string_array.len;
-        headers->values = rx_value->data.string_array.buf;
+        astarte_data_to_string_array(*rx_value, &headers->values, &headers->values_len);
         return;
     }
-    if (strcmp(path, ENDPOINT_PROGRESS) == 0) {
-        tmp->progress = rx_value->data.boolean;
+    if (strcmp(path, ENDPOINT_ENCODING) == 0
+        && astarte_data_to_string(*rx_value, &tmp_string) == ASTARTE_RESULT_OK) {
+        tmp->encoding = parse_encoding_string(tmp_string);
         return;
     }
-    if (strcmp(path, ENDPOINT_DIGEST) == 0) {
-        tmp->digest = duplicate_string((char *) rx_value->data.string);
+    if (strcmp(path, ENDPOINT_PROGRESS) == 0
+        && astarte_data_to_boolean(*rx_value, &tmp_bool) == ASTARTE_RESULT_OK) {
+        tmp->progress = tmp_bool;
         return;
     }
-    if (is_server_to_device && strcmp(path, ENDPOINT_FILE_SIZE_BYTES) == 0) {
-        tmp->file_size_bytes = rx_value->data.longinteger;
+    if (strcmp(path, ENDPOINT_DIGEST) == 0
+        && astarte_data_to_string(*rx_value, &tmp_string) == ASTARTE_RESULT_OK) {
+        tmp->digest = duplicate_string(tmp_string);
         return;
     }
-    if ((is_server_to_device && strcmp(path, ENDPOINT_DESTINATION_TYPE) == 0)
-        || (!is_server_to_device && strcmp(path, ENDPOINT_SOURCE_TYPE) == 0)) {
-        tmp->location_type = duplicate_string((char *) rx_value->data.string);
+    if (is_ser_to_dev && strcmp(path, ENDPOINT_FILE_SIZE_BYTES) == 0
+        && astarte_data_to_longinteger(*rx_value, &tmp_long) == ASTARTE_RESULT_OK) {
+        tmp->file_size_bytes = tmp_long;
         return;
     }
-    if ((tmp->type == EDGEHOG_FT_TYPE_SERVER_TO_DEVICE && strcmp(path, ENDPOINT_DESTINATION) == 0)
-        || (tmp->type == EDGEHOG_FT_TYPE_DEVICE_TO_SERVER && strcmp(path, ENDPOINT_SOURCE) == 0)) {
-        tmp->location = duplicate_string((char *) rx_value->data.string);
+    if (strcmp(path, loc_type_key) == 0
+        && astarte_data_to_string(*rx_value, &tmp_string) == ASTARTE_RESULT_OK) {
+        tmp->location_type = duplicate_string(tmp_string);
+        return;
+    }
+    if (strcmp(path, loc_key) == 0
+        && astarte_data_to_string(*rx_value, &tmp_string) == ASTARTE_RESULT_OK) {
+        tmp->location = duplicate_string(tmp_string);
         return;
     }
 }
@@ -382,6 +409,23 @@ static char **serialize_http_headers(
 
     out[num_headers] = NULL;
     return out;
+}
+
+static enum edgehog_ft_encoding parse_encoding_string(const char *string)
+{
+    if (strlen(string) == 0) {
+        return EDGEHOG_FT_ENCODING_NONE;
+    }
+    if (strcmp(string, "lz4") == 0) {
+        return EDGEHOG_FT_ENCODING_LZ4;
+    }
+    if (strcmp(string, "tar") == 0) {
+        return EDGEHOG_FT_ENCODING_TAR;
+    }
+    if (strcmp(string, "tar.lz4") == 0) {
+        return EDGEHOG_FT_ENCODING_TAR_LZ4;
+    }
+    return EDGEHOG_FT_ENCODING_UNSUPPORTED;
 }
 
 static void free_http_headers(char *header_fields[])

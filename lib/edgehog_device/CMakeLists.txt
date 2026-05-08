@@ -4,7 +4,7 @@
 
 zephyr_library()
 
-# TODO: remove this as it's a workaroung to make available the mbedTLS crypto headers in zephyr 4.3
+# TODO: remove this as it's a workaround to make available the mbedTLS crypto headers in zephyr 4.3
 zephyr_library_link_libraries(mbedTLS)
 
 zephyr_library_include_directories(include)
@@ -18,5 +18,12 @@ zephyr_library_sources(${lib_sources})
 
 if(CONFIG_EDGEHOG_DEVICE_FILE_TRANSFER)
     FILE(GLOB ft_sources file_transfer/*.c)
+
+    # Remove the compression source file if the config is not enabled
+    if(NOT CONFIG_EDGEHOG_DEVICE_FILE_TRANSFER_COMPRESSION)
+        list(REMOVE_ITEM ft_sources "${CMAKE_CURRENT_SOURCE_DIR}/file_transfer/compression.c")
+        list(REMOVE_ITEM ft_sources "${CMAKE_CURRENT_SOURCE_DIR}/file_transfer/decompression.c")
+    endif()
+
     zephyr_library_sources(${ft_sources})
 endif()

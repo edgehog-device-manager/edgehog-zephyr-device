@@ -33,3 +33,4 @@ tests:
       - ft
     extra_configs:
       - CONFIG_EDGEHOG_DEVICE_FILE_TRANSFER=y
+      - CONFIG_EDGEHOG_DEVICE_FILE_TRANSFER_COMPRESSION=y

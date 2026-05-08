@@ -4,6 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+// NOLINENUMBERLINT
+
 #include "ota.h"
 
 #include "edgehog_device/device.h"
