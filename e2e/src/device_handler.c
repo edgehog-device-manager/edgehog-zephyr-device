@@ -45,10 +45,6 @@ static struct k_thread download_thread_data;
 K_THREAD_STACK_DEFINE(upload_thread_stack_area, 2048);
 static struct k_thread upload_thread_data;
 
-// Pointers to the dynamic pipe and event provided by the file transfer logic
-static struct k_pipe *current_loopback_pipe = NULL;
-static struct k_event *current_loopback_event = NULL;
-
 /************************************************
  *         Static functions declaration         *
  ***********************************************/
@@ -56,8 +52,8 @@ static struct k_event *current_loopback_event = NULL;
 static void device_thread_entry_point(void *unused1, void *unused2, void *unused3);
 static void connection_callback(astarte_device_connection_event_t event);
 static void disconnection_callback(astarte_device_disconnection_event_t event);
-static void download_thread_entry_point(void *unused1, void *unused2, void *unused3);
-static void upload_thread_entry_point(void *unused1, void *unused2, void *unused3);
+static void download_thread_entry_point(void *stream_pipe, void *stream_event, void *unused3);
+static void upload_thread_entry_point(void *stream_pipe, void *stream_event, void *unused3);
 
 /************************************************
  *     Callbacks definition and declaration     *
@@ -68,8 +64,8 @@ static bool on_stream_transfer_start(
 {
     if (strcmp(name, "loopback") == 0) {
         // Only one file transfer can be active at a time
-        current_loopback_pipe = stream->pipe;
-        current_loopback_event = stream->event;
+        struct k_pipe *pipe = stream->pipe;
+        struct k_event *event = stream->event;
 
         if (type == EDGEHOG_FT_TYPE_SERVER_TO_DEVICE) {
             LOG_INF("Starting stream transfer [server-to-device] on pipe '%s'. Expected size: %zu "
@@ -79,7 +75,8 @@ static bool on_stream_transfer_start(
             // Spawn the download thread on demand
             k_thread_create(&download_thread_data, download_thread_stack_area,
                 K_THREAD_STACK_SIZEOF(download_thread_stack_area), download_thread_entry_point,
-                NULL, NULL, NULL, CONFIG_E2E_DEVICE_THREAD_PRIORITY, 0, K_NO_WAIT);
+                (void *) pipe, (void *) event, NULL, CONFIG_E2E_DEVICE_THREAD_PRIORITY, 0,
+                K_NO_WAIT);
         } else {
             LOG_INF("Starting stream transfer [device-to-server] on pipe '%s'. Expected size: %zu "
                     "bytes",
@@ -87,8 +84,9 @@ static bool on_stream_transfer_start(
 
             // Spawn the upload thread on demand
             k_thread_create(&upload_thread_data, upload_thread_stack_area,
-                K_THREAD_STACK_SIZEOF(upload_thread_stack_area), upload_thread_entry_point, NULL,
-                NULL, NULL, CONFIG_E2E_DEVICE_THREAD_PRIORITY, 0, K_NO_WAIT);
+                K_THREAD_STACK_SIZEOF(upload_thread_stack_area), upload_thread_entry_point,
+                (void *) pipe, (void *) event, NULL, CONFIG_E2E_DEVICE_THREAD_PRIORITY, 0,
+                K_NO_WAIT);
         }
 
         return true;
@@ -248,13 +246,14 @@ static void disconnection_callback(astarte_device_disconnection_event_t event)
     atomic_clear_bit(&device_thread_flags, DEVICE_THREAD_CONNECTED_FLAG);
 }
 
-static void download_thread_entry_point(void *unused1, void *unused2, void *unused3)
+static void download_thread_entry_point(void *stream_pipe, void *stream_event, void *unused3)
 {
-    ARG_UNUSED(unused1);
-    ARG_UNUSED(unused2);
     ARG_UNUSED(unused3);
 
     LOG_INF("Started Loopback download thread (Server -> Device RAM).");
+
+    struct k_pipe *pipe = (struct k_pipe *) stream_pipe;
+    struct k_event *event = (struct k_event *) stream_event;
 
     loopback_file_size = 0;
 
@@ -264,24 +263,24 @@ static void download_thread_entry_point(void *unused1, void *unused2, void *unus
         uint8_t chunk[256];
 
         // Read progressively from the pipe provided by Edgehog
-        int ret = k_pipe_read(current_loopback_pipe, chunk, sizeof(chunk), K_MSEC(100));
+        int ret = k_pipe_read(pipe, chunk, sizeof(chunk), K_MSEC(100));
         if (ret > 0) {
             if (loopback_file_size + ret <= MAX_LOOPBACK_FILE_SIZE) {
                 memcpy(loopback_file_buffer + loopback_file_size, chunk, ret);
                 loopback_file_size += ret;
             } else {
                 LOG_ERR("Loopback buffer overflow! Max size is %d", MAX_LOOPBACK_FILE_SIZE);
-                k_event_post(current_loopback_event, EDGEHOG_FT_STREAM_ERROR_EVENT_FLAG);
+                k_event_post(event, EDGEHOG_FT_STREAM_ERROR_EVENT_FLAG);
                 return;
             }
         } else if (ret < 0 && ret != -EAGAIN) {
             LOG_ERR("Failed to read from loopback pipe");
-            k_event_post(current_loopback_event, EDGEHOG_FT_STREAM_ERROR_EVENT_FLAG);
+            k_event_post(event, EDGEHOG_FT_STREAM_ERROR_EVENT_FLAG);
             return;
         }
 
         // Check if Edgehog posted the EOF flag indicating download completion
-        if (k_event_test(current_loopback_event, EDGEHOG_FT_STREAM_EOF_EVENT_FLAG)) {
+        if (k_event_test(event, EDGEHOG_FT_STREAM_EOF_EVENT_FLAG)) {
             download_complete = true;
         }
     }
@@ -291,20 +290,21 @@ static void download_thread_entry_point(void *unused1, void *unused2, void *unus
     }
 
     // Acknowledge that reading is complete so the library can safely tear down memory structures
-    if (current_loopback_event) {
-        k_event_post(current_loopback_event, EDGEHOG_FT_STREAM_ACK_EVENT_FLAG);
+    if (event) {
+        k_event_post(event, EDGEHOG_FT_STREAM_ACK_EVENT_FLAG);
     }
 
     LOG_INF("Exiting download thread.");
 }
 
-static void upload_thread_entry_point(void *unused1, void *unused2, void *unused3)
+static void upload_thread_entry_point(void *stream_pipe, void *stream_event, void *unused3)
 {
-    ARG_UNUSED(unused1);
-    ARG_UNUSED(unused2);
     ARG_UNUSED(unused3);
 
     LOG_INF("Started Loopback upload thread (Device RAM -> Server).");
+
+    struct k_pipe *pipe = (struct k_pipe *) stream_pipe;
+    struct k_event *event = (struct k_event *) stream_event;
 
     size_t total_written = 0;
 
@@ -315,7 +315,7 @@ static void upload_thread_entry_point(void *unused1, void *unused2, void *unused
 
             // Write progressively to the pipe. This will block if the pipe is full,
             // properly syncing with the upload HTTP stream.
-            int ret = k_pipe_write(current_loopback_pipe, loopback_file_buffer + total_written,
+            int ret = k_pipe_write(pipe, loopback_file_buffer + total_written,
                 loopback_file_size - total_written, K_MSEC(100));
 
             if (ret > 0) {
@@ -330,13 +330,13 @@ static void upload_thread_entry_point(void *unused1, void *unused2, void *unused
         }
 
         // Post EOF to inform Edgehog's read stream that there is no more data
-        if (current_loopback_event) {
-            k_event_post(current_loopback_event, EDGEHOG_FT_STREAM_EOF_EVENT_FLAG);
+        if (event) {
+            k_event_post(event, EDGEHOG_FT_STREAM_EOF_EVENT_FLAG);
         }
     } else {
         LOG_WRN("Loopback file size is 0. Nothing to upload.");
-        if (current_loopback_event) {
-            k_event_post(current_loopback_event, EDGEHOG_FT_STREAM_EOF_EVENT_FLAG);
+        if (event) {
+            k_event_post(event, EDGEHOG_FT_STREAM_EOF_EVENT_FLAG);
         }
     }
 
