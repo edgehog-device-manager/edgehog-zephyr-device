@@ -22,7 +22,7 @@ jobs:
       # setup astarte
       - name: Create Astarte Cluster
         id: astarte
-        uses: astarte-platform/astarte-cluster-action@v1
+        uses: astarte-platform/astarte-cluster-action@v2
         with:
           astarte_version: "1.2.1"
 
