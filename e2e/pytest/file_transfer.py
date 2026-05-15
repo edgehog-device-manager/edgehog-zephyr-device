@@ -128,6 +128,11 @@ def _run_full_transfer_cycle(e2e_cfg: Configuration, transfer_type: str, device_
     logger.info(f"Initiating {transfer_type} download...")
     _execute_and_wait_for_transfer(e2e_cfg, interface_ft_server_to_device, dl_data)
 
+    # do not perform upload in case of a compressed Device to Server transmission
+    if encoding != None:
+        logger.warning(f"Could not perform compressed Device to Server test")
+        return
+
     # --- PHASE 2: UPLOAD (Device to Server) ---
     ul_data = {
         "url": f"https://192.0.2.2:8443/{upload_filename}",

@@ -19,7 +19,7 @@ typedef struct
 {
     /** @brief Initializes the storage backend and returns a context. */
     edgehog_result_t (*file_init)(
-        void **ctx, edgehog_ft_cbks_t *cbks, char *identifier, char *source);
+        void **ctx, edgehog_ft_cbks_t *cbks, char *identifier, char *source, size_t *out_file_size);
     /** @brief Reads a chunk of data from the storage backend. */
     edgehog_result_t (*file_read_chunk)(
         void *ctx, size_t max_length, uint8_t **chunk_data, size_t *chunk_size, bool *last_chunk);

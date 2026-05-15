@@ -89,6 +89,8 @@ typedef struct
     const char **header_fields;
     /** @brief Timeout to use for the HTTP operations in ms. */
     int32_t timeout_ms;
+    /** @brief Size of the data transmitted by the HTTP PUT request. */
+    size_t payload_size;
     /** @brief Callback for a chunk payload event. */
     edgehog_http_payload_cbk_t payload_cbk;
     /** @brief User data passed to the callback function. */

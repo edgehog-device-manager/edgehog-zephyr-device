@@ -60,7 +60,7 @@ static void upload_thread_entry_point(void *stream_pipe, void *stream_event, voi
  ***********************************************/
 
 static bool on_stream_transfer_start(
-    const char *name, edgehog_ft_type_t type, size_t expected_size, edgehog_ft_stream_t *stream)
+    const char *name, edgehog_ft_type_t type, size_t *expected_size, edgehog_ft_stream_t *stream)
 {
     if (strcmp(name, "loopback") == 0) {
         // Only one file transfer can be active at a time
@@ -70,7 +70,7 @@ static bool on_stream_transfer_start(
         if (type == EDGEHOG_FT_TYPE_SERVER_TO_DEVICE) {
             LOG_INF("Starting stream transfer [server-to-device] on pipe '%s'. Expected size: %zu "
                     "bytes",
-                name, expected_size);
+                name, *expected_size);
 
             // Spawn the download thread on demand
             k_thread_create(&download_thread_data, download_thread_stack_area,
@@ -78,9 +78,11 @@ static bool on_stream_transfer_start(
                 (void *) pipe, (void *) event, NULL, CONFIG_E2E_DEVICE_THREAD_PRIORITY, 0,
                 K_NO_WAIT);
         } else {
+            *expected_size = loopback_file_size;
+
             LOG_INF("Starting stream transfer [device-to-server] on pipe '%s'. Expected size: %zu "
                     "bytes",
-                name, expected_size);
+                name, *expected_size);
 
             // Spawn the upload thread on demand
             k_thread_create(&upload_thread_data, upload_thread_stack_area,
