@@ -1,5 +1,5 @@
 <!---
-  Copyright 2024 SECO Mind Srl
+  Copyright 2026 SECO Mind Srl
 
   SPDX-License-Identifier: Apache-2.0
 -->
@@ -31,6 +31,9 @@ The following information is sent to the remote Edgehog instance:
 - WiFi APs seen by board antenna
 - Battery status API
 - Data Rate Control for telemetry
+- File transfer
+
+For the File transfer functionality, please refer to [this](FILE_TRANSFER.md) page
 
 ### Adding the module as a dependency to an application
 
