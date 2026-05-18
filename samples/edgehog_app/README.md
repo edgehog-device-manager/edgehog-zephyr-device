@@ -225,3 +225,24 @@ You can provide your interfaces and callbacks during the creation of the Edgehog
 want to transmit data with the Astarte device you can obtain its handle using the
 `edgehog_device_get_astarte_device` function. It will return an Astarte device handle that can
 then be used to transmit as any other Astarte device.
+
+### File transfer
+
+Edgehog devices support bi-directional file transfers, both download (server-to-device) and upload (device-to-server). This sample includes an implementation designed to showcase stream-based transfers integrated with Zephyr's pipeline structures.
+
+The sample implements a **loopback mechanism** leveraging in-memory `k_pipe` objects:
+- When a Download transfer is initiated with the filename `loopback`, the sample intercepts the stream via `.on_stream_transfer_start` and spawns a dedicated download thread. The payload is written directly to a RAM buffer dynamically.
+- When an Upload transfer is requested matching the `loopback` name, an upload thread is spawned that pushes the previously buffered payload back up to the server.
+
+This mechanism allows you to test both incoming and outgoing data flows rapidly without requiring persistent storage (flash/filesystem) configured on your target board. For file system operations, the sample currently logs when an `.on_filesystem_transfer_done` event occurs.
+
+To enable this, make sure to wire the provided file transfer callbacks to your device configuration in `main.c` before starting the Edgehog device:
+
+```C
+edgehog_device_config_t edgehog_conf = {
+    // ... other configurations ...
+    .file_transfer_cbks = {
+        .on_stream_transfer_start = app_on_stream_transfer_start,
+        .on_filesystem_transfer_done = app_on_filesystem_transfer_done
+    }
+};

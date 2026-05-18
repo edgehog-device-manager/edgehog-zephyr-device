@@ -34,6 +34,7 @@ endif()
 # Define common sources used by both standard and extended documentation
 set(COMMON_SOURCES
     "${DOXYGEN_LIBRARY_PATH}/README.md"
+    "${DOXYGEN_LIBRARY_PATH}/FILE_TRANSFER.md"
     "${DOXYGEN_LIBRARY_PATH}/doc/architecture"
     "${DOXYGEN_LIBRARY_PATH}/doc/_doxygen/groups.dox"
     "${DOXYGEN_LIBRARY_PATH}/include/"
