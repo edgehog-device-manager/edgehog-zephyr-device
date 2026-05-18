@@ -24,6 +24,9 @@ FILE(GLOB app_sources ${CMAKE_CURRENT_LIST_DIR}/src/*.c)
 if(NOT CONFIG_WIFI)
     LIST(REMOVE_ITEM app_sources ${CMAKE_CURRENT_LIST_DIR}/src/wifi.c)
 endif()
+if(NOT CONFIG_EDGEHOG_DEVICE_FILE_TRANSFER)
+    LIST(REMOVE_ITEM app_sources ${CMAKE_CURRENT_LIST_DIR}/src/file_transfer.c)
+endif()
 
 # Verify that this sample is built through sysbuild to ensure MCUboot is
 # automatically included and that sample specific MCUboot configurations are
