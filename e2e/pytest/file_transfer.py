@@ -21,14 +21,18 @@ interface_ft_progress = "io.edgehog.devicemanager.fileTransfer.Progress"
 
 logger = logging.getLogger(__name__)
 
-def is_file_transfer_enabled(dut, feature = "CONFIG_EDGEHOG_DEVICE_FILE_TRANSFER") -> bool:
+
+def is_file_transfer_enabled(dut, feature="CONFIG_EDGEHOG_DEVICE_FILE_TRANSFER") -> bool:
     """Reads the Zephyr build config from the DUT to check if FT is enabled."""
     cfg_file = Path(dut.device_config.build_dir) / "zephyr" / ".config"
 
     with open(cfg_file, "r") as f:
         return f"{feature}=y" in f.read()
 
-def _execute_and_wait_for_transfer(e2e_cfg: Configuration, interface: str, transfer_data: dict, timeout: int = 30):
+
+def _execute_and_wait_for_transfer(
+    e2e_cfg: Configuration, interface: str, transfer_data: dict, timeout: int = 30
+):
     """
     Triggers a file transfer via POST and polls for BOTH a successful
     response code ('0') and at least one progress update.
@@ -53,7 +57,7 @@ def _execute_and_wait_for_transfer(e2e_cfg: Configuration, interface: str, trans
             if "request" in ft_res:
                 for req in ft_res["request"]:
                     if req.get("id") == target_id:
-                        assert req["code"] == '0', f"Transfer failed with code {req['code']}"
+                        assert req["code"] == "0", f"Transfer failed with code {req['code']}"
                         response_received = True
                         break
 
@@ -78,19 +82,25 @@ def _execute_and_wait_for_transfer(e2e_cfg: Configuration, interface: str, trans
     assert progress_received, f"No progress update received for transfer {target_id}"
 
 
-def _run_full_transfer_cycle(e2e_cfg: Configuration, transfer_type: str, device_path: str, encoding: str = None):
+def _run_full_transfer_cycle(
+    e2e_cfg: Configuration, transfer_type: str, device_path: str, encoding: str = None
+):
     """
     Executes a complete Server -> Device -> Server test loop with optional encoding.
     Generates unique content, downloads to the device, uploads back to the server,
     and verifies the data integrity.
     """
-    logger.info(f"Testing full file transfer loop for type: '{transfer_type}', encoding: '{encoding}'")
+    logger.info(
+        f"Testing full file transfer loop for type: '{transfer_type}', encoding: '{encoding}'"
+    )
 
     # Generate test data unique to the transfer type and encoding
-    test_payload = f"Zephyr {transfer_type.capitalize()} Transfer Test Payload! (Encoding: {encoding}) " * 200
+    test_payload = (
+        f"Zephyr {transfer_type.capitalize()} Transfer Test Payload! (Encoding: {encoding}) " * 200
+    )
 
     # We hash the UNCOMPRESSED bytes, as device code calculates digest of decompressed chunks
-    raw_bytes = test_payload.encode('utf-8')
+    raw_bytes = test_payload.encode("utf-8")
     file_digest = f"sha256:{hashlib.sha256(raw_bytes).hexdigest()}"
 
     enc_suffix = f"{encoding}" if encoding else "txt"
@@ -165,7 +175,9 @@ def _run_full_transfer_cycle(e2e_cfg: Configuration, transfer_type: str, device_
     else:
         actual_payload = actual_uploaded_bytes
 
-    assert actual_payload == raw_bytes, f"Data corruption! Uploaded file does not match downloaded file for {transfer_type} with encoding {encoding}."
+    assert (
+        actual_payload == raw_bytes
+    ), f"Data corruption! Uploaded file does not match downloaded file for {transfer_type} with encoding {encoding}."
 
     logger.info(f"Full transfer loop for '{transfer_type}' (encoding: '{encoding}') completed.")
 
@@ -182,16 +194,29 @@ def validate_file_transfer_capabilities(e2e_cfg: Configuration):
 
     logger.info("File transfer test (capabilities) completed successfully")
 
+
 # Raw Transfer Tests
 def validate_file_transfer_stream(e2e_cfg: Configuration):
     _run_full_transfer_cycle(e2e_cfg, transfer_type="stream", device_path="loopback", encoding=None)
 
+
 def validate_file_transfer_filesystem(e2e_cfg: Configuration):
-    _run_full_transfer_cycle(e2e_cfg, transfer_type="filesystem", device_path="/lfs1/test_fs_transfer.txt", encoding=None)
+    _run_full_transfer_cycle(
+        e2e_cfg, transfer_type="filesystem", device_path="/lfs1/test_fs_transfer.txt", encoding=None
+    )
+
 
 # LZ4 Transfer Tests
 def validate_file_transfer_stream_lz4(e2e_cfg: Configuration):
-    _run_full_transfer_cycle(e2e_cfg, transfer_type="stream", device_path="loopback", encoding="lz4")
+    _run_full_transfer_cycle(
+        e2e_cfg, transfer_type="stream", device_path="loopback", encoding="lz4"
+    )
+
 
 def validate_file_transfer_filesystem_lz4(e2e_cfg: Configuration):
-    _run_full_transfer_cycle(e2e_cfg, transfer_type="filesystem", device_path="/lfs1/test_fs_transfer_lz4.txt", encoding="lz4")
+    _run_full_transfer_cycle(
+        e2e_cfg,
+        transfer_type="filesystem",
+        device_path="/lfs1/test_fs_transfer_lz4.txt",
+        encoding="lz4",
+    )

@@ -81,3 +81,28 @@ jobs:
       - name: Run clang-tidy
         working-directory: ${{ env.PROJECT_MANIFEST_FOLDER }}
         run: west astarte-static --sample ${{ env.SAMPLE_NAME }}
+  python-checks:
+    runs-on: ubuntu-latest
+    concurrency:
+      group: python-checks-${{ github.ref }}
+      cancel-in-progress: true
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          path: ${{ env.PROJECT_MANIFEST_FOLDER }}
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: 3.12
+      - name: Install Python dependencies
+        working-directory: ${{ env.PROJECT_MANIFEST_FOLDER }}
+        run: pip install black
+      - name: Check format for the end to end scripts
+        working-directory: ${{ env.PROJECT_MANIFEST_FOLDER }}
+        run: |
+          if [ -d "./e2e" ]; then
+            python -m black --line-length 100 --diff --check ./e2e/pytest/*.py
+          else
+            echo "Directory ./e2e does not exist. Skipping."
+          fi
