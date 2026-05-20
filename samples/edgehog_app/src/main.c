@@ -34,6 +34,10 @@ LOG_MODULE_REGISTER(edgehog_app, CONFIG_APP_LOG_LEVEL); // NOLINT
 #include "eth.h"
 #endif
 
+#ifdef CONFIG_EDGEHOG_DEVICE_FILE_TRANSFER
+#include "file_transfer.h"
+#endif
+
 /************************************************
  *             Constants and defines            *
  ***********************************************/
@@ -247,10 +251,13 @@ static void edgehog_device_thread_entry_point(void *arg1, void *arg2, void *arg3
                   .period_seconds = TELEMETRY_WIFI_SCAN_PERIOD_S,
               } };
 
-    edgehog_device_config_t edgehog_conf = {
-        .astarte_device_config = astarte_device_config,
+    edgehog_device_config_t edgehog_conf = { .astarte_device_config = astarte_device_config,
         .telemetry_config = telemetry_config,
         .telemetry_config_len = ARRAY_SIZE(telemetry_config),
+#ifdef CONFIG_EDGEHOG_DEVICE_FILE_TRANSFER
+        .file_transfer_cbks = { .on_stream_transfer_start = app_on_stream_transfer_start,
+            .on_filesystem_transfer_done = app_on_filesystem_transfer_done }
+#endif
     };
     eres = edgehog_device_new(&edgehog_conf, &edgehog_device);
     if (eres != EDGEHOG_RESULT_OK) {
