@@ -50,26 +50,80 @@ void edgeghog_ft_publish_capabilities(edgehog_device_handle_t edgehog_device)
 
     // TODO: add support for missign encodings and update the list accordingly
     // Possible values: [gz, lz4, tar, tar.gz, tar.lz4]
-    const char *supported_encodings[] = {
+    const char *supported_server_to_device_streaming_encodings[] = {
+#ifdef CONFIG_EDGEHOG_DEVICE_FILE_TRANSFER_COMPRESSION
+        "lz4", // TODO: add "tar" once implemented
+#endif
+    };
+    size_t supported_server_to_device_streaming_encodings_len
+        = ARRAY_SIZE(supported_server_to_device_streaming_encodings);
+    astarte_result_t res = astarte_device_set_property(edgehog_device->astarte_device,
+        io_edgehog_devicemanager_fileTransfer_Capabilities.name,
+        "/serverToDevice/streaming/encodings",
+        astarte_data_from_string_array(supported_server_to_device_streaming_encodings,
+            supported_server_to_device_streaming_encodings_len));
+    if (res != ASTARTE_RESULT_OK) {
+        EDGEHOG_LOG_ERR("Unable to publish capability: /serverToDevice/streaming/encodings");
+        return;
+    }
+
+    const char *supported_server_to_device_filesystem_encodings[] = {
+#ifdef CONFIG_EDGEHOG_DEVICE_FILE_TRANSFER_COMPRESSION
+        "lz4", // TODO: add "tar" once implemented
+#endif
+    };
+    size_t supported_server_to_device_filesystem_encodings_len
+        = ARRAY_SIZE(supported_server_to_device_filesystem_encodings);
+    res = astarte_device_set_property(edgehog_device->astarte_device,
+        io_edgehog_devicemanager_fileTransfer_Capabilities.name,
+        "/serverToDevice/filesystem/encodings",
+        astarte_data_from_string_array(supported_server_to_device_filesystem_encodings,
+            supported_server_to_device_filesystem_encodings_len));
+    if (res != ASTARTE_RESULT_OK) {
+        EDGEHOG_LOG_ERR("Unable to publish capability: /serverToDevice/filesystem/encodings");
+        return;
+    }
+
+    const char *supported_device_to_server_streaming_encodings[] = {
 #ifdef CONFIG_EDGEHOG_DEVICE_FILE_TRANSFER_COMPRESSION
         "lz4",
 #endif
     };
-    size_t supported_encodings_len = ARRAY_SIZE(supported_encodings);
-    astarte_result_t res = astarte_device_set_property(edgehog_device->astarte_device,
-        io_edgehog_devicemanager_fileTransfer_Capabilities.name, "/encodings",
-        astarte_data_from_string_array(supported_encodings, supported_encodings_len));
+    size_t supported_device_to_server_streaming_encodings_len
+        = ARRAY_SIZE(supported_device_to_server_streaming_encodings);
+    res = astarte_device_set_property(edgehog_device->astarte_device,
+        io_edgehog_devicemanager_fileTransfer_Capabilities.name,
+        "/deviceToServer/streaming/encodings",
+        astarte_data_from_string_array(supported_device_to_server_streaming_encodings,
+            supported_device_to_server_streaming_encodings_len));
     if (res != ASTARTE_RESULT_OK) {
-        EDGEHOG_LOG_ERR("Unable to publish capability: /encodings");
+        EDGEHOG_LOG_ERR("Unable to publish capability: /deviceToServer/streaming/encodings");
+        return;
+    }
+
+    const char *supported_device_to_server_filesystem_encodings[] = {
+#ifdef CONFIG_EDGEHOG_DEVICE_FILE_TRANSFER_COMPRESSION
+        "lz4",
+#endif
+    };
+    size_t supported_device_to_server_filesystem_encodings_len
+        = ARRAY_SIZE(supported_device_to_server_filesystem_encodings);
+    res = astarte_device_set_property(edgehog_device->astarte_device,
+        io_edgehog_devicemanager_fileTransfer_Capabilities.name,
+        "/deviceToServer/filesystem/encodings",
+        astarte_data_from_string_array(supported_device_to_server_filesystem_encodings,
+            supported_device_to_server_filesystem_encodings_len));
+    if (res != ASTARTE_RESULT_OK) {
+        EDGEHOG_LOG_ERR("Unable to publish capability: /deviceToServer/filesystem/encodings");
         return;
     }
 
     // Unix permissions are not supported on this plaform
     res = astarte_device_set_property(edgehog_device->astarte_device,
-        io_edgehog_devicemanager_fileTransfer_Capabilities.name, "/unixPermissions",
+        io_edgehog_devicemanager_fileTransfer_Capabilities.name, "/transfer/unixPermissions",
         astarte_data_from_boolean(false));
     if (res != ASTARTE_RESULT_OK) {
-        EDGEHOG_LOG_ERR("Unable to publish capability: /unixPermissions");
+        EDGEHOG_LOG_ERR("Unable to publish capability: /transfer/unixPermissions");
         return;
     }
 
@@ -77,10 +131,17 @@ void edgeghog_ft_publish_capabilities(edgehog_device_handle_t edgehog_device)
     const char *supported_targets[] = { "streaming", "filesystem" };
     size_t supported_targets_len = ARRAY_SIZE(supported_targets);
     res = astarte_device_set_property(edgehog_device->astarte_device,
-        io_edgehog_devicemanager_fileTransfer_Capabilities.name, "/targets",
+        io_edgehog_devicemanager_fileTransfer_Capabilities.name, "/transfer/serverToDevice/targets",
         astarte_data_from_string_array(supported_targets, supported_targets_len));
     if (res != ASTARTE_RESULT_OK) {
-        EDGEHOG_LOG_ERR("Unable to publish capability: /targets");
+        EDGEHOG_LOG_ERR("Unable to publish capability: /transfer/serverToDevice/targets");
+        return;
+    }
+    res = astarte_device_set_property(edgehog_device->astarte_device,
+        io_edgehog_devicemanager_fileTransfer_Capabilities.name, "/transfer/deviceToServer/targets",
+        astarte_data_from_string_array(supported_targets, supported_targets_len));
+    if (res != ASTARTE_RESULT_OK) {
+        EDGEHOG_LOG_ERR("Unable to publish capability: /transfer/deviceToServer/targets");
         return;
     }
 }

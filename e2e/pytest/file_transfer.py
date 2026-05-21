@@ -30,6 +30,16 @@ def is_file_transfer_enabled(dut, feature="CONFIG_EDGEHOG_DEVICE_FILE_TRANSFER")
         return f"{feature}=y" in f.read()
 
 
+def get_by_path(data, path):
+    """Helper to traverse a dict using a string path like 'a/b/c'"""
+    keys = path.split("/")
+    for key in keys:
+        if not isinstance(data, dict):
+            return None
+        data = data.get(key)
+    return data
+
+
 def _execute_and_wait_for_transfer(
     e2e_cfg: Configuration, interface: str, transfer_data: dict, timeout: int = 30
 ):
@@ -187,10 +197,42 @@ def validate_file_transfer_capabilities(e2e_cfg: Configuration):
 
     ft_res = http_get_server_data(e2e_cfg, interface_ft_capabilities)
 
-    assert (i in ft_res for i in ["encodings", "targets", "unixPermissions"]), "Wrong capabilities"
-    assert ft_res.get("encodings") == ["lz4"], "Incorrect capability encodings"
-    assert ft_res.get("targets") == ["streaming", "filesystem"], "Wrong targets"
-    assert not ft_res.get("unixPermissions"), "Wrong unix permissions"
+    assert (
+        i in ft_res
+        for i in [
+            "transfer/unixPermissions",
+            "transfer/serverToDevice/targets",
+            "transfer/deviceToServer/targets",
+            "deviceToServer/streaming/encodings",
+            "deviceToServer/filesystem/encodings",
+            "serverToDevice/streaming/encodings",
+            "serverToDevice/filesystem/encodings",
+        ]
+    ), "Wrong capabilities"
+
+    # Assuming the HTTP response dictionary is stored in the variable 'ft_res'
+
+    assert not get_by_path(ft_res, "transfer/unixPermissions"), "Wrong unix permissions"
+    assert get_by_path(ft_res, "transfer/serverToDevice/targets") == [
+        "streaming",
+        "filesystem",
+    ], "Wrong serverToDevice targets"
+    assert get_by_path(ft_res, "transfer/deviceToServer/targets") == [
+        "streaming",
+        "filesystem",
+    ], "Wrong deviceToServer targets"
+    assert get_by_path(ft_res, "deviceToServer/streaming/encodings") == [
+        "lz4"
+    ], "Incorrect deviceToServer streaming capability encodings"
+    assert get_by_path(ft_res, "deviceToServer/filesystem/encodings") == [
+        "lz4"
+    ], "Incorrect deviceToServer filesystem capability encodings"
+    assert get_by_path(ft_res, "serverToDevice/streaming/encodings") == [
+        "lz4"
+    ], "Incorrect serverToDevice streaming capability encodings"
+    assert get_by_path(ft_res, "serverToDevice/filesystem/encodings") == [
+        "lz4"
+    ], "Incorrect serverToDevice filesystem capability encodings"
 
     logger.info("File transfer test (capabilities) completed successfully")
 
