@@ -116,7 +116,7 @@ config EDGEHOG_DEVICE_FILE_TRANSFER_HTTPS_CA_CERT_TAG
 	  The CA certificate should be added by the user with the tls_credential_add function.
 	  This configuration option should be set to the tag used when adding the CA certificate.
 
-config EDGEHOG_DEVICE_ADVANCED_FILE_TRANSFER_QUEUE_SIZE
+config EDGEHOG_DEVICE_FILE_TRANSFER_QUEUE_SIZE
 	int "File transfer message queue size"
 	depends on EDGEHOG_DEVICE
 	default 10

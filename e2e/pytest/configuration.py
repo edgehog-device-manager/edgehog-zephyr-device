@@ -4,6 +4,7 @@
 
 import json
 from pathlib import Path
+import shutil
 from typing import Any, Optional, Union
 import requests
 from typing import List
@@ -60,6 +61,8 @@ class Configuration:
             prj_config, "CONFIG_E2E_HTTP_SERVER_DATA_DIR"
         )
         self.http_server_data_dir = end_to_end_root_path / server_data_path
+        if self.http_server_data_dir.exists():
+            shutil.rmtree(self.http_server_data_dir)
         self.http_server_data_dir.mkdir(parents=True, exist_ok=True)
         server_cert_path: str = self._get_config_value(
             prj_config, "CONFIG_E2E_HTTP_SERVER_CERT_DIR"

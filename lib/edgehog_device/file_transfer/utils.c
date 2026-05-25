@@ -73,6 +73,7 @@ static void parse_endpoint_value(const char *path, const astarte_data_t *rx_valu
 static char **serialize_http_headers(
     const char *keys[], size_t keys_size, const char *values[], size_t values_size);
 static enum edgehog_ft_encoding parse_encoding_string(const char *string);
+static enum edgehog_ft_location_type parse_location_type_string(const char *string);
 static void free_http_headers(char *header_fields[]);
 static void progress_work_handler(struct k_work *work);
 static char *duplicate_string(const char *src);
@@ -95,7 +96,8 @@ edgehog_result_t edgehog_ft_msg_init(astarte_object_entry_t *rx_values, size_t r
         parse_endpoint_value(rx_values[i].path, &rx_values[i].data, &tmp, &parsed_http_headers);
     }
 
-    if (!tmp.id || !tmp.url || !tmp.location_type || !tmp.location) {
+    if (!tmp.id || !tmp.url || (tmp.location_type == EDGEHOG_FT_LOCATION_TYPE_UNSUPPORTED)
+        || !tmp.location) {
         EDGEHOG_LOG_ERR("Missing required entries for transfer data");
         eres = EDGEHOG_RESULT_FILE_TRANSFER_INVALID_REQUEST;
         goto failure;
@@ -122,11 +124,31 @@ edgehog_result_t edgehog_ft_msg_init(astarte_object_entry_t *rx_values, size_t r
 #ifdef CONFIG_EDGEHOG_DEVICE_FILE_TRANSFER_COMPRESSION
         && (tmp.encoding != EDGEHOG_FT_ENCODING_LZ4)
 #endif
+#ifdef CONFIG_EDGEHOG_DEVICE_FILE_TRANSFER_TAR
+        && (tmp.encoding != EDGEHOG_FT_ENCODING_TAR)
+#endif
     ) {
         EDGEHOG_LOG_ERR("Request with invalid encoding %d", tmp.encoding);
         eres = EDGEHOG_RESULT_FILE_TRANSFER_INVALID_REQUEST;
         goto failure;
     }
+
+    // Some combinations are not supported.
+#ifdef CONFIG_EDGEHOG_DEVICE_FILE_TRANSFER_COMPRESSION
+    if ((type == EDGEHOG_FT_TYPE_DEVICE_TO_SERVER) && (tmp.encoding == EDGEHOG_FT_ENCODING_LZ4)) {
+        EDGEHOG_LOG_ERR("Device to server transfers with LZ4 compression are not supported");
+        eres = EDGEHOG_RESULT_FILE_TRANSFER_INVALID_REQUEST;
+        goto failure;
+    }
+#endif
+#ifdef CONFIG_EDGEHOG_DEVICE_FILE_TRANSFER_TAR
+    if ((tmp.encoding == EDGEHOG_FT_ENCODING_TAR)
+        && (tmp.location_type == EDGEHOG_FT_LOCATION_TYPE_STREAM)) {
+        EDGEHOG_LOG_ERR("Stream transfers as TAR are not supported");
+        eres = EDGEHOG_RESULT_FILE_TRANSFER_INVALID_REQUEST;
+        goto failure;
+    }
+#endif
 
     *msg = tmp;
     return eres;
@@ -148,8 +170,6 @@ void edgehog_ft_msg_destroy(edgehog_ft_msg_t *msg)
         free_http_headers(msg->http_headers);
         msg->http_headers = NULL;
     }
-    k_free(msg->location_type);
-    msg->location_type = NULL;
     k_free(msg->location);
     msg->location = NULL;
 }
@@ -351,7 +371,7 @@ static void parse_endpoint_value(const char *path, const astarte_data_t *rx_valu
     }
     if (strcmp(path, loc_type_key) == 0
         && astarte_data_to_string(*rx_value, &tmp_string) == ASTARTE_RESULT_OK) {
-        tmp->location_type = duplicate_string(tmp_string);
+        tmp->location_type = parse_location_type_string(tmp_string);
         return;
     }
     if (strcmp(path, loc_key) == 0
@@ -426,6 +446,17 @@ static enum edgehog_ft_encoding parse_encoding_string(const char *string)
         return EDGEHOG_FT_ENCODING_TAR_LZ4;
     }
     return EDGEHOG_FT_ENCODING_UNSUPPORTED;
+}
+
+static enum edgehog_ft_location_type parse_location_type_string(const char *string)
+{
+    if (strcmp(string, "filesystem") == 0) {
+        return EDGEHOG_FT_LOCATION_TYPE_FILESYSTEM;
+    }
+    if (strcmp(string, "stream") == 0) {
+        return EDGEHOG_FT_LOCATION_TYPE_STREAM;
+    }
+    return EDGEHOG_FT_LOCATION_TYPE_UNSUPPORTED;
 }
 
 static void free_http_headers(char *header_fields[])

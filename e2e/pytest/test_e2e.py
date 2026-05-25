@@ -17,6 +17,9 @@ from file_transfer import (
     validate_file_transfer_filesystem,
     validate_file_transfer_stream_lz4,
     validate_file_transfer_filesystem_lz4,
+    validate_file_transfer_filesystem_tar,
+    validate_file_transfer_filesystem_tar_nested,
+    validate_file_transfer_filesystem_tar_empty,
 )
 
 logger = logging.getLogger(__name__)
@@ -83,5 +86,8 @@ def test_file_transfer(e2e_device_env):
     validate_file_transfer_filesystem(cfg)
     validate_file_transfer_stream_lz4(cfg)
     validate_file_transfer_filesystem_lz4(cfg)
+    validate_file_transfer_filesystem_tar(cfg)
+    validate_file_transfer_filesystem_tar_nested(cfg)
+    validate_file_transfer_filesystem_tar_empty(cfg)
 
     time.sleep(1)

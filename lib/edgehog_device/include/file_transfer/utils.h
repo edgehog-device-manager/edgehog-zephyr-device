@@ -19,6 +19,9 @@
 #include "file_transfer/compression.h"
 #include "file_transfer/core.h"
 #include "file_transfer/decompression.h"
+#include "ztar/core.h"
+#include "ztar/pack.h"
+#include "ztar/unpack.h"
 
 /** @brief HTTP request timeout duration in milliseconds. */
 #define EDGEHOG_FT_HTTP_REQ_TIMEOUT_MS (60 * 1000)
@@ -70,6 +73,16 @@ typedef struct
     bool file_exhausted;
     /** @brief Track if the LZ4 footer has been successfully written */
     bool comp_footer_written;
+#endif
+#ifdef CONFIG_EDGEHOG_DEVICE_FILE_TRANSFER_TAR
+    /** @brief ZTAR context for TAR unpacking */
+    ztar_unpack_t ztar_unpack_ctx;
+    /** @brief ZTAR context for TAR packing */
+    ztar_pack_t ztar_pack_ctx;
+    /** @brief TAR buffer, used to temporarely store data while packing a TAR archive */
+    uint8_t tar_buffer[ZTAR_BLOCK_SIZE * 2];
+    /** @brief Service flag to be used to verify if the TAR has been fully processed */
+    bool tar_exhausted;
 #endif
 } edgehog_ft_http_cbk_data_t;
 

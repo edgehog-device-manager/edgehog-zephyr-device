@@ -20,21 +20,29 @@ The library supports transferring data using two distinct mediums:
 
 Support status for the **Server -> Device** file transfer configuration:
 
-| Compression | Medium | Status |
-| :--- | :--- | :--- |
-| Non-compressed | Stream | Supported |
-| Non-compressed | File System | Supported |
-| Compressed | Stream | Supported |
-| Compressed | File System | Supported |
+| Medium         | Archival       | Compression    | Status         |
+| :------------- | :------------- | :------------- | :------------- |
+| Stream         | Non-archived   | Non-compressed | Supported      |
+| Stream         | Non-archived   | Compressed     | Supported      |
+| Stream         | TAR archive    | Non-compressed | NOT Supported  |
+| Stream         | TAR archive    | Compressed     | NOT Supported  |
+| File System    | Non-archived   | Non-compressed | Supported      |
+| File System    | Non-archived   | Compressed     | Supported      |
+| File System    | TAR archive    | Non-compressed | Supported      |
+| File System    | TAR archive    | Compressed     | NOT Supported  |
 
 Support status for the **Device -> Server** file transfer configuration:
 
-| Compression | Medium | Status |
-| :--- | :--- | :--- |
-| Non-compressed | Stream | Supported |
-| Non-compressed | File System | Supported |
-| Compressed | Stream | NOT Supported |
-| Compressed | File System | NOT Supported |
+| Medium         | Archival       | Compression    | Status         |
+| :------------- | :------------- | :------------- | :------------- |
+| Stream         | Non-archived   | Non-compressed | Supported      |
+| Stream         | Non-archived   | Compressed     | NOT Supported  |
+| Stream         | TAR archive    | Non-compressed | NOT Supported  |
+| Stream         | TAR archive    | Compressed     | NOT Supported  |
+| File System    | Non-archived   | Non-compressed | Supported      |
+| File System    | Non-archived   | Compressed     | NOT Supported  |
+| File System    | TAR archive    | Non-compressed | Supported      |
+| File System    | TAR archive    | Compressed     | NOT Supported  |
 
 ## Configuration
 

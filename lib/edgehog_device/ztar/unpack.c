@@ -24,6 +24,12 @@ EDGEHOG_LOG_MODULE_REGISTER(ztar_unpack, CONFIG_EDGEHOG_DEVICE_ZTAR_LOG_LEVEL);
 
 // Octal base used in USTAR to store numerical values
 #define OCTAL_BASE 8
+// Typeflag value for a regular file
+#define TYPEFLAG_REGULAR_FILE '0'
+// Typeflag value for backward compatibility with older TAR formats
+#define TYPEFLAG_REGULAR_FILE_OLD '\0'
+// Typeflag value for a directory
+#define TYPEFLAG_DIRECTORY '5'
 
 /************************************************
  *         Static functions declaration         *
@@ -189,12 +195,10 @@ ztar_result_t ztar_unpack_get_file_type(const ztar_header_t *header, ztar_filety
         return ZTAR_RESULT_INVALID_ARGS;
     }
 
-    // In standard tar, both '0' and '\0' denote a regular file
-    if (header->typeflag == '0' || header->typeflag == '\0') {
+    if (header->typeflag == TYPEFLAG_REGULAR_FILE
+        || header->typeflag == TYPEFLAG_REGULAR_FILE_OLD) {
         *file_type = ZTAR_REGULAR_FILE;
-    }
-    // '5' denotes a directory
-    else if (header->typeflag == '5') {
+    } else if (header->typeflag == TYPEFLAG_DIRECTORY) {
         *file_type = ZTAR_DIRECTORY;
     }
     // Anything else (including PAX 'x'/'g' headers) is unsupported
