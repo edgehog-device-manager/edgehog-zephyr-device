@@ -19,6 +19,12 @@ zephyr_library_sources(${lib_sources})
 if(CONFIG_EDGEHOG_DEVICE_FILE_TRANSFER)
     FILE(GLOB ft_sources file_transfer/*.c)
 
+    # Add ztar sources only if the tar config is enabled
+    if(CONFIG_EDGEHOG_DEVICE_FILE_TRANSFER_TAR)
+        FILE(GLOB ztar_sources ztar/*.c)
+        list(APPEND ft_sources ${ztar_sources})
+    endif()
+
     # Remove the compression source file if the config is not enabled
     if(NOT CONFIG_EDGEHOG_DEVICE_FILE_TRANSFER_COMPRESSION)
         list(REMOVE_ITEM ft_sources "${CMAKE_CURRENT_SOURCE_DIR}/file_transfer/compression.c")
