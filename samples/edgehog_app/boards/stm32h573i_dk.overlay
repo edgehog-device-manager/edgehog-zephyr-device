@@ -8,6 +8,13 @@
 /delete-node/ &slot1_partition;
 /delete-node/ &storage_partition;
 
+/ {
+    chosen {
+        /* Move the default Zephyr RAM allocation to the 320KB SRAM3 bank */
+        zephyr,sram = &sram3;
+    };
+};
+
 &flash0 {
     partitions {
         slot0_partition: partition@10000 {

@@ -15,7 +15,13 @@
 #include "edgehog_device/device.h"
 #include "edgehog_device/result.h"
 
+#include <zephyr/version.h>
+
+#if (KERNEL_VERSION_MAJOR >= 4) && (KERNEL_VERSION_MINOR >= 4)
+#include <zephyr/kvss/nvs.h>
+#else
 #include <zephyr/fs/nvs.h>
+#endif
 
 #if defined(CONFIG_SETTINGS_NVS)
 

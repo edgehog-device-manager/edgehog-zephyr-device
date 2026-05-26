@@ -140,7 +140,7 @@ ztar_result_t ztar_unpack_process(ztar_unpack_t *stream, const uint8_t *data, si
 ztar_result_t ztar_unpack_get_file_name(
     const ztar_header_t *header, char buffer[static ZTAR_FILE_NAME_BUFF_SIZE])
 {
-    if (!header || !buffer) {
+    if (!header) {
         EDGEHOG_LOG_ERR(
             "Called ztar_unpack_get_file_name with null header pointer or buffer pointer");
         return ZTAR_RESULT_INVALID_ARGS;

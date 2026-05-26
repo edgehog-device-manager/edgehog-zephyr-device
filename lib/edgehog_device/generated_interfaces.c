@@ -5,8 +5,6 @@
  * @warning Do not modify this file manually.
  */
 
-// NOLINENUMBERLINT
-
 // clang-format off
 
 #include "generated_interfaces.h"

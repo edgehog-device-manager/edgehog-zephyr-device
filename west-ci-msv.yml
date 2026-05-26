@@ -2,6 +2,9 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
+# NOTE: This manifest can be used to setup the minimum supported version of Zephry LTS for the
+# automated compatibility checks.
+
 manifest:
 
   remotes:
@@ -9,22 +12,21 @@ manifest:
       url-base: https://github.com/zephyrproject-rtos
     - name: astarte-platform
       url-base: https://github.com/astarte-platform
-    - name: edgehog-device-manager
-      url-base: https://github.com/edgehog-device-manager
 
   projects:
     - name: zephyr
       remote: zephyrproject-rtos
-      revision: v4.4.0
-      import: true
+      revision: v4.3.0
+      import:
+        name-allowlist:
+          - cmsis_6
+          - hal_nxp
+          - hal_espressif
+          - hal_stm32
+          - mbedtls
+          - picolibc
+          - mcuboot
     - name: astarte-device-sdk-zephyr
       remote: astarte-platform
       revision: a72dd16efa95bdbfc218d2fb0db293554558efa8
       import: true
-    - name: edgehog-astarte-interfaces
-      remote: edgehog-device-manager
-      revision: c327c82289d3e28b0d99360fe0d9456367fa8bf7
-    - name: lz4
-      url: https://github.com/zephyrproject-rtos/lz4
-      revision: zephyr
-      path: modules/lib/lz4
