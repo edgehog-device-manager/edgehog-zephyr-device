@@ -554,24 +554,38 @@ const astarte_interface_t io_edgehog_devicemanager_config_Telemetry = {
 };
 
 /** @brief Automatically generated mapping definition. */
-static const astarte_mapping_t io_edgehog_devicemanager_fileTransfer_Capabilities_mappings[3] = {
+static const astarte_mapping_t io_edgehog_devicemanager_fileTransfer_Capabilities_mappings[5] = {
 
     {
-        .endpoint = "/encodings",
-        .type = ASTARTE_MAPPING_TYPE_STRINGARRAY,
-        .reliability = ASTARTE_MAPPING_RELIABILITY_UNIQUE,
-        .explicit_timestamp = false,
-        .allow_unset = false,
-    },
-    {
-        .endpoint = "/unixPermissions",
+        .endpoint = "/transfer/unixPermissions",
         .type = ASTARTE_MAPPING_TYPE_BOOLEAN,
         .reliability = ASTARTE_MAPPING_RELIABILITY_UNIQUE,
         .explicit_timestamp = false,
         .allow_unset = false,
     },
     {
-        .endpoint = "/targets",
+        .endpoint = "/transfer/serverToDevice/targets",
+        .type = ASTARTE_MAPPING_TYPE_STRINGARRAY,
+        .reliability = ASTARTE_MAPPING_RELIABILITY_UNIQUE,
+        .explicit_timestamp = false,
+        .allow_unset = false,
+    },
+    {
+        .endpoint = "/transfer/deviceToServer/targets",
+        .type = ASTARTE_MAPPING_TYPE_STRINGARRAY,
+        .reliability = ASTARTE_MAPPING_RELIABILITY_UNIQUE,
+        .explicit_timestamp = false,
+        .allow_unset = false,
+    },
+    {
+        .endpoint = "/deviceToServer/%{target}/encodings",
+        .type = ASTARTE_MAPPING_TYPE_STRINGARRAY,
+        .reliability = ASTARTE_MAPPING_RELIABILITY_UNIQUE,
+        .explicit_timestamp = false,
+        .allow_unset = false,
+    },
+    {
+        .endpoint = "/serverToDevice/%{target}/encodings",
         .type = ASTARTE_MAPPING_TYPE_STRINGARRAY,
         .reliability = ASTARTE_MAPPING_RELIABILITY_UNIQUE,
         .explicit_timestamp = false,
@@ -588,7 +602,7 @@ const astarte_interface_t io_edgehog_devicemanager_fileTransfer_Capabilities = {
     .ownership = ASTARTE_INTERFACE_OWNERSHIP_DEVICE,
     .aggregation = ASTARTE_INTERFACE_AGGREGATION_INDIVIDUAL,
     .mappings = io_edgehog_devicemanager_fileTransfer_Capabilities_mappings,
-    .mappings_length = 3U,
+    .mappings_length = 5U,
 };
 
 /** @brief Automatically generated mapping definition. */
