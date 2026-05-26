@@ -2,10 +2,12 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
+import io
 import logging
 import hashlib
 import time
 import uuid
+import tarfile
 import lz4.frame
 from pathlib import Path
 from datetime import datetime, timezone
@@ -92,173 +94,340 @@ def _execute_and_wait_for_transfer(
     assert progress_received, f"No progress update received for transfer {target_id}"
 
 
-def _run_full_transfer_cycle(
-    e2e_cfg: Configuration, transfer_type: str, device_path: str, encoding: str = None
-):
-    """
-    Executes a complete Server -> Device -> Server test loop with optional encoding.
-    Generates unique content, downloads to the device, uploads back to the server,
-    and verifies the data integrity.
-    """
-    logger.info(
-        f"Testing full file transfer loop for type: '{transfer_type}', encoding: '{encoding}'"
-    )
-
-    # Generate test data unique to the transfer type and encoding
-    test_payload = (
-        f"Zephyr {transfer_type.capitalize()} Transfer Test Payload! (Encoding: {encoding}) " * 200
-    )
-
-    # We hash the UNCOMPRESSED bytes, as device code calculates digest of decompressed chunks
-    raw_bytes = test_payload.encode("utf-8")
-    file_digest = f"sha256:{hashlib.sha256(raw_bytes).hexdigest()}"
-
-    enc_suffix = f"{encoding}" if encoding else "txt"
-    download_filename = f"{transfer_type}_download.{enc_suffix}"
-    upload_filename = f"{transfer_type}_upload.{enc_suffix}"
-
-    dl_id = str(uuid.uuid4())
-    ul_id = str(uuid.uuid4())
-
-    # If encoding is lz4, create an lz4 compressed file for the server to serve
-    server_download_bytes = raw_bytes
-    if encoding == "lz4":
-        server_download_bytes = lz4.frame.compress(raw_bytes)
-
-    # Write the initial file to the HTTP server's data directory
-    download_file_path = Path(e2e_cfg.http_server_data_dir) / download_filename
-    download_file_path.write_bytes(server_download_bytes)
-
-    # --- PHASE 1: DOWNLOAD (Server to Device) ---
-    dl_data = {
-        "url": f"https://192.0.2.2:8443/{download_filename}",
-        "id": dl_id,
-        "progress": True,
-        "digest": file_digest,
-        "fileSizeBytes": len(raw_bytes),
-        "httpHeaderKeys": ["Content-Type"],
-        "httpHeaderValues": ["application/octet-stream" if encoding else "text/plain"],
-        "destinationType": transfer_type,
-        "destination": device_path,
-    }
-
-    if encoding:
-        dl_data["encoding"] = encoding
-
-    logger.info(f"Initiating {transfer_type} download...")
-    _execute_and_wait_for_transfer(e2e_cfg, interface_ft_server_to_device, dl_data)
-
-    # do not perform upload in case of a compressed Device to Server transmission
-    if encoding != None:
-        logger.warning(f"Could not perform compressed Device to Server test")
-        return
-
-    # --- PHASE 2: UPLOAD (Device to Server) ---
-    ul_data = {
-        "url": f"https://192.0.2.2:8443/{upload_filename}",
-        "id": ul_id,
-        "progress": True,
-        "httpHeaderKeys": ["Content-Type"],
-        "httpHeaderValues": ["application/octet-stream" if encoding else "text/plain"],
-        "sourceType": transfer_type,
-        "source": device_path,
-    }
-
-    if encoding:
-        ul_data["encoding"] = encoding
-
-    logger.info(f"Initiating {transfer_type} upload...")
-    _execute_and_wait_for_transfer(e2e_cfg, interface_ft_device_to_server, ul_data)
-
-    # --- PHASE 3: VERIFICATION ---
-    uploaded_file_path = Path(e2e_cfg.http_server_data_dir) / upload_filename
-    assert uploaded_file_path.exists(), "The device failed to upload the file back to the server"
-
-    actual_uploaded_bytes = uploaded_file_path.read_bytes()
-
-    # If encoding is lz4, the device compressed the file. We need to decompress to verify.
-    if encoding == "lz4":
-        try:
-            actual_payload = lz4.frame.decompress(actual_uploaded_bytes)
-        except Exception as e:
-            assert False, f"Failed to decompress the uploaded LZ4 file: {e}"
-    else:
-        actual_payload = actual_uploaded_bytes
-
-    assert (
-        actual_payload == raw_bytes
-    ), f"Data corruption! Uploaded file does not match downloaded file for {transfer_type} with encoding {encoding}."
-
-    logger.info(f"Full transfer loop for '{transfer_type}' (encoding: '{encoding}') completed.")
-
-
 def validate_file_transfer_capabilities(e2e_cfg: Configuration):
     logger.info("Testing file transfer: capabilities")
 
     ft_res = http_get_server_data(e2e_cfg, interface_ft_capabilities)
 
-    assert (
-        i in ft_res
-        for i in [
-            "transfer/unixPermissions",
-            "transfer/serverToDevice/targets",
-            "transfer/deviceToServer/targets",
-            "deviceToServer/streaming/encodings",
-            "deviceToServer/filesystem/encodings",
-            "serverToDevice/streaming/encodings",
-            "serverToDevice/filesystem/encodings",
-        ]
-    ), "Wrong capabilities"
+    expected_capabilities = {
+        "deviceToServer": {"filesystem": {"encodings": ["tar"]}, "streaming": {"encodings": None}},
+        "serverToDevice": {
+            "filesystem": {"encodings": ["lz4", "tar"]},
+            "streaming": {"encodings": ["lz4"]},
+        },
+        "transfer": {
+            "deviceToServer": {"targets": ["streaming", "filesystem"]},
+            "serverToDevice": {"targets": ["streaming", "filesystem"]},
+            "unixPermissions": False,
+        },
+    }
 
-    # Assuming the HTTP response dictionary is stored in the variable 'ft_res'
-
-    assert not get_by_path(ft_res, "transfer/unixPermissions"), "Wrong unix permissions"
-    assert get_by_path(ft_res, "transfer/serverToDevice/targets") == [
-        "streaming",
-        "filesystem",
-    ], "Wrong serverToDevice targets"
-    assert get_by_path(ft_res, "transfer/deviceToServer/targets") == [
-        "streaming",
-        "filesystem",
-    ], "Wrong deviceToServer targets"
-    assert get_by_path(ft_res, "deviceToServer/streaming/encodings") == [
-        "lz4"
-    ], "Incorrect deviceToServer streaming capability encodings"
-    assert get_by_path(ft_res, "deviceToServer/filesystem/encodings") == [
-        "lz4"
-    ], "Incorrect deviceToServer filesystem capability encodings"
-    assert get_by_path(ft_res, "serverToDevice/streaming/encodings") == [
-        "lz4"
-    ], "Incorrect serverToDevice streaming capability encodings"
-    assert get_by_path(ft_res, "serverToDevice/filesystem/encodings") == [
-        "lz4"
-    ], "Incorrect serverToDevice filesystem capability encodings"
+    assert expected_capabilities == ft_res, "Wrong capabilities"
 
     logger.info("File transfer test (capabilities) completed successfully")
 
 
-# Raw Transfer Tests
+# --- RAW FILE TRANSFER TESTS ---
+
+
+def _run_raw_transfer_cycle(e2e_cfg: Configuration, transfer_type: str, device_path: str):
+    logger.info(f"Testing raw file transfer loop for type: '{transfer_type}'")
+
+    test_payload = f"Zephyr Raw {transfer_type.capitalize()} Transfer Test Payload! " * 200
+    raw_bytes = test_payload.encode("utf-8")
+
+    download_filename = f"{transfer_type}_raw_download.txt"
+    upload_filename = f"{transfer_type}_raw_upload.txt"
+    file_digest = f"sha256:{hashlib.sha256(raw_bytes).hexdigest()}"
+
+    Path(e2e_cfg.http_server_data_dir, download_filename).write_bytes(raw_bytes)
+
+    # 1. Download
+    dl_data = {
+        "url": f"https://192.0.2.2:8443/{download_filename}",
+        "id": str(uuid.uuid4()),
+        "progress": True,
+        "digest": file_digest,
+        "fileSizeBytes": len(raw_bytes),
+        "httpHeaderKeys": ["Content-Type"],
+        "httpHeaderValues": ["text/plain"],
+        "destinationType": transfer_type,
+        "destination": device_path,
+    }
+    logger.info(f"Initiating raw {transfer_type} download...")
+    _execute_and_wait_for_transfer(e2e_cfg, interface_ft_server_to_device, dl_data)
+
+    # 2. Upload
+    ul_data = {
+        "url": f"https://192.0.2.2:8443/{upload_filename}",
+        "id": str(uuid.uuid4()),
+        "progress": True,
+        "httpHeaderKeys": ["Content-Type"],
+        "httpHeaderValues": ["text/plain"],
+        "sourceType": transfer_type,
+        "source": device_path,
+    }
+    logger.info(f"Initiating raw {transfer_type} upload...")
+    _execute_and_wait_for_transfer(e2e_cfg, interface_ft_device_to_server, ul_data)
+
+    # 3. Verification
+    uploaded_file_path = Path(e2e_cfg.http_server_data_dir, upload_filename)
+    assert (
+        uploaded_file_path.exists()
+    ), "The device failed to upload the raw file back to the server"
+    assert (
+        uploaded_file_path.read_bytes() == raw_bytes
+    ), f"Data corruption! Uploaded raw file does not match."
+    logger.info(f"Raw transfer loop for '{transfer_type}' completed.")
+
+
 def validate_file_transfer_stream(e2e_cfg: Configuration):
-    _run_full_transfer_cycle(e2e_cfg, transfer_type="stream", device_path="loopback", encoding=None)
+    _run_raw_transfer_cycle(e2e_cfg, transfer_type="stream", device_path="loopback")
 
 
 def validate_file_transfer_filesystem(e2e_cfg: Configuration):
-    _run_full_transfer_cycle(
-        e2e_cfg, transfer_type="filesystem", device_path="/lfs1/test_fs_transfer.txt", encoding=None
+    _run_raw_transfer_cycle(
+        e2e_cfg, transfer_type="filesystem", device_path="/lfs1/test_fs_transfer.txt"
     )
 
 
-# LZ4 Transfer Tests
+# --- LZ4 TRANSFER TESTS ---
+
+
+def _run_lz4_transfer_cycle(e2e_cfg: Configuration, transfer_type: str, device_path: str):
+    """
+    Downloads LZ4 compressed data and uploads uncompressed data to ensure correct handling on the device.
+    """
+    logger.info(f"Testing LZ4 file transfer loop for type: '{transfer_type}'")
+
+    raw_bytes = (f"Zephyr LZ4 {transfer_type.capitalize()} Transfer Test Payload! " * 200).encode(
+        "utf-8"
+    )
+    lz4_bytes = lz4.frame.compress(raw_bytes)
+
+    download_filename = f"{transfer_type}_lz4_download.lz4"
+    upload_filename = f"{transfer_type}_lz4_upload.txt"
+
+    # Device computes digest on the UNCOMPRESSED stream
+    file_digest = f"sha256:{hashlib.sha256(raw_bytes).hexdigest()}"
+    Path(e2e_cfg.http_server_data_dir, download_filename).write_bytes(lz4_bytes)
+
+    # 1. Download Compressed
+    dl_data = {
+        "url": f"https://192.0.2.2:8443/{download_filename}",
+        "id": str(uuid.uuid4()),
+        "progress": True,
+        "digest": file_digest,
+        "fileSizeBytes": len(raw_bytes),
+        "httpHeaderKeys": ["Content-Type"],
+        "httpHeaderValues": ["application/octet-stream"],
+        "destinationType": transfer_type,
+        "destination": device_path,
+        "encoding": "lz4",
+    }
+    logger.info(f"Initiating LZ4 {transfer_type} download...")
+    _execute_and_wait_for_transfer(e2e_cfg, interface_ft_server_to_device, dl_data)
+
+    # 2. Upload Uncompressed
+    ul_data = {
+        "url": f"https://192.0.2.2:8443/{upload_filename}",
+        "id": str(uuid.uuid4()),
+        "progress": True,
+        "httpHeaderKeys": ["Content-Type"],
+        "httpHeaderValues": ["text/plain"],
+        "sourceType": transfer_type,
+        "source": device_path,
+        # Intentionally omitting encoding to test uncompressed retrieval
+    }
+    logger.info(f"Initiating uncompressed {transfer_type} upload...")
+    _execute_and_wait_for_transfer(e2e_cfg, interface_ft_device_to_server, ul_data)
+
+    # 3. Verification
+    uploaded_file_path = Path(e2e_cfg.http_server_data_dir, upload_filename)
+    assert uploaded_file_path.exists(), "The device failed to upload the uncompressed file."
+    assert (
+        uploaded_file_path.read_bytes() == raw_bytes
+    ), "Data mismatch! Retrieved uncompressed file does not match original."
+    logger.info(f"LZ4 transfer loop for '{transfer_type}' completed.")
+
+
 def validate_file_transfer_stream_lz4(e2e_cfg: Configuration):
-    _run_full_transfer_cycle(
-        e2e_cfg, transfer_type="stream", device_path="loopback", encoding="lz4"
-    )
+    _run_lz4_transfer_cycle(e2e_cfg, transfer_type="stream", device_path="loopback")
 
 
 def validate_file_transfer_filesystem_lz4(e2e_cfg: Configuration):
-    _run_full_transfer_cycle(
-        e2e_cfg,
-        transfer_type="filesystem",
-        device_path="/lfs1/test_fs_transfer_lz4.txt",
-        encoding="lz4",
+    _run_lz4_transfer_cycle(
+        e2e_cfg, transfer_type="filesystem", device_path="/lfs1/test_fs_transfer_lz4.txt"
     )
+
+
+# --- TAR TRANSFER TESTS ---
+
+
+def validate_file_transfer_filesystem_tar(e2e_cfg: Configuration):
+    logger.info("Testing TAR file transfer loop with 3 files (including a large file)")
+
+    # USTAR blocks are 512 bytes. Making file1 sufficiently large (~14KB) to exceed the frame size.
+    large_payload = (
+        b"This is a large file payload intended to exceed standard USTAR frame sizes. " * 200
+    )
+
+    files = {
+        "file1.txt": large_payload,
+        "file2.txt": b"Content for the second TAR file test",
+        "file3.txt": b"Content for the third TAR file test",
+    }
+
+    tar_stream = io.BytesIO()
+    with tarfile.open(fileobj=tar_stream, mode="w", format=tarfile.USTAR_FORMAT) as tar:
+        for name, content in files.items():
+            tarinfo = tarfile.TarInfo(name=name)
+            tarinfo.size = len(content)
+            tar.addfile(tarinfo, io.BytesIO(content))
+    tar_bytes = tar_stream.getvalue()
+
+    download_filename = "tar_download.tar"
+    upload_filename = "tar_upload.tar"
+    file_digest = f"sha256:{hashlib.sha256(tar_bytes).hexdigest()}"
+
+    Path(e2e_cfg.http_server_data_dir, download_filename).write_bytes(tar_bytes)
+
+    # 1. Download TAR
+    dl_data = {
+        "url": f"https://192.0.2.2:8443/{download_filename}",
+        "id": str(uuid.uuid4()),
+        "progress": True,
+        "digest": file_digest,
+        "fileSizeBytes": len(tar_bytes),
+        "httpHeaderKeys": ["Content-Type"],
+        "httpHeaderValues": ["application/octet-stream"],
+        "destinationType": "filesystem",
+        "destination": "/lfs1/tar_test_dir",
+        "encoding": "tar",
+    }
+    logger.info("Initiating TAR folder download...")
+    _execute_and_wait_for_transfer(e2e_cfg, interface_ft_server_to_device, dl_data)
+
+    # 2. Upload TAR
+    ul_data = {
+        "url": f"https://192.0.2.2:8443/{upload_filename}",
+        "id": str(uuid.uuid4()),
+        "progress": True,
+        "httpHeaderKeys": ["Content-Type"],
+        "httpHeaderValues": ["application/octet-stream"],
+        "sourceType": "filesystem",
+        "source": "/lfs1/tar_test_dir",
+        "encoding": "tar",
+    }
+    logger.info("Initiating TAR folder upload...")
+    _execute_and_wait_for_transfer(e2e_cfg, interface_ft_device_to_server, ul_data)
+
+    # 3. Verification (Server extracts incoming TARs via http_server.py)
+    for name, content in files.items():
+        extracted_path = Path(e2e_cfg.http_server_data_dir, name)
+        assert extracted_path.exists(), f"Extracted file {name} is missing from the server."
+        assert extracted_path.read_bytes() == content, f"Content mismatch in extracted file {name}."
+    logger.info("TAR transfer loop completed.")
+
+
+def validate_file_transfer_filesystem_tar_nested(e2e_cfg: Configuration):
+    logger.info("Testing TAR file transfer loop with nested directories")
+
+    # Creating a mix of root-level and nested files
+    files = {
+        "root.txt": b"Root content",
+        "folder_a/file_a.txt": b"Content A",
+        "folder_a/folder_b/folder_c/file_b.txt": b"Content B",
+    }
+
+    tar_stream = io.BytesIO()
+    with tarfile.open(fileobj=tar_stream, mode="w", format=tarfile.USTAR_FORMAT) as tar:
+        for name, content in files.items():
+            tarinfo = tarfile.TarInfo(name=name)
+            tarinfo.size = len(content)
+            tar.addfile(tarinfo, io.BytesIO(content))
+    tar_bytes = tar_stream.getvalue()
+
+    download_filename = "nested_tar_download.tar"
+    upload_filename = "nested_tar_upload.tar"
+    file_digest = f"sha256:{hashlib.sha256(tar_bytes).hexdigest()}"
+
+    Path(e2e_cfg.http_server_data_dir, download_filename).write_bytes(tar_bytes)
+
+    # 1. Download
+    dl_data = {
+        "url": f"https://192.0.2.2:8443/{download_filename}",
+        "id": str(uuid.uuid4()),
+        "progress": True,
+        "digest": file_digest,
+        "fileSizeBytes": len(tar_bytes),
+        "httpHeaderKeys": ["Content-Type"],
+        "httpHeaderValues": ["application/octet-stream"],
+        "destinationType": "filesystem",
+        "destination": "/lfs1/nested_tar_test",
+        "encoding": "tar",
+    }
+    logger.info("Initiating Nested TAR download...")
+    _execute_and_wait_for_transfer(e2e_cfg, interface_ft_server_to_device, dl_data)
+
+    # 2. Upload
+    ul_data = {
+        "url": f"https://192.0.2.2:8443/{upload_filename}",
+        "id": str(uuid.uuid4()),
+        "progress": True,
+        "httpHeaderKeys": ["Content-Type"],
+        "httpHeaderValues": ["application/octet-stream"],
+        "sourceType": "filesystem",
+        "source": "/lfs1/nested_tar_test",
+        "encoding": "tar",
+    }
+    logger.info("Initiating Nested TAR upload...")
+    _execute_and_wait_for_transfer(e2e_cfg, interface_ft_device_to_server, ul_data)
+
+    # 3. Verification
+    for name, content in files.items():
+        extracted_path = Path(e2e_cfg.http_server_data_dir, name)
+        assert extracted_path.exists(), f"Extracted nested file {name} is missing."
+        assert extracted_path.read_bytes() == content, f"Content mismatch in nested file {name}."
+    logger.info("Nested TAR transfer loop completed.")
+
+
+def validate_file_transfer_filesystem_tar_empty(e2e_cfg: Configuration):
+    logger.info("Testing empty TAR file transfer loop")
+
+    tar_stream = io.BytesIO()
+    with tarfile.open(fileobj=tar_stream, mode="w", format=tarfile.USTAR_FORMAT) as tar:
+        pass  # Create an empty TAR structure
+    tar_bytes = tar_stream.getvalue()
+
+    download_filename = "empty_tar_download.tar"
+    upload_filename = "empty_tar_upload.tar"
+    file_digest = f"sha256:{hashlib.sha256(tar_bytes).hexdigest()}"
+
+    Path(e2e_cfg.http_server_data_dir, download_filename).write_bytes(tar_bytes)
+
+    # 1. Download Empty TAR
+    dl_data = {
+        "url": f"https://192.0.2.2:8443/{download_filename}",
+        "id": str(uuid.uuid4()),
+        "progress": True,
+        "digest": file_digest,
+        "fileSizeBytes": len(tar_bytes),
+        "httpHeaderKeys": ["Content-Type"],
+        "httpHeaderValues": ["application/octet-stream"],
+        "destinationType": "filesystem",
+        "destination": "/lfs1/empty_tar_dir",
+        "encoding": "tar",
+    }
+    logger.info("Initiating Empty TAR folder download...")
+    _execute_and_wait_for_transfer(e2e_cfg, interface_ft_server_to_device, dl_data)
+
+    # 2. Upload Empty TAR
+    ul_data = {
+        "url": f"https://192.0.2.2:8443/{upload_filename}",
+        "id": str(uuid.uuid4()),
+        "progress": True,
+        "httpHeaderKeys": ["Content-Type"],
+        "httpHeaderValues": ["application/octet-stream"],
+        "sourceType": "filesystem",
+        "source": "/lfs1/empty_tar_dir",
+        "encoding": "tar",
+    }
+    logger.info("Initiating Empty TAR folder upload...")
+    _execute_and_wait_for_transfer(e2e_cfg, interface_ft_device_to_server, ul_data)
+
+    # 3. Verification
+    uploaded_path = Path(e2e_cfg.http_server_data_dir, upload_filename)
+    assert uploaded_path.exists(), "The empty TAR file was not uploaded to the server."
+    assert tarfile.is_tarfile(uploaded_path), "Uploaded file is not a valid TAR."
+    logger.info("Empty TAR transfer loop completed.")

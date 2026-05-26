@@ -83,6 +83,8 @@ def start_server(port=8443, cert_file="192.0.2.2.pem", key_file="192.0.2.2.key",
                     tar_path = save_path[:-4]
                     Path(tar_path).write_bytes(lz4.frame.decompress(Path(save_path).read_bytes()))
                     tarfile.open(tar_path).extractall(os.path.dirname(save_path))
+                elif save_path.endswith(".tar"):
+                    tarfile.open(save_path).extractall(os.path.dirname(save_path))
 
                 # Send success response
                 response_msg = f"Successfully saved to {self.path}".encode("utf-8")

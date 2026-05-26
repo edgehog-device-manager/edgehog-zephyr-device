@@ -18,8 +18,10 @@
 typedef struct
 {
     /** @brief Initializes the storage backend and returns a context. */
-    edgehog_result_t (*file_init)(void **ctx, edgehog_ft_cbks_t *cbks, char *identifier, char *url,
-        size_t expected_file_size, char *destination);
+    edgehog_result_t (*file_init)(void **ctx, edgehog_ft_cbks_t *cbks, size_t expected_file_size,
+        char *destination, bool is_tar);
+    /** @brief Store the next file entry (used for TAR directories). */
+    edgehog_result_t (*file_append_next_entry)(void *ctx, const char *name_len);
     /** @brief Appends a chunk of data to the storage backend. */
     edgehog_result_t (*file_append_chunk)(void *ctx, const uint8_t *chunk_data, size_t chunk_size);
     /** @brief Finalizes and closes the file transfer successfully. */

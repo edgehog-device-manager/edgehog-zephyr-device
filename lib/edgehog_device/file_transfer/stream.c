@@ -65,14 +65,17 @@ typedef struct
  *         Static functions declarations        *
  ***********************************************/
 
-static edgehog_result_t write_init(void **ctx, edgehog_ft_cbks_t *cbks, char *identifier, char *url,
-    size_t expected_file_size, char *destination);
+static edgehog_result_t write_init(
+    void **ctx, edgehog_ft_cbks_t *cbks, size_t expected_file_size, char *destination, bool is_tar);
+static edgehog_result_t write_append_next_entry(void *ctx, const char *file_name);
 static edgehog_result_t write_append(void *ctx, const uint8_t *chunk_data, size_t chunk_size);
 static edgehog_result_t write_complete(void *ctx);
 static void write_abort(void *ctx);
 
 static edgehog_result_t read_init(
-    void **ctx, edgehog_ft_cbks_t *cbks, char *identifier, char *source, size_t *out_file_size);
+    void **ctx, edgehog_ft_cbks_t *cbks, char *source, size_t *out_file_size, bool is_tar);
+static edgehog_result_t read_get_next_entry(
+    void *ctx, char *file_name, size_t name_len, size_t *file_size, bool *has_next);
 static edgehog_result_t read_chunk(
     void *ctx, size_t max_length, uint8_t **chunk_data, size_t *chunk_size, bool *last_chunk);
 static edgehog_result_t read_complete(void *ctx);
@@ -83,10 +86,12 @@ static void read_abort(void *ctx);
  ***********************************************/
 
 const edgehog_ft_file_write_cbks_t edgehog_ft_stream_write_cbks = { .file_init = write_init,
+    .file_append_next_entry = write_append_next_entry,
     .file_append_chunk = write_append,
     .file_complete = write_complete,
     .file_abort = write_abort };
 const edgehog_ft_file_read_cbks_t edgehog_ft_stream_read_cbks = { .file_init = read_init,
+    .file_get_next_entry = read_get_next_entry,
     .file_read_chunk = read_chunk,
     .file_complete = read_complete,
     .file_abort = read_abort };
@@ -95,8 +100,8 @@ const edgehog_ft_file_read_cbks_t edgehog_ft_stream_read_cbks = { .file_init = r
  *         Static functions definitions         *
  ***********************************************/
 
-static edgehog_result_t write_init(void **ctx, edgehog_ft_cbks_t *cbks, char * /*identifier*/,
-    char * /*url*/, size_t expected_file_size, char *destination)
+static edgehog_result_t write_init(void **ctx, edgehog_ft_cbks_t *cbks, size_t expected_file_size,
+    char *destination, bool /*is_tar*/)
 {
     write_ctx_t *wctx = k_malloc(sizeof(write_ctx_t));
     if (!wctx) {
@@ -131,6 +136,11 @@ static edgehog_result_t write_init(void **ctx, edgehog_ft_cbks_t *cbks, char * /
     wctx->transferred_size = 0;
 
     *ctx = wctx;
+    return EDGEHOG_RESULT_OK;
+}
+
+static edgehog_result_t write_append_next_entry(void * /*ctx*/, const char * /*file_name*/)
+{
     return EDGEHOG_RESULT_OK;
 }
 
@@ -207,7 +217,7 @@ static void write_abort(void *ctx)
 }
 
 static edgehog_result_t read_init(
-    void **ctx, edgehog_ft_cbks_t *cbks, char * /*identifier*/, char *source, size_t *out_file_size)
+    void **ctx, edgehog_ft_cbks_t *cbks, char *source, size_t *out_file_size, bool /*is_tar*/)
 {
     read_ctx_t *rctx = k_malloc(sizeof(read_ctx_t));
     if (!rctx) {
@@ -242,6 +252,12 @@ static edgehog_result_t read_init(
     }
 
     *ctx = rctx;
+    return EDGEHOG_RESULT_OK;
+}
+
+static edgehog_result_t read_get_next_entry(void * /*ctx*/, char * /*file_name*/,
+    size_t /*name_len*/, size_t * /*file_size*/, bool * /*has_next*/)
+{
     return EDGEHOG_RESULT_OK;
 }
 

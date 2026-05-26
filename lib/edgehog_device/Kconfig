@@ -95,12 +95,18 @@ config EDGEHOG_DEVICE_FILE_TRANSFER
 
 config EDGEHOG_DEVICE_FILE_TRANSFER_COMPRESSION
 	bool "Enable file transfer compression functionality"
-	depends on EDGEHOG_DEVICE
 	depends on EDGEHOG_DEVICE_FILE_TRANSFER
 	depends on LZ4
 	default false
 	help
-	  Enable the possibility to compress and decompress files
+	  Enable the possibility to compress and decompress files through the LZ4 compression algorithm.
+
+config EDGEHOG_DEVICE_FILE_TRANSFER_TAR
+	bool "Enable file transfer TAR functionality"
+	depends on EDGEHOG_DEVICE_FILE_TRANSFER
+	default false
+	help
+	  Enable the possibility to pack multiple files into a TAR archive
 
 config EDGEHOG_DEVICE_FILE_TRANSFER_HTTPS_CA_CERT_TAG
 	int "CA root certificate TLS security tag for the file transfer download URL"
@@ -110,7 +116,7 @@ config EDGEHOG_DEVICE_FILE_TRANSFER_HTTPS_CA_CERT_TAG
 	  The CA certificate should be added by the user with the tls_credential_add function.
 	  This configuration option should be set to the tag used when adding the CA certificate.
 
-config EDGEHOG_DEVICE_ADVANCED_FILE_TRANSFER_QUEUE_SIZE
+config EDGEHOG_DEVICE_FILE_TRANSFER_QUEUE_SIZE
 	int "File transfer message queue size"
 	depends on EDGEHOG_DEVICE
 	default 10
@@ -123,84 +129,9 @@ endmenu
 
 menu "Logging options"
 
-module = EDGEHOG_DEVICE_DEVICE
-module-str = Log level for Edgehog device
-module-help = Sets log level for Edgehog device.
-source "subsys/logging/Kconfig.template.log_config"
-
-module = EDGEHOG_DEVICE_HARDWARE_INFO
-module-str = Log level for Edgehog device hardware informantions
-module-help = Sets log level for Edgehog device hardware informantions.
-source "subsys/logging/Kconfig.template.log_config"
-
-module = EDGEHOG_DEVICE_OS_INFO
-module-str = Log level for Edgehog device operating system informantions
-module-help = Sets log level for Edgehog device operating system informantions.
-source "subsys/logging/Kconfig.template.log_config"
-
-module = EDGEHOG_DEVICE_SYSTEM_INFO
-module-str = Log level for Edgehog device system informantions
-module-help = Sets log level for Edgehog device system informantions.
-source "subsys/logging/Kconfig.template.log_config"
-
 module = EDGEHOG_DEVICE_BASE_IMAGE
 module-str = Log level for Edgehog device software image informations
 module-help = Sets log level for Edgehog device software image informations.
-source "subsys/logging/Kconfig.template.log_config"
-
-module = EDGEHOG_DEVICE_UTIL
-module-str = Log level for Edgehog device utility functions
-module-help = Sets log level for Edgehog device utility functions.
-source "subsys/logging/Kconfig.template.log_config"
-
-module = EDGEHOG_DEVICE_HTTP
-module-str = Log level for Edgehog device connectivity utilities
-module-help = Sets log level for Edgehog device connectivity utilities.
-source "subsys/logging/Kconfig.template.log_config"
-
-module = EDGEHOG_DEVICE_OTA
-module-str = Log level for Edgehog device OTA utilities
-module-help = Sets log level for Edgehog device OTA utilities.
-source "subsys/logging/Kconfig.template.log_config"
-
-module = EDGEHOG_DEVICE_NVS
-module-str = Log level for Edgehog device NVS utilities
-module-help = Sets log level for Edgehog device NVS utilities.
-source "subsys/logging/Kconfig.template.log_config"
-
-module = EDGEHOG_DEVICE_SETTINGS
-module-str = Log level for Edgehog device Settings utilities
-module-help = Sets log level for Edgehog device Settings utilities.
-source "subsys/logging/Kconfig.template.log_config"
-
-module = EDGEHOG_DEVICE_COMMAND
-module-str = Log level for Edgehog device Command utilities
-module-help = Sets log level for Edgehog device Command utilities.
-source "subsys/logging/Kconfig.template.log_config"
-
-module = EDGEHOG_DEVICE_RUNTIME_INFO
-module-str = Log level for Edgehog device Runtime informantions
-module-help = Sets log level for Edgehog device Runtime informantions.
-source "subsys/logging/Kconfig.template.log_config"
-
-module = EDGEHOG_DEVICE_SYSTEM_STATUS
-module-str = Log level for Edgehog device System status informantions
-module-help = Sets log level for Edgehog device System status informantions.
-source "subsys/logging/Kconfig.template.log_config"
-
-module = EDGEHOG_DEVICE_STORAGE_USAGE
-module-str = Log level for Edgehog device Storage usage informantions
-module-help = Sets log level for Edgehog device Storage usage informantions.
-source "subsys/logging/Kconfig.template.log_config"
-
-module = EDGEHOG_DEVICE_LED
-module-str = Log level for Edgehog device led controller.
-module-help = Sets log level for Edgehog device led controller.
-source "subsys/logging/Kconfig.template.log_config"
-
-module = EDGEHOG_DEVICE_WIFI_SCAN
-module-str = Log level for Edgehog device WiFi scan.
-module-help = Sets log level for Edgehog device WiFi scan.
 source "subsys/logging/Kconfig.template.log_config"
 
 module = EDGEHOG_DEVICE_BATTERY_STATUS
@@ -208,14 +139,14 @@ module-str = Log level for Edgehog device Battery status informantions.
 module-help = Sets log level for Edgehog device Battery status informantions.
 source "subsys/logging/Kconfig.template.log_config"
 
-module = EDGEHOG_DEVICE_TELEMETRY
-module-str = Log level for Edgehog device telemtry utilities.
-module-help = Sets log level for Edgehog device telemtry utilities.
+module = EDGEHOG_DEVICE_COMMAND
+module-str = Log level for Edgehog device Command utilities
+module-help = Sets log level for Edgehog device Command utilities.
 source "subsys/logging/Kconfig.template.log_config"
 
-module = EDGEHOG_DEVICE_UUID
-module-str = Log level for Edgehog device uuid utilities.
-module-help = Sets log level for Edgehog device uuid utilities.
+module = EDGEHOG_DEVICE_DEVICE
+module-str = Log level for Edgehog device
+module-help = Sets log level for Edgehog device.
 source "subsys/logging/Kconfig.template.log_config"
 
 module = EDGEHOG_DEVICE_FILE_TRANSFER
@@ -223,9 +154,9 @@ module-str = Log level for Edgehog device file transfer utilities.
 module-help = Sets log level for Edgehog device file transfer utilities.
 source "subsys/logging/Kconfig.template.log_config"
 
-module = EDGEHOG_DEVICE_FILE_TRANSFER_STORAGE
-module-str = Log level for Edgehog device file transfer storage utilities.
-module-help = Sets log level for Edgehog device file transfer storage utilities.
+module = EDGEHOG_DEVICE_FILE_TRANSFER_COMPRESSION
+module-str = Log level for the file transfer compression
+module-help = Sets log level for zephyr file transfer compression
 source "subsys/logging/Kconfig.template.log_config"
 
 module = EDGEHOG_DEVICE_FILE_TRANSFER_DECOMPRESSION
@@ -233,9 +164,89 @@ module-str = Log level for the file transfer decompression
 module-help = Sets log level for zephyr file transfer decompression
 source "subsys/logging/Kconfig.template.log_config"
 
-module = EDGEHOG_DEVICE_FILE_TRANSFER_COMPRESSION
-module-str = Log level for the file transfer compression
-module-help = Sets log level for zephyr file transfer compression
+module = EDGEHOG_DEVICE_FILE_TRANSFER_STORAGE
+module-str = Log level for Edgehog device file transfer storage utilities.
+module-help = Sets log level for Edgehog device file transfer storage utilities.
+source "subsys/logging/Kconfig.template.log_config"
+
+module = EDGEHOG_DEVICE_HARDWARE_INFO
+module-str = Log level for Edgehog device hardware informantions
+module-help = Sets log level for Edgehog device hardware informantions.
+source "subsys/logging/Kconfig.template.log_config"
+
+module = EDGEHOG_DEVICE_HTTP
+module-str = Log level for Edgehog device connectivity utilities
+module-help = Sets log level for Edgehog device connectivity utilities.
+source "subsys/logging/Kconfig.template.log_config"
+
+module = EDGEHOG_DEVICE_LED
+module-str = Log level for Edgehog device led controller.
+module-help = Sets log level for Edgehog device led controller.
+source "subsys/logging/Kconfig.template.log_config"
+
+module = EDGEHOG_DEVICE_NVS
+module-str = Log level for Edgehog device NVS utilities
+module-help = Sets log level for Edgehog device NVS utilities.
+source "subsys/logging/Kconfig.template.log_config"
+
+module = EDGEHOG_DEVICE_OS_INFO
+module-str = Log level for Edgehog device operating system informantions
+module-help = Sets log level for Edgehog device operating system informantions.
+source "subsys/logging/Kconfig.template.log_config"
+
+module = EDGEHOG_DEVICE_OTA
+module-str = Log level for Edgehog device OTA utilities
+module-help = Sets log level for Edgehog device OTA utilities.
+source "subsys/logging/Kconfig.template.log_config"
+
+module = EDGEHOG_DEVICE_RUNTIME_INFO
+module-str = Log level for Edgehog device Runtime informantions
+module-help = Sets log level for Edgehog device Runtime informantions.
+source "subsys/logging/Kconfig.template.log_config"
+
+module = EDGEHOG_DEVICE_SETTINGS
+module-str = Log level for Edgehog device Settings utilities
+module-help = Sets log level for Edgehog device Settings utilities.
+source "subsys/logging/Kconfig.template.log_config"
+
+module = EDGEHOG_DEVICE_STORAGE_USAGE
+module-str = Log level for Edgehog device Storage usage informantions
+module-help = Sets log level for Edgehog device Storage usage informantions.
+source "subsys/logging/Kconfig.template.log_config"
+
+module = EDGEHOG_DEVICE_SYSTEM_INFO
+module-str = Log level for Edgehog device system informantions
+module-help = Sets log level for Edgehog device system informantions.
+source "subsys/logging/Kconfig.template.log_config"
+
+module = EDGEHOG_DEVICE_SYSTEM_STATUS
+module-str = Log level for Edgehog device System status informantions
+module-help = Sets log level for Edgehog device System status informantions.
+source "subsys/logging/Kconfig.template.log_config"
+
+module = EDGEHOG_DEVICE_TELEMETRY
+module-str = Log level for Edgehog device telemtry utilities.
+module-help = Sets log level for Edgehog device telemtry utilities.
+source "subsys/logging/Kconfig.template.log_config"
+
+module = EDGEHOG_DEVICE_UTIL
+module-str = Log level for Edgehog device utility functions
+module-help = Sets log level for Edgehog device utility functions.
+source "subsys/logging/Kconfig.template.log_config"
+
+module = EDGEHOG_DEVICE_UUID
+module-str = Log level for Edgehog device uuid utilities.
+module-help = Sets log level for Edgehog device uuid utilities.
+source "subsys/logging/Kconfig.template.log_config"
+
+module = EDGEHOG_DEVICE_WIFI_SCAN
+module-str = Log level for Edgehog device WiFi scan.
+module-help = Sets log level for Edgehog device WiFi scan.
+source "subsys/logging/Kconfig.template.log_config"
+
+module = EDGEHOG_DEVICE_ZTAR
+module-str = Log level for Edgehog device zTAR.
+module-help = Sets log level for Edgehog device zTAR.
 source "subsys/logging/Kconfig.template.log_config"
 
 endmenu

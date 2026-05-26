@@ -41,9 +41,14 @@ EDGEHOG_LOG_MODULE_REGISTER(file_transfer_download, CONFIG_EDGEHOG_DEVICE_FILE_T
 static edgehog_result_t process_compressed_chunk(
     edgehog_ft_http_cbk_data_t *data, const edgehog_http_response_chunk_t *response_chunk);
 #endif
+#ifdef CONFIG_EDGEHOG_DEVICE_FILE_TRANSFER_TAR
+static edgehog_result_t process_tar_chunk(
+    edgehog_ft_http_cbk_data_t *data, const edgehog_http_response_chunk_t *response_chunk);
+#endif
 static edgehog_result_t process_uncompressed_chunk(
     edgehog_ft_http_cbk_data_t *data, const edgehog_http_response_chunk_t *response_chunk);
-static const edgehog_ft_file_write_cbks_t *get_callbacks(const char *destination_type);
+static const edgehog_ft_file_write_cbks_t *get_callbacks(
+    enum edgehog_ft_location_type destination_type);
 static edgehog_result_t setup_digest(edgehog_ft_http_cbk_data_t *data);
 static int verify_digest(edgehog_ft_http_cbk_data_t *data, const char *expected_digest);
 
@@ -82,6 +87,51 @@ static int decompression_write_cbk(const uint8_t *data_chunk, size_t size, void 
 }
 #endif
 
+#ifdef CONFIG_EDGEHOG_DEVICE_FILE_TRANSFER_TAR
+static int tar_on_file_start(const ztar_header_t *header, void *user_data)
+{
+    edgehog_ft_http_cbk_data_t *data = (edgehog_ft_http_cbk_data_t *) user_data;
+    const edgehog_ft_file_write_cbks_t *file_cbks = data->file_cbks;
+
+    char file_name[ZTAR_FILE_NAME_BUFF_SIZE] = { 0 };
+    if (ztar_unpack_get_file_name(header, file_name) != ZTAR_RESULT_OK) {
+        return -1;
+    }
+
+    // Check file type, skip directories or unsupported files
+    ztar_filetype_t type = ZTAR_REGULAR_FILE;
+    if (ztar_unpack_get_file_type(header, &type) != ZTAR_RESULT_OK || type != ZTAR_REGULAR_FILE) {
+        return 0;
+    }
+
+    // Initialize a new file context for the current file in the TAR
+    edgehog_result_t eres = file_cbks->file_append_next_entry(data->file_cbks_ctx, file_name);
+    if (eres != EDGEHOG_RESULT_OK) {
+        data->posix_errno = EIO;
+        data->message = "Failed to initialize file backend for TAR extraction";
+        return -1;
+    }
+
+    return 0;
+}
+
+static int tar_on_file_data(
+    const ztar_header_t * /*header*/, const uint8_t *chunk, size_t size, void *user_data)
+{
+    edgehog_ft_http_cbk_data_t *data = (edgehog_ft_http_cbk_data_t *) user_data;
+    const edgehog_ft_file_write_cbks_t *file_cbks = data->file_cbks;
+
+    // Append chunk directly to the opened file
+    edgehog_result_t eres = file_cbks->file_append_chunk(data->file_cbks_ctx, chunk, size);
+    return eres == EDGEHOG_RESULT_OK ? 0 : -1;
+}
+
+static int tar_on_file_end(const ztar_header_t * /*header*/, void * /*user_data*/)
+{
+    return EDGEHOG_RESULT_OK;
+}
+#endif
+
 static edgehog_result_t http_get_server_to_device_request_cbk(
     edgehog_http_response_chunk_t *response_chunk, void *user_data)
 {
@@ -103,6 +153,11 @@ static edgehog_result_t http_get_server_to_device_request_cbk(
 #ifdef CONFIG_EDGEHOG_DEVICE_FILE_TRANSFER_COMPRESSION
     if (data->encoding == EDGEHOG_FT_ENCODING_LZ4) {
         return process_compressed_chunk(data, response_chunk);
+    }
+#endif
+#ifdef CONFIG_EDGEHOG_DEVICE_FILE_TRANSFER_TAR
+    if (data->encoding == EDGEHOG_FT_ENCODING_TAR) {
+        return process_tar_chunk(data, response_chunk);
     }
 #endif
 
@@ -139,23 +194,22 @@ void edgehog_ft_handle_server_to_device(
 
     const edgehog_ft_file_write_cbks_t *file_cbks = get_callbacks(msg->location_type);
     if (!file_cbks) {
-        EDGEHOG_LOG_DBG("Destination type: %s", msg->location_type);
+        EDGEHOG_LOG_DBG("Destination type: %d", msg->location_type);
         posix_errno = EINVAL;
         message = "Unknown or unsupported file transfer destination type";
         goto exit;
     }
 
-    // Initialize file context
+    // Initialize a file depending on the encoding
     void *file_cbks_ctx = NULL;
-    eres = file_cbks->file_init(&file_cbks_ctx, &edgehog_device->file_transfer->cbks, msg->id,
-        msg->url, msg->file_size_bytes, msg->location);
+    eres = file_cbks->file_init(&file_cbks_ctx, &edgehog_device->file_transfer->cbks,
+        msg->file_size_bytes, msg->location, msg->encoding == EDGEHOG_FT_ENCODING_TAR);
     if (eres != EDGEHOG_RESULT_OK) {
         posix_errno = EIO;
         message = "Failed to initialize the file backend";
         goto exit;
     }
 
-    // TODO: initialize also digest, posix errno and message int the `_new` function
     // Initialize the user data for the HTTP callback
     // Must be allocated on the heap since it needs to be accessed in the work thread.
     http_cbk_user_data
@@ -268,6 +322,64 @@ static edgehog_result_t process_compressed_chunk(
 }
 #endif
 
+#ifdef CONFIG_EDGEHOG_DEVICE_FILE_TRANSFER_TAR
+static edgehog_result_t process_tar_chunk(
+    edgehog_ft_http_cbk_data_t *data, const edgehog_http_response_chunk_t *response_chunk)
+{
+    ztar_result_t zres = ZTAR_RESULT_OK;
+
+    // Initialize context on the first chunk
+    if (!ztar_unpack_is_initialized(&data->ztar_unpack_ctx)) {
+        ztar_unpack_callbacks_t cbks = { .on_file_start = tar_on_file_start,
+            .on_file_data = tar_on_file_data,
+            .on_file_end = tar_on_file_end };
+
+        zres = ztar_unpack_init(&data->ztar_unpack_ctx, cbks, data);
+        if (zres != ZTAR_RESULT_OK) {
+            data->posix_errno = EINVAL;
+            data->message = "Failed to initialize TAR unpacking";
+            return EDGEHOG_RESULT_HTTP_REQUEST_ABORTED;
+        }
+    }
+
+    if (response_chunk->chunk_size > 0) {
+        zres = ztar_unpack_process(
+            &data->ztar_unpack_ctx, response_chunk->chunk_start_addr, response_chunk->chunk_size);
+        if (zres != ZTAR_RESULT_OK && zres != ZTAR_RESULT_ARCHIVE_EXAHUSTED) {
+            data->posix_errno = EIO;
+            data->message = "TAR parsing chunk processing failed";
+            return EDGEHOG_RESULT_HTTP_REQUEST_ABORTED;
+        }
+
+        // Stream the new chunk into the SHA-256 hash operation
+        if (data->expected_digest) {
+            psa_status_t status = psa_hash_update(&data->hash_operation,
+                response_chunk->chunk_start_addr, response_chunk->chunk_size);
+            if (status != PSA_SUCCESS) {
+                data->posix_errno = EIO;
+                data->message = "Failed to update file digest";
+                return EDGEHOG_RESULT_HTTP_REQUEST_ABORTED;
+            }
+        }
+    }
+
+    // Check that the TAR file has been exhausted if this is the last chunk
+    if (response_chunk->last_chunk) {
+        if (zres != ZTAR_RESULT_ARCHIVE_EXAHUSTED
+            && data->ztar_unpack_ctx.bytes_processed_in_trailer < ZTAR_TRAILER_SIZE) {
+            data->posix_errno = EIO;
+            data->message = "TAR archive was not fully exhausted";
+            return EDGEHOG_RESULT_HTTP_REQUEST_ABORTED;
+        }
+    }
+
+    // Update progress
+    edgehog_ft_update_progress(data, response_chunk->chunk_size, response_chunk->last_chunk);
+
+    return EDGEHOG_RESULT_OK;
+}
+#endif
+
 static edgehog_result_t process_uncompressed_chunk(
     edgehog_ft_http_cbk_data_t *data, const edgehog_http_response_chunk_t *response_chunk)
 {
@@ -359,12 +471,12 @@ static int verify_digest(edgehog_ft_http_cbk_data_t *data, const char *expected_
     return 0;
 }
 
-const edgehog_ft_file_write_cbks_t *get_callbacks(const char *destination_type)
+const edgehog_ft_file_write_cbks_t *get_callbacks(enum edgehog_ft_location_type destination_type)
 {
     const edgehog_ft_file_write_cbks_t *file_cbks = NULL;
-    if (strcmp(destination_type, "stream") == 0) {
+    if (destination_type == EDGEHOG_FT_LOCATION_TYPE_STREAM) {
         file_cbks = &edgehog_ft_stream_write_cbks;
-    } else if (strcmp(destination_type, "filesystem") == 0) {
+    } else if (destination_type == EDGEHOG_FT_LOCATION_TYPE_FILESYSTEM) {
         file_cbks = &edgehog_ft_filesystem_write_cbks;
     }
     return file_cbks;

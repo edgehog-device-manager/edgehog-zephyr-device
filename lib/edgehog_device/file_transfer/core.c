@@ -48,11 +48,10 @@ void edgeghog_ft_publish_capabilities(edgehog_device_handle_t edgehog_device)
 {
     EDGEHOG_LOG_DBG("Publishing Edgehog file transfer capabilities");
 
-    // TODO: add support for missign encodings and update the list accordingly
     // Possible values: [gz, lz4, tar, tar.gz, tar.lz4]
     const char *supported_server_to_device_streaming_encodings[] = {
 #ifdef CONFIG_EDGEHOG_DEVICE_FILE_TRANSFER_COMPRESSION
-        "lz4", // TODO: add "tar" once implemented
+        "lz4",
 #endif
     };
     size_t supported_server_to_device_streaming_encodings_len
@@ -69,7 +68,10 @@ void edgeghog_ft_publish_capabilities(edgehog_device_handle_t edgehog_device)
 
     const char *supported_server_to_device_filesystem_encodings[] = {
 #ifdef CONFIG_EDGEHOG_DEVICE_FILE_TRANSFER_COMPRESSION
-        "lz4", // TODO: add "tar" once implemented
+        "lz4",
+#endif
+#ifdef CONFIG_EDGEHOG_DEVICE_FILE_TRANSFER_TAR
+        "tar",
 #endif
     };
     size_t supported_server_to_device_filesystem_encodings_len
@@ -84,11 +86,7 @@ void edgeghog_ft_publish_capabilities(edgehog_device_handle_t edgehog_device)
         return;
     }
 
-    const char *supported_device_to_server_streaming_encodings[] = {
-#ifdef CONFIG_EDGEHOG_DEVICE_FILE_TRANSFER_COMPRESSION
-        "lz4",
-#endif
-    };
+    const char *supported_device_to_server_streaming_encodings[] = {};
     size_t supported_device_to_server_streaming_encodings_len
         = ARRAY_SIZE(supported_device_to_server_streaming_encodings);
     res = astarte_device_set_property(edgehog_device->astarte_device,
@@ -102,8 +100,8 @@ void edgeghog_ft_publish_capabilities(edgehog_device_handle_t edgehog_device)
     }
 
     const char *supported_device_to_server_filesystem_encodings[] = {
-#ifdef CONFIG_EDGEHOG_DEVICE_FILE_TRANSFER_COMPRESSION
-        "lz4",
+#ifdef CONFIG_EDGEHOG_DEVICE_FILE_TRANSFER_TAR
+        "tar",
 #endif
     };
     size_t supported_device_to_server_filesystem_encodings_len
@@ -196,7 +194,7 @@ edgehog_result_t edgehog_ft_start(edgehog_device_handle_t device)
     }
 
     if (k_msgq_alloc_init(&file_transfer->msgq, sizeof(edgehog_ft_msg_t),
-            CONFIG_EDGEHOG_DEVICE_ADVANCED_FILE_TRANSFER_QUEUE_SIZE)
+            CONFIG_EDGEHOG_DEVICE_FILE_TRANSFER_QUEUE_SIZE)
         != 0) {
         EDGEHOG_LOG_ERR("Unable to allocate and init file transfer message queue");
         atomic_clear_bit(&file_transfer->thread_state, THREAD_RUNNING_BIT);
