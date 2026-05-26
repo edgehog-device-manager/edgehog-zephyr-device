@@ -56,6 +56,7 @@ jobs:
         run: |
           west --version
           west blobs -a fetch hal_nxp
+          west blobs -a fetch hal_espressif
       - name: Build sample
         working-directory: ${{ env.PROJECT_MANIFEST_FOLDER }}
         run: |
