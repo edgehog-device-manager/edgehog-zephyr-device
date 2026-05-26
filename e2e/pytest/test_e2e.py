@@ -46,7 +46,7 @@ def e2e_device_env(end_to_end_configuration: Configuration):
 
     logger.info("Launching the device")
     end_to_end_configuration.dut.launch()
-    end_to_end_configuration.dut.readlines_until(SHELL_IS_READY, timeout=60)
+    end_to_end_configuration.dut.readlines_until(regex=SHELL_IS_READY, timeout=60)
     time.sleep(1)
 
     yield end_to_end_configuration, initial_time
@@ -60,7 +60,7 @@ def e2e_device_env(end_to_end_configuration: Configuration):
 
     # Safely disconnect
     end_to_end_configuration.shell.exec_command(SHELL_CMD_DISCONNECT)
-    end_to_end_configuration.dut.readlines_until(SHELL_IS_CLOSING, timeout=60)
+    end_to_end_configuration.dut.readlines_until(regex=SHELL_IS_CLOSING, timeout=60)
 
     logger.info("Stopping the http server")
     stop_server()

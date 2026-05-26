@@ -21,3 +21,10 @@ tests:
     extra_args: EXTRA_CONF_FILE="prj-wifi.conf"
     integration_platforms:
       - frdm_rw612
+  sample.msv:
+    build_only: true
+    sysbuild: true
+    extra_args: CONF_FILE="prj-zephyr-msv.conf"
+    integration_platforms:
+      - frdm_rw612
+      - stm32h573i_dk

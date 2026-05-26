@@ -24,7 +24,7 @@ EDGEHOG_LOG_MODULE_REGISTER(wifi_scan, CONFIG_EDGEHOG_DEVICE_WIFI_SCAN_LOG_LEVEL
 
 #define WIFI_SCAN_ACTIVE_TIME_MS 120
 
-#define WIFI_SCAN_THREAD_STACK_SIZE 2048
+#define WIFI_SCAN_THREAD_STACK_SIZE 16384
 #define WIFI_SCAN_THREAD_PRIORITY 5
 #define WIFI_SCAN_THREAD_START_BIT (1)
 #define WIFI_SCAN_THREAD_STOP_BIT (2)
@@ -222,6 +222,14 @@ edgehog_result_t edgehog_wifi_scan_start(edgehog_device_handle_t edgehog_device)
         atomic_clear_bit(&wifi_scan_data->thread_state, WIFI_SCAN_THREAD_START_BIT);
         return EDGEHOG_RESULT_WIFI_SCAN_REQUEST_FAIL;
     }
+
+#ifdef CONFIG_THREAD_NAME
+    int ret = k_thread_name_set(thread_id, "edgehog_wifi_scan_thread");
+    if (ret != 0) {
+        EDGEHOG_LOG_ERR("Failed to set thread name, error %d", ret);
+    }
+#endif
+
     k_timer_start(&wifi_scan_data->timeout_timer, K_SECONDS(WIFI_SCAN_TIMEOUT_S), K_NO_WAIT);
 
     EDGEHOG_LOG_DBG("WiFi scan started");

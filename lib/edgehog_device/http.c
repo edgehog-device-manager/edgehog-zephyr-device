@@ -11,7 +11,6 @@
 #include <zephyr/net/http/parser.h>
 #include <zephyr/net/http/status.h>
 #include <zephyr/net/socket.h>
-#include <zephyr/version.h>
 
 #ifndef CONFIG_EDGEHOG_DEVICE_DEVELOP_USE_NON_TLS_HTTP
 #include <zephyr/net/tls_credentials.h>
