@@ -276,7 +276,7 @@ exit:
 
     edgehog_ft_http_cbk_data_destroy(http_cbk_user_data);
     edgehog_ft_send_response(
-        edgehog_device, msg->id, EDGEHOG_FT_TYPE_SERVER_TO_DEVICE, posix_errno, message, eres);
+        edgehog_device, &msg->id, EDGEHOG_FT_TYPE_SERVER_TO_DEVICE, posix_errno, message, eres);
     edgehog_ft_msg_destroy(msg);
 }
 
