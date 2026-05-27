@@ -35,7 +35,7 @@ typedef struct
     /** @brief Edgehog device handle. */
     edgehog_device_handle_t edgehog_device;
     /** @brief Transfer ID for the file. */
-    char *id;
+    struct uuid *id;
     /** @brief Flag to enable the progress reporting of the transfer. */
     bool progress;
     /** @brief The type of the file transfer, indicating which callbacks to use. */
@@ -152,7 +152,7 @@ void edgehog_ft_update_progress(
  * @param in_msg Human-readable error or success message.
  * @param eres The edgehog result code to use as fallback if no errno is available.
  */
-void edgehog_ft_send_response(edgehog_device_handle_t device, const char *identifier,
+void edgehog_ft_send_response(edgehog_device_handle_t device, const struct uuid *identifier,
     edgehog_ft_type_t type, int in_errno, const char *in_msg, edgehog_result_t eres);
 
 #endif // FILE_TRANSFER_UTILS_H

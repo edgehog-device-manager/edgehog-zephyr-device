@@ -314,8 +314,11 @@ failure:
     // Send a failure to Astarte if possible, otherwise just log the error and exit
     // TODO: Evaluate if it's possible to offload this operation outside of this function.
     //  to avoid performing a network operation within the event handler
-    if (msg.id) {
-        edgehog_ft_send_response(device, msg.id, type, posix_errno, message, eres);
+    if (UNALIGNED_GET((uint32_t *) msg.id.val) != 0
+        || UNALIGNED_GET((uint32_t *) msg.id.val + 1) != 0
+        || UNALIGNED_GET((uint32_t *) msg.id.val + 2) != 0
+        || UNALIGNED_GET((uint32_t *) msg.id.val + 3) != 0) {
+        edgehog_ft_send_response(device, &msg.id, type, posix_errno, message, eres);
     }
     edgehog_ft_msg_destroy(&msg);
     return eres;
@@ -355,11 +358,13 @@ static void thread_entry_point(void *device_ptr, void *unused1, void *unused2)
             }
 
             // Proceed with the transfer since we hold the semaphore
+            char id_str[UUID_STR_LEN] = { 0 };
+            uuid_to_string(&msg_rcv.id, id_str);
             if (msg_rcv.type == EDGEHOG_FT_TYPE_SERVER_TO_DEVICE) {
-                EDGEHOG_LOG_DBG("Server to device file transfer: %s", msg_rcv.id);
+                EDGEHOG_LOG_DBG("Server to device file transfer: %s", id_str);
                 edgehog_ft_handle_server_to_device(edgehog_device, &msg_rcv);
             } else if (msg_rcv.type == EDGEHOG_FT_TYPE_DEVICE_TO_SERVER) {
-                EDGEHOG_LOG_DBG("Device to server file transfer: %s", msg_rcv.id);
+                EDGEHOG_LOG_DBG("Device to server file transfer: %s", id_str);
                 edgehog_ft_handle_device_to_server(edgehog_device, &msg_rcv);
             }
 

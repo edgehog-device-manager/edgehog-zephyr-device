@@ -16,6 +16,7 @@
 #include "edgehog_device/file_transfer.h"
 
 #include <zephyr/kernel.h>
+#include <zephyr/sys/uuid.h>
 
 /**
  * @brief Encodings and compressions for file transfers.
@@ -51,7 +52,7 @@ enum edgehog_ft_location_type
 typedef struct
 {
     /** @brief Transfer ID for the file. */
-    char *id;
+    struct uuid id;
     /** @brief The URL to get the file from. */
     char *url;
     /** @brief HTTP headers, as a NULL terminated list. */
