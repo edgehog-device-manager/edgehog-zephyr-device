@@ -9,7 +9,7 @@
 
 /**
  * @file network_properties.h
- * @brief Storage usageS API
+ * @brief Network information API
  */
 
 #include "edgehog_device/device.h"
@@ -22,9 +22,8 @@ extern "C" {
  * @brief Publish a network interfaces information.
  *
  * @param[in] edgehog_device A valid Edgehog device handle.
- * @return edgehog_result_t ASTARTE_RESULT_OK if no error occurrs, an error otherwise.
  */
-edgehog_result_t publish_network_properties(edgehog_device_handle_t edgehog_device);
+void publish_network_properties(edgehog_device_handle_t edgehog_device);
 
 #ifdef __cplusplus
 }
