@@ -135,7 +135,7 @@ def _run_raw_transfer_cycle(e2e_cfg: Configuration, transfer_type: str, device_p
     # 1. Download
     dl_data = {
         "url": f"https://192.0.2.2:8443/{download_filename}",
-        "id": str(uuid.uuid4()),
+        "id": str(uuid.uuid7()),
         "progress": True,
         "digest": file_digest,
         "fileSizeBytes": len(raw_bytes),
@@ -150,7 +150,7 @@ def _run_raw_transfer_cycle(e2e_cfg: Configuration, transfer_type: str, device_p
     # 2. Upload
     ul_data = {
         "url": f"https://192.0.2.2:8443/{upload_filename}",
-        "id": str(uuid.uuid4()),
+        "id": str(uuid.uuid7()),
         "progress": True,
         "httpHeaderKeys": ["Content-Type"],
         "httpHeaderValues": ["text/plain"],
@@ -205,7 +205,7 @@ def _run_lz4_transfer_cycle(e2e_cfg: Configuration, transfer_type: str, device_p
     # 1. Download Compressed
     dl_data = {
         "url": f"https://192.0.2.2:8443/{download_filename}",
-        "id": str(uuid.uuid4()),
+        "id": str(uuid.uuid7()),
         "progress": True,
         "digest": file_digest,
         "fileSizeBytes": len(raw_bytes),
@@ -221,7 +221,7 @@ def _run_lz4_transfer_cycle(e2e_cfg: Configuration, transfer_type: str, device_p
     # 2. Upload Uncompressed
     ul_data = {
         "url": f"https://192.0.2.2:8443/{upload_filename}",
-        "id": str(uuid.uuid4()),
+        "id": str(uuid.uuid7()),
         "progress": True,
         "httpHeaderKeys": ["Content-Type"],
         "httpHeaderValues": ["text/plain"],
@@ -285,7 +285,7 @@ def validate_file_transfer_filesystem_tar(e2e_cfg: Configuration):
     # 1. Download TAR
     dl_data = {
         "url": f"https://192.0.2.2:8443/{download_filename}",
-        "id": str(uuid.uuid4()),
+        "id": str(uuid.uuid7()),
         "progress": True,
         "digest": file_digest,
         "fileSizeBytes": len(tar_bytes),
@@ -301,7 +301,7 @@ def validate_file_transfer_filesystem_tar(e2e_cfg: Configuration):
     # 2. Upload TAR
     ul_data = {
         "url": f"https://192.0.2.2:8443/{upload_filename}",
-        "id": str(uuid.uuid4()),
+        "id": str(uuid.uuid7()),
         "progress": True,
         "httpHeaderKeys": ["Content-Type"],
         "httpHeaderValues": ["application/octet-stream"],
@@ -347,7 +347,7 @@ def validate_file_transfer_filesystem_tar_nested(e2e_cfg: Configuration):
     # 1. Download
     dl_data = {
         "url": f"https://192.0.2.2:8443/{download_filename}",
-        "id": str(uuid.uuid4()),
+        "id": str(uuid.uuid7()),
         "progress": True,
         "digest": file_digest,
         "fileSizeBytes": len(tar_bytes),
@@ -363,7 +363,7 @@ def validate_file_transfer_filesystem_tar_nested(e2e_cfg: Configuration):
     # 2. Upload
     ul_data = {
         "url": f"https://192.0.2.2:8443/{upload_filename}",
-        "id": str(uuid.uuid4()),
+        "id": str(uuid.uuid7()),
         "progress": True,
         "httpHeaderKeys": ["Content-Type"],
         "httpHeaderValues": ["application/octet-stream"],
@@ -399,7 +399,7 @@ def validate_file_transfer_filesystem_tar_empty(e2e_cfg: Configuration):
     # 1. Download Empty TAR
     dl_data = {
         "url": f"https://192.0.2.2:8443/{download_filename}",
-        "id": str(uuid.uuid4()),
+        "id": str(uuid.uuid7()),
         "progress": True,
         "digest": file_digest,
         "fileSizeBytes": len(tar_bytes),
@@ -415,7 +415,7 @@ def validate_file_transfer_filesystem_tar_empty(e2e_cfg: Configuration):
     # 2. Upload Empty TAR
     ul_data = {
         "url": f"https://192.0.2.2:8443/{upload_filename}",
-        "id": str(uuid.uuid4()),
+        "id": str(uuid.uuid7()),
         "progress": True,
         "httpHeaderKeys": ["Content-Type"],
         "httpHeaderValues": ["application/octet-stream"],
