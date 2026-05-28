@@ -77,7 +77,7 @@ typedef enum
     /** @brief An error occurred during configuration of LED device. */
     EDGEHOG_RESULT_LED_CONFIGURE_ERROR = 24,
     /** @brief Unable to run a WiFi scan request. */
-    EDGEHOG_RESULT_WIFI_SCAN_REQUEST_FAIL = 25,
+    EDGEHOG_RESULT_NETWORK_INTERFACE_SCAN_REQUEST_FAIL = 25,
     /** @brief Unable to init Edgehog settings. */
     EDGEHOG_RESULT_SETTINGS_INIT_FAIL = 26,
     /** @brief Unable to load items from the Edgehog settings. */

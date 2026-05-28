@@ -190,14 +190,14 @@ edgehog_result_t edgehog_wifi_scan_start(edgehog_device_handle_t edgehog_device)
 
     if (atomic_test_and_set_bit(&wifi_scan_data->thread_state, WIFI_SCAN_THREAD_START_BIT)) {
         EDGEHOG_LOG_ERR("Failed starting wifi scan as one is already been executed");
-        return EDGEHOG_RESULT_WIFI_SCAN_REQUEST_FAIL;
+        return EDGEHOG_RESULT_NETWORK_INTERFACE_SCAN_REQUEST_FAIL;
     }
 
     struct net_if *iface = net_if_get_wifi_sta();
     if (!iface) {
         EDGEHOG_LOG_ERR("Failed getting interface for the WiFi station");
         atomic_clear_bit(&wifi_scan_data->thread_state, WIFI_SCAN_THREAD_START_BIT);
-        return EDGEHOG_RESULT_WIFI_SCAN_REQUEST_FAIL;
+        return EDGEHOG_RESULT_NETWORK_INTERFACE_SCAN_REQUEST_FAIL;
     }
 
     net_mgmt_add_event_callback(&wifi_scan_data->wifi_scan_cb);
@@ -211,7 +211,7 @@ edgehog_result_t edgehog_wifi_scan_start(edgehog_device_handle_t edgehog_device)
     if (net_mgmt(NET_REQUEST_WIFI_SCAN, iface, &params, sizeof(params))) {
         EDGEHOG_LOG_ERR("WiFi Scan request failed");
         atomic_clear_bit(&wifi_scan_data->thread_state, WIFI_SCAN_THREAD_START_BIT);
-        return EDGEHOG_RESULT_WIFI_SCAN_REQUEST_FAIL;
+        return EDGEHOG_RESULT_NETWORK_INTERFACE_SCAN_REQUEST_FAIL;
     }
 
     k_tid_t thread_id = k_thread_create(&wifi_scan_data->thread, wifi_scan_stack_area,
@@ -220,7 +220,7 @@ edgehog_result_t edgehog_wifi_scan_start(edgehog_device_handle_t edgehog_device)
     if (!thread_id) {
         EDGEHOG_LOG_ERR("Unable to start wifi scan thread");
         atomic_clear_bit(&wifi_scan_data->thread_state, WIFI_SCAN_THREAD_START_BIT);
-        return EDGEHOG_RESULT_WIFI_SCAN_REQUEST_FAIL;
+        return EDGEHOG_RESULT_NETWORK_INTERFACE_SCAN_REQUEST_FAIL;
     }
 
 #ifdef CONFIG_THREAD_NAME
