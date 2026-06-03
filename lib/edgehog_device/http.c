@@ -215,6 +215,9 @@ static int put_payload_cbk(int sock, struct http_request * /*req*/, void *user_d
 
 edgehog_result_t edgehog_http_get(edgehog_http_get_data_t *data)
 {
+    EDGEHOG_LOG_DBG(
+        "Initiating HTTP GET request to URL: %s (Timeout: %d ms)", data->url, data->timeout_ms);
+
     struct request_data req_data = {
         .method = HTTP_GET,
         .url = data->url,
@@ -286,7 +289,8 @@ static int create_and_connect_socket(const char *hostname, const char *port)
     struct zsock_addrinfo *host_addrinfo = NULL;
     int getaddrinfo_rc = zsock_getaddrinfo(hostname, port, &hints, &host_addrinfo);
     if (getaddrinfo_rc != 0) {
-        EDGEHOG_LOG_ERR("Unable to resolve address %s", zsock_gai_strerror(getaddrinfo_rc));
+        EDGEHOG_LOG_ERR("Unable to resolve address (%d) %s", getaddrinfo_rc,
+            zsock_gai_strerror(getaddrinfo_rc));
         if (getaddrinfo_rc == DNS_EAI_SYSTEM) {
             EDGEHOG_LOG_ERR("Errno: (%d) %s", errno, strerror(errno));
         }
@@ -338,7 +342,8 @@ static int create_and_connect_socket(const char *hostname, const char *port)
         int connect_rc = zsock_connect(sock, curr_addr->ai_addr, curr_addr->ai_addrlen);
         if (connect_rc == -1) {
             EDGEHOG_LOG_DBG(
-                "Connection failed (%d -  %s), trying next address...", errno, strerror(errno));
+                "Connection failed (%d -  %s), closing socket and trying next address...", errno,
+                strerror(errno));
             zsock_close(sock);
             sock = -1;
             continue;
@@ -395,7 +400,8 @@ static edgehog_result_t perform_request(struct request_data *data)
 
     int sock = create_and_connect_socket(host, port);
     if (sock < 0) {
-        EDGEHOG_LOG_ERR("socket err %d", sock);
+        EDGEHOG_LOG_ERR(
+            "Aborting HTTP request due to socket creation/connection failure (err %d)", sock);
         return EDGEHOG_RESULT_NETWORK_ERROR;
     }
 
@@ -456,6 +462,9 @@ static edgehog_result_t perform_request(struct request_data *data)
         return data->cbk_ctx.result;
     }
 
+    EDGEHOG_LOG_DBG(
+        "HTTP request completed successfully. Closing socket %d and freeing buffer.", sock);
+
     zsock_close(sock);
     k_free(recv_buf);
     return EDGEHOG_RESULT_OK;
@@ -465,6 +474,8 @@ static int send_buffer_fully(int sock, const uint8_t *buf, size_t len)
 {
     int sent_bytes = 0;
     while (sent_bytes < len) {
+        EDGEHOG_LOG_DBG("Attempting to send chunk of size %zu (already sent %d)...",
+            len - sent_bytes, sent_bytes);
         int send_rc = zsock_send(sock, buf + sent_bytes, len - sent_bytes, 0);
         if (send_rc <= 0) {
             EDGEHOG_LOG_ERR("Failed to send socket data: %d", errno);
