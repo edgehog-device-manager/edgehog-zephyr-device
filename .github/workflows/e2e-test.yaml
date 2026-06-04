@@ -10,7 +10,7 @@ permissions:
   contents: read
 
 env:
-  EDGEHOG_INTERFACES_REF: 1707969570a7121a130c97df914a025d5232c70e
+  ASTARTE_REALM: "test"
   ASTARTE_API_BASE: api.autotest.astarte-platform.org
   ASTARTE_BROKER_BASE: broker.autotest.astarte-platform.org
   ASTARTE_ACTION_CERT: /usr/local/share/ca-certificates/astarte-autotest.crt
@@ -22,9 +22,9 @@ jobs:
       # setup astarte
       - name: Create Astarte Cluster
         id: astarte
-        uses: astarte-platform/astarte-cluster-action@v1
+        uses: astarte-platform/astarte-cluster-action@v2.0.0
         with:
-          astarte_version: "1.2.1"
+          astarte_version: "1.3.0"
 
       - name: Checkout Edgehog device
         uses: actions/checkout@v6
@@ -63,16 +63,14 @@ jobs:
           # Register a device
           DEVICE_ID=$(astartectl utils device-id generate-random)
           CREDENTIAL_SECRET=$(astartectl pairing agent register --compact-output -- "$DEVICE_ID")
-          PAIRING_TOKEN=$(astartectl utils gen-jwt pairing)
-          TOKEN=$(astartectl utils gen-jwt appengine)
-          tee -a private.conf << END
+          APPENGINE_TOKEN=$(astartectl utils gen-jwt appengine)
           # Store Astarte configuration and device credentials
+          tee -a private.conf << END
           CONFIG_ASTARTE_DEVICE_SDK_HOSTNAME="$ASTARTE_API_BASE"
-          CONFIG_ASTARTE_DEVICE_SDK_REALM_NAME="test"
+          CONFIG_ASTARTE_DEVICE_SDK_REALM_NAME="$ASTARTE_REALM"
           CONFIG_E2E_ASTARTE_DEVICE_ID="$DEVICE_ID"
           CONFIG_E2E_ASTARTE_CREDENTIAL_SECRET="$CREDENTIAL_SECRET"
-          CONFIG_ASTARTE_DEVICE_SDK_PAIRING_JWT="$PAIRING_TOKEN"
-          CONFIG_E2E_APPENGINE_TOKEN="$TOKEN"
+          CONFIG_E2E_APPENGINE_TOKEN="$APPENGINE_TOKEN"
           CONFIG_E2E_APPENGINE_URL="https://$ASTARTE_API_BASE/appengine"
           # Configuration for the DNS (must be the one of the zeth interface)
           # Since we are injecting there the correct domain name resolutions

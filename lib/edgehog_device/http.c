@@ -117,6 +117,9 @@ static int send_buffer_fully(int sock, const uint8_t *buf, size_t len);
 static int get_response_cbk(
     struct http_response *rsp, enum http_final_call final_data, void *user_data)
 {
+    EDGEHOG_LOG_DBG("get_response_cbk called. Status: %s (%d), Fragment len: %zu",
+        rsp->http_status ? rsp->http_status : "N/A", rsp->http_status_code, rsp->body_frag_len);
+
     if (!user_data) {
         EDGEHOG_LOG_ERR("Unable to read user data context");
         return -1;
@@ -135,13 +138,20 @@ static int get_response_cbk(
 
     edgehog_http_response_chunk_t http_response_chunk = { 0 };
     if (rsp->body_found) {
+        EDGEHOG_LOG_DBG("Processing body fragment of size %zu.", rsp->body_frag_len);
         http_response_chunk.chunk_start_addr = rsp->body_frag_start;
         http_response_chunk.chunk_size = rsp->body_frag_len;
     } else {
-        EDGEHOG_LOG_DBG("Empty body found in HTTP response");
+        EDGEHOG_LOG_DBG("Empty body found in HTTP response chunk");
     }
     http_response_chunk.response_size = rsp->content_length;
-    http_response_chunk.last_chunk = final_data == HTTP_DATA_FINAL;
+    http_response_chunk.last_chunk = (final_data == HTTP_DATA_FINAL);
+
+    if (final_data == HTTP_DATA_FINAL) {
+        EDGEHOG_LOG_DBG("All HTTP data received for this response.");
+    } else {
+        EDGEHOG_LOG_DBG("Awaiting more HTTP data...");
+    }
 
     ctx->result = ctx->response_cbk(&http_response_chunk, ctx->user_data);
     if (ctx->result != EDGEHOG_RESULT_OK) {
@@ -152,8 +162,9 @@ static int get_response_cbk(
 }
 
 static int put_response_cbk(
-    struct http_response * /*rsp*/, enum http_final_call /*final_data*/, void * /*user_data*/)
+    struct http_response * /*rsp*/, enum http_final_call final_data, void * /*user_data*/)
 {
+    EDGEHOG_LOG_DBG("put_response_cbk called. Final data flag: %d", final_data);
     // Zephyr requires a response callback.
     return 0;
 }
@@ -169,6 +180,8 @@ static int put_response_cbk(
  */
 static int put_payload_cbk(int sock, struct http_request * /*req*/, void *user_data)
 {
+    EDGEHOG_LOG_DBG("put_payload_cbk called. Starting payload upload on socket %d.", sock);
+
     if (!user_data) {
         EDGEHOG_LOG_ERR("Unable to read user data context");
         return -EINVAL;
@@ -189,6 +202,9 @@ static int put_payload_cbk(int sock, struct http_request * /*req*/, void *user_d
             return -EIO;
         }
 
+        EDGEHOG_LOG_DBG("Retrieved payload chunk from user callback. Size: %zu, Last chunk: %d",
+            http_payload_chunk.chunk_size, http_payload_chunk.last_chunk);
+
         // Send the raw chunk directly to the socket without HTTP chunk wrappers
         if (http_payload_chunk.chunk_size > 0) {
             int sent_bytes = send_buffer_fully(
@@ -200,11 +216,12 @@ static int put_payload_cbk(int sock, struct http_request * /*req*/, void *user_d
             }
             total_sent_bytes += sent_bytes;
 
-            EDGEHOG_LOG_DBG("Sent raw chunk of size %zu bytes", http_payload_chunk.chunk_size);
+            EDGEHOG_LOG_DBG("Sent raw chunk of size %zu bytes. Total sent so far: %d",
+                http_payload_chunk.chunk_size, total_sent_bytes);
         }
     }
 
-    EDGEHOG_LOG_DBG("Finished sending all payload chunks based on Content-Length");
+    EDGEHOG_LOG_DBG("Finished sending all payload chunks. Total bytes sent: %d", total_sent_bytes);
 
     return total_sent_bytes;
 }
@@ -239,6 +256,9 @@ edgehog_result_t edgehog_http_get(edgehog_http_get_data_t *data)
 
 edgehog_result_t edgehog_http_put(edgehog_http_put_data_t *data)
 {
+    EDGEHOG_LOG_DBG("Initiating HTTP PUT request to URL: %s (Timeout: %d ms, Payload size: %zu)",
+        data->url, data->timeout_ms, data->payload_size);
+
     // Search for any "Content-Length: " header in the provided headers
     if (data->header_fields) {
         for (size_t i = 0; data->header_fields[i] != NULL; i++) {
@@ -283,6 +303,8 @@ edgehog_result_t edgehog_http_put(edgehog_http_put_data_t *data)
 
 static int create_and_connect_socket(const char *hostname, const char *port)
 {
+    EDGEHOG_LOG_DBG("Attempting DNS resolution for %s:%s", hostname, port);
+
     struct zsock_addrinfo hints = { 0 };
     hints.ai_family = AF_INET;
     hints.ai_socktype = SOCK_STREAM;
@@ -297,10 +319,14 @@ static int create_and_connect_socket(const char *hostname, const char *port)
         return -1;
     }
 
+    EDGEHOG_LOG_DBG("DNS resolution successful. Iterating through available addresses.");
+
 #ifdef CONFIG_EDGEHOG_DEVICE_DEVELOP_USE_NON_TLS_HTTP
     int proto = IPPROTO_TCP;
+    EDGEHOG_LOG_DBG("Using cleartext TCP (IPPROTO_TCP)");
 #else
     int proto = IPPROTO_TLS_1_2;
+    EDGEHOG_LOG_DBG("Using secure TLS (IPPROTO_TLS_1_2)");
 #endif
 
     int sock = -1;
@@ -308,11 +334,16 @@ static int create_and_connect_socket(const char *hostname, const char *port)
 
     // Iterate through the linked list of resolved addresses
     for (curr_addr = host_addrinfo; curr_addr != NULL; curr_addr = curr_addr->ai_next) {
+        EDGEHOG_LOG_DBG("Attempting to create socket (family: %d, socktype: %d, proto: %d)",
+            curr_addr->ai_family, curr_addr->ai_socktype, proto);
+
         sock = zsock_socket(curr_addr->ai_family, curr_addr->ai_socktype, proto);
         if (sock == -1) {
-            EDGEHOG_LOG_DBG("Socket creation failed, trying next address...");
+            EDGEHOG_LOG_DBG("Socket creation failed for this address, trying next address...");
             continue;
         }
+
+        EDGEHOG_LOG_DBG("Socket successfully created (fd: %d). Applying options.", sock);
 
 #ifndef CONFIG_EDGEHOG_DEVICE_DEVELOP_USE_NON_TLS_HTTP
         // TODO: Evaluate what happens if one of the two tags is not found,
@@ -321,6 +352,8 @@ static int create_and_connect_socket(const char *hostname, const char *port)
             CONFIG_EDGEHOG_DEVICE_OTA_HTTPS_CA_CERT_TAG,
             CONFIG_EDGEHOG_DEVICE_FILE_TRANSFER_HTTPS_CA_CERT_TAG,
         };
+
+        EDGEHOG_LOG_DBG("Setting TLS_SEC_TAG_LIST option.");
         int sockopt_rc
             = zsock_setsockopt(sock, SOL_TLS, TLS_SEC_TAG_LIST, sec_tag_opt, sizeof(sec_tag_opt));
         if (sockopt_rc == -1) {
@@ -330,6 +363,7 @@ static int create_and_connect_socket(const char *hostname, const char *port)
             continue;
         }
 
+        EDGEHOG_LOG_DBG("Setting TLS_HOSTNAME option to '%s'.", hostname);
         sockopt_rc = zsock_setsockopt(sock, SOL_TLS, TLS_HOSTNAME, hostname, strlen(hostname));
         if (sockopt_rc == -1) {
             EDGEHOG_LOG_ERR("Socket options error (TLS_HOSTNAME): %d", sockopt_rc);
@@ -339,6 +373,7 @@ static int create_and_connect_socket(const char *hostname, const char *port)
         }
 #endif
 
+        EDGEHOG_LOG_DBG("Attempting to connect socket %d to remote address.", sock);
         int connect_rc = zsock_connect(sock, curr_addr->ai_addr, curr_addr->ai_addrlen);
         if (connect_rc == -1) {
             EDGEHOG_LOG_DBG(
@@ -350,6 +385,7 @@ static int create_and_connect_socket(const char *hostname, const char *port)
         }
 
         // If we reach here, we have successfully connected
+        EDGEHOG_LOG_DBG("Successfully connected socket %d.", sock);
         break;
     }
 
@@ -358,7 +394,7 @@ static int create_and_connect_socket(const char *hostname, const char *port)
 
     // Check if we exhausted the list without a successful connection
     if (sock == -1) {
-        EDGEHOG_LOG_ERR("Failed to connect to any resolved address.");
+        EDGEHOG_LOG_ERR("Failed to connect to any resolved address. Exhausted all DNS records.");
     }
 
     return sock;
@@ -366,6 +402,8 @@ static int create_and_connect_socket(const char *hostname, const char *port)
 
 static edgehog_result_t perform_request(struct request_data *data)
 {
+    EDGEHOG_LOG_DBG("Entering perform_request. Method: %d, URL: %s", data->method, data->url);
+
     // Create and connect the socket to use
     struct http_parser_url parser;
     http_parser_url_init(&parser);
@@ -398,6 +436,8 @@ static edgehog_result_t perform_request(struct request_data *data)
         }
     }
 
+    EDGEHOG_LOG_DBG("Parsed URL correctly. Host: %s, Port: %s", host, port);
+
     int sock = create_and_connect_socket(host, port);
     if (sock < 0) {
         EDGEHOG_LOG_ERR(
@@ -421,6 +461,8 @@ static edgehog_result_t perform_request(struct request_data *data)
         }
     }
 
+    EDGEHOG_LOG_DBG("Extracted path: %s", path);
+
     // Perform the HTTP request and wait for the response
     uint8_t *recv_buf = k_malloc(CONFIG_EDGEHOG_DEVICE_ADVANCED_HTTP_RCV_BUFFER_SIZE);
     if (recv_buf == NULL) {
@@ -433,21 +475,31 @@ static edgehog_result_t perform_request(struct request_data *data)
     struct http_request req = { 0 };
     req.method = data->method;
     req.host = host;
-    req.port = port;
+    req.port = NULL;
     req.url = path;
     req.header_fields = data->header_fields;
     req.protocol = "HTTP/1.1";
     req.payload_len = data->payload_len;
+
     if (data->payload_cbk) {
         req.content_type_value = "application/octet-stream";
         req.payload_cb = data->payload_cbk;
+        EDGEHOG_LOG_DBG("Payload callback attached. Payload length declared: %zu", req.payload_len);
+    } else {
+        EDGEHOG_LOG_DBG("No payload callback attached to this request.");
     }
+
     req.response = data->response_cbk;
     req.recv_buf = recv_buf;
     req.recv_buf_len = CONFIG_EDGEHOG_DEVICE_ADVANCED_HTTP_RCV_BUFFER_SIZE;
 
+    EDGEHOG_LOG_DBG("Executing http_client_req on socket %d...", sock);
+
     // Pass context struct as the user_data parameter
     int http_rc = http_client_req(sock, &req, data->timeout_ms, &data->cbk_ctx);
+
+    EDGEHOG_LOG_DBG("http_client_req returned with code: %d", http_rc);
+
     if (http_rc < 0) {
         EDGEHOG_LOG_ERR("HTTP request failed, http error: %d", http_rc);
         zsock_close(sock);
@@ -482,6 +534,7 @@ static int send_buffer_fully(int sock, const uint8_t *buf, size_t len)
             return -1;
         }
         sent_bytes += send_rc;
+        EDGEHOG_LOG_DBG("Sent %d bytes successfully.", send_rc);
     }
 
     return sent_bytes;

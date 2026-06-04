@@ -29,7 +29,7 @@ manifest:
           - littlefs
     - name: astarte-device-sdk-zephyr
       remote: astarte-platform
-      revision: a72dd16efa95bdbfc218d2fb0db293554558efa8
+      revision: 6b59c72c49c99b6ea2a670d788efd7a5a95d992a
       import: true
     - name: edgehog-astarte-interfaces
       remote: edgehog-device-manager
