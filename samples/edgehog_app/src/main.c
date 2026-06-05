@@ -156,9 +156,11 @@ int main(void)
 #ifndef CONFIG_EDGEHOG_DEVICE_DEVELOP_USE_NON_TLS_HTTP
     tls_credential_add(CONFIG_EDGEHOG_DEVICE_OTA_HTTPS_CA_CERT_TAG, TLS_CREDENTIAL_CA_CERTIFICATE,
         edgehog_ota_ca_certificate_root, sizeof(edgehog_ota_ca_certificate_root));
+#ifdef CONFIG_EDGEHOG_DEVICE_FILE_TRANSFER_HTTPS_CA_CERT_TAG
     tls_credential_add(CONFIG_EDGEHOG_DEVICE_FILE_TRANSFER_HTTPS_CA_CERT_TAG,
         TLS_CREDENTIAL_CA_CERTIFICATE, edgehog_ft_ca_certificate_root,
         sizeof(edgehog_ft_ca_certificate_root));
+#endif
 #endif
 
     // Initalize the system time
@@ -249,6 +251,11 @@ static void edgehog_device_thread_entry_point(void *arg1, void *arg2, void *arg3
 
     edgehog_result_t eres = EDGEHOG_RESULT_OK;
 
+#ifdef CONFIG_EDGEHOG_DEVICE_FILE_TRANSFER
+    edgehog_ft_filesystem_partition_t ft_partitions[]
+        = { { .mount_point = "/lfs1", .permissions = EDGEHOG_FT_FILESYSTEM_PERM_RW } };
+#endif
+
     edgehog_telemetry_config_t telemetry_config[]
         = { {
                 .type = EDGEHOG_TELEMETRY_SYSTEM_STATUS,
@@ -264,7 +271,9 @@ static void edgehog_device_thread_entry_point(void *arg1, void *arg2, void *arg3
         .telemetry_config_len = ARRAY_SIZE(telemetry_config),
 #ifdef CONFIG_EDGEHOG_DEVICE_FILE_TRANSFER
         .file_transfer_cbks = { .on_stream_transfer_start = app_on_stream_transfer_start,
-            .on_filesystem_transfer_done = app_on_filesystem_transfer_done }
+            .on_filesystem_transfer_done = app_on_filesystem_transfer_done },
+        .file_transfer_partitions = ft_partitions,
+        .file_transfer_partitions_len = ARRAY_SIZE(ft_partitions)
 #endif
     };
     eres = edgehog_device_new(&edgehog_conf, &edgehog_device);

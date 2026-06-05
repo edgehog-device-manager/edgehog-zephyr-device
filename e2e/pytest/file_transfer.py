@@ -123,7 +123,11 @@ def validate_file_transfer_capabilities(e2e_cfg: Configuration):
 def _run_raw_transfer_cycle(e2e_cfg: Configuration, transfer_type: str, device_path: str):
     logger.info(f"Testing raw file transfer loop for type: '{transfer_type}'")
 
-    test_payload = f"Zephyr Raw {transfer_type.capitalize()} Transfer Test Payload! " * 200
+    test_payload = (
+        "File start! "
+        + (f"Zephyr Raw {transfer_type.capitalize()} Transfer Test Payload! " * 200)
+        + "File end!"
+    )
     raw_bytes = test_payload.encode("utf-8")
 
     download_filename = f"{transfer_type}_raw_download.txt"
@@ -172,7 +176,7 @@ def _run_raw_transfer_cycle(e2e_cfg: Configuration, transfer_type: str, device_p
 
 
 def validate_file_transfer_stream(e2e_cfg: Configuration):
-    _run_raw_transfer_cycle(e2e_cfg, transfer_type="stream", device_path="loopback")
+    _run_raw_transfer_cycle(e2e_cfg, transfer_type="streaming", device_path="loopback")
 
 
 def validate_file_transfer_filesystem(e2e_cfg: Configuration):
@@ -198,8 +202,8 @@ def _run_lz4_transfer_cycle(e2e_cfg: Configuration, transfer_type: str, device_p
     download_filename = f"{transfer_type}_lz4_download.lz4"
     upload_filename = f"{transfer_type}_lz4_upload.txt"
 
-    # Device computes digest on the UNCOMPRESSED stream
-    file_digest = f"sha256:{hashlib.sha256(raw_bytes).hexdigest()}"
+    # Device computes digest on the COMPRESSED stream
+    file_digest = f"sha256:{hashlib.sha256(lz4_bytes).hexdigest()}"
     Path(e2e_cfg.http_server_data_dir, download_filename).write_bytes(lz4_bytes)
 
     # 1. Download Compressed
@@ -242,7 +246,7 @@ def _run_lz4_transfer_cycle(e2e_cfg: Configuration, transfer_type: str, device_p
 
 
 def validate_file_transfer_stream_lz4(e2e_cfg: Configuration):
-    _run_lz4_transfer_cycle(e2e_cfg, transfer_type="stream", device_path="loopback")
+    _run_lz4_transfer_cycle(e2e_cfg, transfer_type="streaming", device_path="loopback")
 
 
 def validate_file_transfer_filesystem_lz4(e2e_cfg: Configuration):

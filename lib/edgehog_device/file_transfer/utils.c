@@ -105,6 +105,9 @@ edgehog_result_t edgehog_ft_msg_init(astarte_object_entry_t *rx_values, size_t r
         goto failure;
     }
 
+    // Early store the ID so it can be used for error reporting to Edgehog
+    msg->id = tmp.id;
+
     if (!tmp.url || (tmp.location_type == EDGEHOG_FT_LOCATION_TYPE_UNSUPPORTED) || !tmp.location) {
         EDGEHOG_LOG_ERR("Missing required entries for transfer data");
         eres = EDGEHOG_RESULT_FILE_TRANSFER_INVALID_REQUEST;
@@ -151,12 +154,20 @@ edgehog_result_t edgehog_ft_msg_init(astarte_object_entry_t *rx_values, size_t r
 #endif
 #ifdef CONFIG_EDGEHOG_DEVICE_FILE_TRANSFER_TAR
     if ((tmp.encoding == EDGEHOG_FT_ENCODING_TAR)
-        && (tmp.location_type == EDGEHOG_FT_LOCATION_TYPE_STREAM)) {
+        && (tmp.location_type == EDGEHOG_FT_LOCATION_TYPE_STREAMING)) {
         EDGEHOG_LOG_ERR("Stream transfers as TAR are not supported");
         eres = EDGEHOG_RESULT_FILE_TRANSFER_INVALID_REQUEST;
         goto failure;
     }
 #endif
+
+    char id_str[UUID_STR_LEN] = { 0 };
+    uuid_to_string(&tmp.id, id_str);
+    EDGEHOG_LOG_DBG("FT msg - ID: %s, URL: %s, LocType: %d, Loc: %s, Enc: %d, Size: %lld, "
+                    "Prog: %d, Digest: %s",
+        id_str, tmp.url ? tmp.url : "N/A", (int) tmp.location_type,
+        tmp.location ? tmp.location : "N/A", (int) tmp.encoding, (long long) tmp.file_size_bytes,
+        tmp.progress, tmp.digest ? tmp.digest : "N/A");
 
     *msg = tmp;
     return eres;
@@ -207,7 +218,7 @@ void edgehog_ft_http_cbk_data_destroy(edgehog_ft_http_cbk_data_t *data)
 {
     if (data) {
         struct k_work_sync sync;
-        k_work_cancel_sync(&data->progress_work, &sync);
+        k_work_flush(&data->progress_work, &sync);
     }
     k_free(data);
 }
@@ -467,8 +478,8 @@ static enum edgehog_ft_location_type parse_location_type_string(const char *stri
     if (strcmp(string, "filesystem") == 0) {
         return EDGEHOG_FT_LOCATION_TYPE_FILESYSTEM;
     }
-    if (strcmp(string, "stream") == 0) {
-        return EDGEHOG_FT_LOCATION_TYPE_STREAM;
+    if (strcmp(string, "streaming") == 0) {
+        return EDGEHOG_FT_LOCATION_TYPE_STREAMING;
     }
     return EDGEHOG_FT_LOCATION_TYPE_UNSUPPORTED;
 }

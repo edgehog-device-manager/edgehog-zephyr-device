@@ -100,6 +100,16 @@ static edgehog_result_t perform_request(struct request_data *data);
  * @return The total number of bytes sent, or -1 on error.
  */
 static int send_buffer_fully(int sock, const uint8_t *buf, size_t len);
+/**
+ * @brief Helper function to build the full path (including query) from a parsed URL.
+ *
+ * @param[in] url The original URL string.
+ * @param[in] parser Pointer to the populated URL parser structure.
+ * @param[out] out_path Pointer to a char pointer that will receive the allocated path string.
+ * @return EDGEHOG_RESULT_OK if successful, otherwise an error code.
+ */
+static edgehog_result_t build_full_path(
+    const char *url, const struct http_parser_url *parser, char **out_path);
 
 /************************************************
  *       Callbacks definition/declaration       *
@@ -162,10 +172,34 @@ static int get_response_cbk(
 }
 
 static int put_response_cbk(
-    struct http_response * /*rsp*/, enum http_final_call final_data, void * /*user_data*/)
+    struct http_response *rsp, enum http_final_call final_data, void *user_data)
 {
-    EDGEHOG_LOG_DBG("put_response_cbk called. Final data flag: %d", final_data);
-    // Zephyr requires a response callback.
+    EDGEHOG_LOG_DBG("put_response_cbk called. Status: %s (%d), Final data flag: %d",
+        rsp->http_status ? rsp->http_status : "N/A", rsp->http_status_code, final_data);
+
+    if (!user_data) {
+        EDGEHOG_LOG_ERR("Unable to read user data context");
+        return -1;
+    }
+
+    struct request_cbk_ctx *ctx = (struct request_cbk_ctx *) user_data;
+
+    // Evaluate the status code to ensure it's a 2xx success code
+    if ((rsp->http_status_code < HTTP_200_OK)
+        || (rsp->http_status_code >= HTTP_300_MULTIPLE_CHOICES)) {
+        EDGEHOG_LOG_ERR("HTTP PUT request failed, response code: %s (%d)",
+            rsp->http_status ? rsp->http_status : "N/A", rsp->http_status_code);
+
+        // If the server sent back an error payload body (e.g., XML/JSON error details), log it
+        if (rsp->body_found && rsp->body_frag_len > 0) {
+            EDGEHOG_LOG_HEXDUMP_DBG(
+                rsp->body_frag_start, rsp->body_frag_len, "Server error response body");
+        }
+
+        ctx->result = EDGEHOG_RESULT_HTTP_REQUEST_ERROR;
+        return -1;
+    }
+
     return 0;
 }
 
@@ -346,11 +380,13 @@ static int create_and_connect_socket(const char *hostname, const char *port)
         EDGEHOG_LOG_DBG("Socket successfully created (fd: %d). Applying options.", sock);
 
 #ifndef CONFIG_EDGEHOG_DEVICE_DEVELOP_USE_NON_TLS_HTTP
-        // TODO: Evaluate what happens if one of the two tags is not found,
-        // currently we are assuming both will be always present if TLS is enabled.
+        // While the file transfer is optional the OTA is mandatory, so the OTA HTTPs
+        // certificate will always be set.
         sec_tag_t sec_tag_opt[] = {
             CONFIG_EDGEHOG_DEVICE_OTA_HTTPS_CA_CERT_TAG,
+#ifdef CONFIG_EDGEHOG_DEVICE_FILE_TRANSFER_HTTPS_CA_CERT_TAG
             CONFIG_EDGEHOG_DEVICE_FILE_TRANSFER_HTTPS_CA_CERT_TAG,
+#endif
         };
 
         EDGEHOG_LOG_DBG("Setting TLS_SEC_TAG_LIST option.");
@@ -402,6 +438,7 @@ static int create_and_connect_socket(const char *hostname, const char *port)
 
 static edgehog_result_t perform_request(struct request_data *data)
 {
+    edgehog_result_t eres = EDGEHOG_RESULT_OK;
     EDGEHOG_LOG_DBG("Entering perform_request. Method: %d, URL: %s", data->method, data->url);
 
     // Create and connect the socket to use
@@ -445,28 +482,20 @@ static edgehog_result_t perform_request(struct request_data *data)
         return EDGEHOG_RESULT_NETWORK_ERROR;
     }
 
-    uint16_t path_off = parser.field_data[UF_PATH].off;
-    uint16_t path_len = parser.field_data[UF_PATH].len;
-
-    char path[MAX(path_len + 1, 2)];
-    if (path_len == 0) {
-        path[0] = '/';
-        path[1] = '\0';
-    } else {
-        ret = snprintf(path, path_len + 1, "%s", data->url + path_off);
-        if (ret < 0) {
-            EDGEHOG_LOG_ERR("Error extracting path from URL");
-            zsock_close(sock);
-            return EDGEHOG_RESULT_PARSE_URL_ERROR;
-        }
+    char *full_path = NULL;
+    edgehog_result_t path_res = build_full_path(data->url, &parser, &full_path);
+    if (path_res != EDGEHOG_RESULT_OK) {
+        zsock_close(sock);
+        return path_res;
     }
 
-    EDGEHOG_LOG_DBG("Extracted path: %s", path);
+    EDGEHOG_LOG_DBG("Extracted path with query: %s", full_path);
 
     // Perform the HTTP request and wait for the response
     uint8_t *recv_buf = k_malloc(CONFIG_EDGEHOG_DEVICE_ADVANCED_HTTP_RCV_BUFFER_SIZE);
     if (recv_buf == NULL) {
         EDGEHOG_LOG_ERR("Failed to allocate memory for recv_buf");
+        k_free(full_path);
         zsock_close(sock);
         return EDGEHOG_RESULT_OUT_OF_MEMORY;
     }
@@ -476,7 +505,7 @@ static edgehog_result_t perform_request(struct request_data *data)
     req.method = data->method;
     req.host = host;
     req.port = NULL;
-    req.url = path;
+    req.url = full_path;
     req.header_fields = data->header_fields;
     req.protocol = "HTTP/1.1";
     req.payload_len = data->payload_len;
@@ -502,24 +531,18 @@ static edgehog_result_t perform_request(struct request_data *data)
 
     if (http_rc < 0) {
         EDGEHOG_LOG_ERR("HTTP request failed, http error: %d", http_rc);
-        zsock_close(sock);
-        k_free(recv_buf);
-        return EDGEHOG_RESULT_HTTP_REQUEST_ERROR;
-    }
-
-    if (data->cbk_ctx.result != EDGEHOG_RESULT_OK) {
+        eres = EDGEHOG_RESULT_HTTP_REQUEST_ERROR;
+    } else if (data->cbk_ctx.result != EDGEHOG_RESULT_OK) {
         EDGEHOG_LOG_ERR("HTTP request failed, edgehog error: %d", data->cbk_ctx.result);
-        zsock_close(sock);
-        k_free(recv_buf);
-        return data->cbk_ctx.result;
+        eres = data->cbk_ctx.result;
+    } else {
+        EDGEHOG_LOG_DBG("HTTP request completed successfully.");
     }
-
-    EDGEHOG_LOG_DBG(
-        "HTTP request completed successfully. Closing socket %d and freeing buffer.", sock);
 
     zsock_close(sock);
     k_free(recv_buf);
-    return EDGEHOG_RESULT_OK;
+    k_free(full_path);
+    return eres;
 }
 
 static int send_buffer_fully(int sock, const uint8_t *buf, size_t len)
@@ -538,4 +561,55 @@ static int send_buffer_fully(int sock, const uint8_t *buf, size_t len)
     }
 
     return sent_bytes;
+}
+
+static edgehog_result_t build_full_path(
+    const char *url, const struct http_parser_url *parser, char **out_path)
+{
+    uint16_t path_off = parser->field_data[UF_PATH].off;
+    uint16_t path_len = parser->field_data[UF_PATH].len;
+    uint16_t query_off = parser->field_data[UF_QUERY].off;
+    uint16_t query_len = parser->field_data[UF_QUERY].len;
+    // NOLINTNEXTLINE(hicpp-signed-bitwise)
+    bool has_query = (parser->field_set & (1U << UF_QUERY)) != 0;
+
+    // Calculate total size needed: path + '?' + query + null terminator
+    size_t full_path_len = (path_len == 0 ? 1 : path_len) + (has_query ? (1 + query_len) : 0) + 1;
+    char *full_path = k_malloc(full_path_len);
+    if (!full_path) {
+        EDGEHOG_LOG_ERR("Failed to allocate memory for full_path");
+        return EDGEHOG_RESULT_OUT_OF_MEMORY;
+    }
+
+    // Build the base path
+    if (path_len == 0) {
+        int ret = snprintf(full_path, full_path_len, "/");
+        if (ret < 0) {
+            EDGEHOG_LOG_ERR("Error writing root path");
+            k_free(full_path);
+            return EDGEHOG_RESULT_PARSE_URL_ERROR;
+        }
+    } else {
+        int ret = snprintf(full_path, path_len + 1, "%s", url + path_off);
+        if (ret < 0) {
+            EDGEHOG_LOG_ERR("Error extracting path from URL");
+            k_free(full_path);
+            return EDGEHOG_RESULT_PARSE_URL_ERROR;
+        }
+    }
+
+    // Append query string arguments if present
+    if (has_query) {
+        size_t curr_len = strlen(full_path);
+        full_path[curr_len] = '?';
+        int ret = snprintf(full_path + curr_len + 1, query_len + 1, "%s", url + query_off);
+        if (ret < 0) {
+            EDGEHOG_LOG_ERR("Error extracting query from URL");
+            k_free(full_path);
+            return EDGEHOG_RESULT_PARSE_URL_ERROR;
+        }
+    }
+
+    *out_path = full_path;
+    return EDGEHOG_RESULT_OK;
 }

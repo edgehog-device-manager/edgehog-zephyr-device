@@ -43,7 +43,7 @@ enum edgehog_ft_location_type
     /** @brief Filesystem location. */
     EDGEHOG_FT_LOCATION_TYPE_FILESYSTEM = 0,
     /** @brief Stream location. */
-    EDGEHOG_FT_LOCATION_TYPE_STREAM,
+    EDGEHOG_FT_LOCATION_TYPE_STREAMING,
     /** @brief Unsupported location. */
     EDGEHOG_FT_LOCATION_TYPE_UNSUPPORTED,
 };

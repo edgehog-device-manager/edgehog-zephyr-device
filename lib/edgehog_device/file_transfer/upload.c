@@ -167,6 +167,8 @@ void edgehog_ft_handle_device_to_server(
         goto exit;
     }
 
+    msg->file_size_bytes = upload_size;
+
     // Initialize the user data for the HTTP callback
     // Must be allocated on the heap since it needs to be accessed in the work thread.
     http_cbk_user_data
@@ -191,6 +193,13 @@ void edgehog_ft_handle_device_to_server(
         EDGEHOG_LOG_ERR("File transfer HTTP put failure: %d.", eres);
         posix_errno = http_cbk_user_data->posix_errno;
         message = http_cbk_user_data->message;
+
+        // If the HTTP put failed but no local error occurred during socket streaming
+        if (posix_errno == 0) {
+            posix_errno = EPROTO;
+            message = "HTTP PUT request rejected by storage server.";
+        }
+
         file_cbks->file_abort(file_cbks_ctx);
         goto exit;
     }
@@ -423,7 +432,7 @@ static edgehog_result_t process_uncompressed_upload_chunk(
 const edgehog_ft_file_read_cbks_t *get_callbacks(enum edgehog_ft_location_type source_type)
 {
     const edgehog_ft_file_read_cbks_t *file_cbks = NULL;
-    if (source_type == EDGEHOG_FT_LOCATION_TYPE_STREAM) {
+    if (source_type == EDGEHOG_FT_LOCATION_TYPE_STREAMING) {
         file_cbks = &edgehog_ft_stream_read_cbks;
     } else if (source_type == EDGEHOG_FT_LOCATION_TYPE_FILESYSTEM) {
         file_cbks = &edgehog_ft_filesystem_read_cbks;
