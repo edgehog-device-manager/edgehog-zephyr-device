@@ -180,6 +180,11 @@ module-str = Log level for Edgehog device led controller.
 module-help = Sets log level for Edgehog device led controller.
 source "subsys/logging/Kconfig.template.log_config"
 
+module = EDGEHOG_DEVICE_NETWORK_PROPERTIES
+module-str = Log level for Edgehog device network interfaces property.
+module-help = Sets log level for Edgehog device network interfaces property.
+source "subsys/logging/Kconfig.template.log_config"
+
 module = EDGEHOG_DEVICE_NVS
 module-str = Log level for Edgehog device NVS utilities
 module-help = Sets log level for Edgehog device NVS utilities.
@@ -243,11 +248,6 @@ source "subsys/logging/Kconfig.template.log_config"
 module = EDGEHOG_DEVICE_ZTAR
 module-str = Log level for Edgehog device zTAR.
 module-help = Sets log level for Edgehog device zTAR.
-source "subsys/logging/Kconfig.template.log_config"
-
-module = EDGEHOG_DEVICE_NETWORK_PROPERTIES
-module-str = Log level for Edgehog device network interfaces property.
-module-help = Sets log level for Edgehog device network interfaces property.
 source "subsys/logging/Kconfig.template.log_config"
 
 endmenu

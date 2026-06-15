@@ -102,12 +102,10 @@ static void process_interface_cb(struct net_if *iface, void *user_data)
     const char *tech_type = get_technology_type(iface);
 
     // avoid clang-tidy warning returned when the return value is not used
-    // NOLINTNEXTLINE(cert-err33-c)
+    // NOLINTBEGIN(cert-err33-c)
     snprintf(mac_addr_endpoint, MAC_ADDR_ENDPOINT_LEN, "/%s/macAddress", if_name);
-    EDGEHOG_LOG_DBG("MAC ADDR ENDPOINT: %s", mac_addr_endpoint);
-    // NOLINTNEXTLINE(cert-err33-c)
     snprintf(tech_type_endpoint, TECH_TYPE_ENDPOINT_LEN, "/%s/technologyType", if_name);
-    EDGEHOG_LOG_DBG("TECH TYPE ENDPOINT: %s", tech_type_endpoint);
+    // NOLINTEND(cert-err33-c)
 
     astarte_result_t ares = astarte_device_set_property(ctx->edgehog_device->astarte_device,
         io_edgehog_devicemanager_NetworkInterfaceProperties.name, mac_addr_endpoint,
