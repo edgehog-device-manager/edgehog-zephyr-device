@@ -111,7 +111,7 @@ config EDGEHOG_DEVICE_FILE_TRANSFER_TAR
 
 config EDGEHOG_DEVICE_FILE_TRANSFER_HTTPS_CA_CERT_TAG
 	int "CA root certificate TLS security tag for the file transfer download URL"
-	depends on EDGEHOG_DEVICE
+	depends on EDGEHOG_DEVICE_FILE_TRANSFER
 	depends on !EDGEHOG_DEVICE_DEVELOP_USE_NON_TLS_HTTP
 	help
 	  The CA certificate should be added by the user with the tls_credential_add function.
@@ -119,7 +119,7 @@ config EDGEHOG_DEVICE_FILE_TRANSFER_HTTPS_CA_CERT_TAG
 
 config EDGEHOG_DEVICE_FILE_TRANSFER_QUEUE_SIZE
 	int "File transfer message queue size"
-	depends on EDGEHOG_DEVICE
+	depends on EDGEHOG_DEVICE_FILE_TRANSFER
 	default 10
 	help
 	  Use this option to increase/decrease the file transfer message queue size.
@@ -163,11 +163,6 @@ source "subsys/logging/Kconfig.template.log_config"
 module = EDGEHOG_DEVICE_FILE_TRANSFER_DECOMPRESSION
 module-str = Log level for the file transfer decompression
 module-help = Sets log level for zephyr file transfer decompression
-source "subsys/logging/Kconfig.template.log_config"
-
-module = EDGEHOG_DEVICE_FILE_TRANSFER_STORAGE
-module-str = Log level for Edgehog device file transfer storage utilities.
-module-help = Sets log level for Edgehog device file transfer storage utilities.
 source "subsys/logging/Kconfig.template.log_config"
 
 module = EDGEHOG_DEVICE_HARDWARE_INFO

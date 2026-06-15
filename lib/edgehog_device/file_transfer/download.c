@@ -71,16 +71,6 @@ static int decompression_write_cbk(const uint8_t *data_chunk, size_t size, void 
         return -1;
     }
 
-    // Stream the uncompressed chunk into the SHA-256 hash operation
-    if (data->expected_digest) {
-        psa_status_t status = psa_hash_update(&data->hash_operation, data_chunk, size);
-        if (status != PSA_SUCCESS) {
-            data->posix_errno = EIO;
-            data->message = "Failed to update file digest";
-            return -1;
-        }
-    }
-
     // Update progress with the uncompressed size
     edgehog_ft_update_progress(data, size, false);
     return 0;
@@ -148,6 +138,19 @@ static edgehog_result_t http_get_server_to_device_request_cbk(
         data->posix_errno = EPIPE;
         data->message = "Unable to read chunk data";
         return EDGEHOG_RESULT_HTTP_REQUEST_ABORTED;
+    }
+
+    EDGEHOG_LOG_HEXDUMP_DBG(response_chunk->chunk_start_addr, response_chunk->chunk_size,
+        "[server-to-device] raw chunk data");
+
+    if (data->expected_digest && response_chunk->chunk_size > 0) {
+        psa_status_t status = psa_hash_update(
+            &data->hash_operation, response_chunk->chunk_start_addr, response_chunk->chunk_size);
+        if (status != PSA_SUCCESS) {
+            data->posix_errno = EIO;
+            data->message = "Failed to update file digest";
+            return EDGEHOG_RESULT_HTTP_REQUEST_ABORTED;
+        }
     }
 
 #ifdef CONFIG_EDGEHOG_DEVICE_FILE_TRANSFER_COMPRESSION
@@ -257,6 +260,7 @@ void edgehog_ft_handle_server_to_device(
             posix_errno = verify_res;
             message = (verify_res == EINVAL) ? "File digest mismatch"
                                              : "Failed to finalize file digest";
+            file_cbks->file_abort(file_cbks_ctx);
             goto exit;
         }
         digest_active = false;
@@ -266,6 +270,7 @@ void edgehog_ft_handle_server_to_device(
     if (eres != EDGEHOG_RESULT_OK) {
         posix_errno = EIO;
         message = "Failed to finalize file transfer";
+        file_cbks->file_abort(file_cbks_ctx);
         goto exit;
     }
 
@@ -350,17 +355,6 @@ static edgehog_result_t process_tar_chunk(
             data->message = "TAR parsing chunk processing failed";
             return EDGEHOG_RESULT_HTTP_REQUEST_ABORTED;
         }
-
-        // Stream the new chunk into the SHA-256 hash operation
-        if (data->expected_digest) {
-            psa_status_t status = psa_hash_update(&data->hash_operation,
-                response_chunk->chunk_start_addr, response_chunk->chunk_size);
-            if (status != PSA_SUCCESS) {
-                data->posix_errno = EIO;
-                data->message = "Failed to update file digest";
-                return EDGEHOG_RESULT_HTTP_REQUEST_ABORTED;
-            }
-        }
     }
 
     // Check that the TAR file has been exhausted if this is the last chunk
@@ -394,17 +388,6 @@ static edgehog_result_t process_uncompressed_chunk(
         data->posix_errno = EIO;
         data->message = "Failed to write chunk to file";
         return eres;
-    }
-
-    // Stream the new chunk into the SHA-256 hash operation
-    if (data->expected_digest) {
-        psa_status_t status = psa_hash_update(
-            &data->hash_operation, response_chunk->chunk_start_addr, response_chunk->chunk_size);
-        if (status != PSA_SUCCESS) {
-            data->posix_errno = EIO;
-            data->message = "Failed to update file digest";
-            return EDGEHOG_RESULT_HTTP_REQUEST_ABORTED;
-        }
     }
 
     edgehog_ft_update_progress(data, response_chunk->chunk_size, response_chunk->last_chunk);
@@ -474,7 +457,7 @@ static int verify_digest(edgehog_ft_http_cbk_data_t *data, const char *expected_
 const edgehog_ft_file_write_cbks_t *get_callbacks(enum edgehog_ft_location_type destination_type)
 {
     const edgehog_ft_file_write_cbks_t *file_cbks = NULL;
-    if (destination_type == EDGEHOG_FT_LOCATION_TYPE_STREAM) {
+    if (destination_type == EDGEHOG_FT_LOCATION_TYPE_STREAMING) {
         file_cbks = &edgehog_ft_stream_write_cbks;
     } else if (destination_type == EDGEHOG_FT_LOCATION_TYPE_FILESYSTEM) {
         file_cbks = &edgehog_ft_filesystem_write_cbks;
