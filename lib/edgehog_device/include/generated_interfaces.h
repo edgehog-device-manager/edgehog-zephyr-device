@@ -30,6 +30,8 @@ extern const astarte_interface_t io_edgehog_devicemanager_HardwareInfo;
 /** @brief Automatically generated interface declaration. */
 extern const astarte_interface_t io_edgehog_devicemanager_LedBehavior;
 /** @brief Automatically generated interface declaration. */
+extern const astarte_interface_t io_edgehog_devicemanager_NetworkInterfaceProperties;
+/** @brief Automatically generated interface declaration. */
 extern const astarte_interface_t io_edgehog_devicemanager_OSInfo;
 /** @brief Automatically generated interface declaration. */
 extern const astarte_interface_t io_edgehog_devicemanager_OTAEvent;

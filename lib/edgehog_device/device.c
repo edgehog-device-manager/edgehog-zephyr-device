@@ -16,6 +16,7 @@
 #include "hardware_info.h"
 #include "led.h"
 #include "log.h"
+#include "network_properties.h"
 #include "os_info.h"
 #include "runtime_info.h"
 #include "settings.h"
@@ -484,6 +485,7 @@ static edgehog_result_t add_interfaces(astarte_device_handle_t astarte_device)
         &io_edgehog_devicemanager_RuntimeInfo,
         &io_edgehog_devicemanager_SystemStatus,
         &io_edgehog_devicemanager_StorageUsage,
+        &io_edgehog_devicemanager_NetworkInterfaceProperties,
 #if DT_NODE_HAS_STATUS(EDGEHOG_LED_NODE, okay)
         &io_edgehog_devicemanager_LedBehavior,
 #endif
@@ -523,6 +525,7 @@ static void edgehog_initial_publish(edgehog_device_handle_t edgehog_device)
     publish_runtime_info(edgehog_device);
     publish_system_status(edgehog_device);
     publish_storage_usage(edgehog_device);
+    publish_network_properties(edgehog_device);
 #ifdef CONFIG_WIFI
     edgehog_wifi_scan_start(edgehog_device);
 #endif

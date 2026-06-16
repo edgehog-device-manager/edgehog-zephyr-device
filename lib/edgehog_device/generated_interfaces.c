@@ -198,6 +198,37 @@ const astarte_interface_t io_edgehog_devicemanager_LedBehavior = {
 };
 
 /** @brief Automatically generated mapping definition. */
+static const astarte_mapping_t io_edgehog_devicemanager_NetworkInterfaceProperties_mappings[2] = {
+
+    {
+        .endpoint = "/%{iface_name}/macAddress",
+        .type = ASTARTE_MAPPING_TYPE_STRING,
+        .reliability = ASTARTE_MAPPING_RELIABILITY_UNIQUE,
+        .explicit_timestamp = false,
+        .allow_unset = true,
+    },
+    {
+        .endpoint = "/%{iface_name}/technologyType",
+        .type = ASTARTE_MAPPING_TYPE_STRING,
+        .reliability = ASTARTE_MAPPING_RELIABILITY_UNIQUE,
+        .explicit_timestamp = false,
+        .allow_unset = true,
+    },
+};
+
+/** @brief Automatically generated interface definition. */
+const astarte_interface_t io_edgehog_devicemanager_NetworkInterfaceProperties = {
+    .name = "io.edgehog.devicemanager.NetworkInterfaceProperties",
+    .major_version = 0,
+    .minor_version = 1,
+    .type = ASTARTE_INTERFACE_TYPE_PROPERTIES,
+    .ownership = ASTARTE_INTERFACE_OWNERSHIP_DEVICE,
+    .aggregation = ASTARTE_INTERFACE_AGGREGATION_INDIVIDUAL,
+    .mappings = io_edgehog_devicemanager_NetworkInterfaceProperties_mappings,
+    .mappings_length = 2U,
+};
+
+/** @brief Automatically generated mapping definition. */
 static const astarte_mapping_t io_edgehog_devicemanager_OSInfo_mappings[2] = {
 
     {
