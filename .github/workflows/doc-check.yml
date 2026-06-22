@@ -36,7 +36,7 @@ jobs:
       cancel-in-progress: true
     steps:
     - name: Checkout
-      uses: actions/checkout@v6
+      uses: actions/checkout@v7
       with:
         path: ${{ env.PROJECT_MANIFEST_FOLDER }}
     - name: Install ubuntu packages
