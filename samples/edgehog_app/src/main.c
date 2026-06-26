@@ -254,6 +254,10 @@ static void edgehog_device_thread_entry_point(void *arg1, void *arg2, void *arg3
 #ifdef CONFIG_EDGEHOG_DEVICE_FILE_TRANSFER
     edgehog_ft_filesystem_partition_t ft_partitions[]
         = { { .mount_point = "/lfs1", .permissions = EDGEHOG_FT_FILESYSTEM_PERM_RW } };
+
+    // Register /lfs1 as a user storage partition for storage-usage telemetry
+    edgehog_storage_partition_t storage_partitions[]
+        = { { .type = EDGEHOG_STORAGE_PARTITION_TYPE_FS, .path = "/lfs1" } };
 #endif
 
     edgehog_telemetry_config_t telemetry_config[]
@@ -273,7 +277,9 @@ static void edgehog_device_thread_entry_point(void *arg1, void *arg2, void *arg3
         .file_transfer_cbks = { .on_stream_transfer_start = app_on_stream_transfer_start,
             .on_filesystem_transfer_done = app_on_filesystem_transfer_done },
         .file_transfer_partitions = ft_partitions,
-        .file_transfer_partitions_len = ARRAY_SIZE(ft_partitions)
+        .file_transfer_partitions_len = ARRAY_SIZE(ft_partitions),
+        .storage_partitions = storage_partitions,
+        .storage_partitions_len = ARRAY_SIZE(storage_partitions)
 #endif
     };
     eres = edgehog_device_new(&edgehog_conf, &edgehog_device);

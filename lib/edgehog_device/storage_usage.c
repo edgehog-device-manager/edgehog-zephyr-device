@@ -160,6 +160,8 @@ static void publish_user_storage_usage(edgehog_device_handle_t edgehog_device)
                 continue;
         }
 
+        EDGEHOG_LOG_DBG("Usage of partition %s, total space %zu, free space %zu", path, total_space,
+            free_space);
         send_storage_telemetry(edgehog_device, path, total_space, free_space);
     }
 }
@@ -199,6 +201,8 @@ static void publish_edgehog_storage_usage(edgehog_device_handle_t edgehog_device
     return; // Unsupported storage backend, skip telemetry
 #endif
 
+    EDGEHOG_LOG_DBG("Usage of Edgehog partition %s, total space %zu, free space %zu", path,
+        total_space, free_space);
     send_storage_telemetry(edgehog_device, path, total_space, free_space);
 }
 
