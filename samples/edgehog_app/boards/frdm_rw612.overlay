@@ -46,3 +46,9 @@
 		};
 	};
 };
+
+/ {
+	chosen {
+		zephyr,settings-partition = &edgehog_partition;
+	};
+};

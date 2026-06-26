@@ -77,6 +77,10 @@ struct edgehog_device
     edgehog_ft_t *file_transfer;
     /** @brief Semaphore used to synchronize an OTA or File Transfer operation. */
     struct k_sem sync_ota_ft_sem;
+    /** @brief User-provided storage partitions for telemetry. */
+    edgehog_storage_partition_t *storage_partitions;
+    /** @brief Length of user-provided storage partitions. */
+    size_t storage_partitions_len;
 #ifdef CONFIG_WIFI
     /** @brief WiFi scan data struct. */
     struct wifi_scan wifi_scan_data;

@@ -22,6 +22,7 @@
 
 #include "edgehog_device/file_transfer.h"
 #include "edgehog_device/result.h"
+#include "edgehog_device/storage.h"
 #include "edgehog_device/telemetry.h"
 
 #include <astarte_device_sdk/device.h>
@@ -75,6 +76,10 @@ typedef struct
      * incoming/outgoing file transfers.
      */
     edgehog_ft_cbks_t file_transfer_cbks;
+    /** @brief The storage partitions explicitly configured for telemetry. */
+    edgehog_storage_partition_t *storage_partitions;
+    /** @brief The length of the storage_partitions array. */
+    size_t storage_partitions_len;
 } edgehog_device_config_t;
 
 #ifdef __cplusplus
