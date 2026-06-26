@@ -55,16 +55,14 @@ def validate_initial_telemetry(e2e_cfg, since_after):
 
     storage_info = http_get_server_data(e2e_cfg, interface_storage_usage, since_after=since_after)
     assert storage_info, "Failed to retrieve storage usage telemetry"
-    storage_info = storage_info.get("storage", None)
-    assert storage_info, "Storage information missing in storage usage telemetry"
-    assert len(storage_info) == 1, "Unexpected number of storage entries in storage usage telemetry"
-    storage_info = storage_info[0]
-    assert storage_info.get(
-        "freeBytes", None
-    ), "Free memory information missing in storage usage telemetry"
-    assert storage_info.get(
-        "totalBytes", None
-    ), "Total memory information missing in storage usage telemetry"
+    assert len(storage_info) >= 1, "Unexpected number of entries in storage usage telemetry"
+    for _, value in storage_info.items():
+        assert value.get(
+            "freeBytes", None
+        ), "Free memory information missing in storage usage telemetry"
+        assert value.get(
+            "totalBytes", None
+        ), "Total memory information missing in storage usage telemetry"
 
     logger.info(f"Initial telemetry validation successful")
 
@@ -77,12 +75,12 @@ def validate_telemetry_frequency(e2e_cfg):
     test_duration = 60 + (telemetry_period / 2)
 
     logger.info(
-        f"Enabling telemetry on interface {interface_storage_usage} with a period of {telemetry_period} seconds"
+        f"Enabling telemetry on interface {interface_sysstat} with a period of {telemetry_period} seconds"
     )
 
-    tel_cfg_period_path = f"/request/{interface_storage_usage}/periodSeconds"
+    tel_cfg_period_path = f"/request/{interface_sysstat}/periodSeconds"
     http_post_server_data(e2e_cfg, interface_tel_cfg, tel_cfg_period_path, telemetry_period)
-    tel_cfg_enable_path = f"/request/{interface_storage_usage}/enable"
+    tel_cfg_enable_path = f"/request/{interface_sysstat}/enable"
     http_post_server_data(e2e_cfg, interface_tel_cfg, tel_cfg_enable_path, True)
 
     start_time = datetime.datetime.now(datetime.timezone.utc)
@@ -92,18 +90,18 @@ def validate_telemetry_frequency(e2e_cfg):
     time.sleep(test_duration)
 
     logger.info(f"Getting telemetry data since {start_time.isoformat()}")
-    storage_info = http_get_server_data(e2e_cfg, interface_storage_usage, since_after=start_time)
-    assert storage_info, "Failed to retrieve storage usage telemetry"
-    storage_info = storage_info.get("storage", None)
-    assert storage_info, "Storage information missing in storage usage telemetry"
-    assert len(storage_info) == math.floor(
+    sysstat_info = http_get_server_data(e2e_cfg, interface_sysstat, since_after=start_time)
+    assert sysstat_info, "Failed to retrieve system status telemetry"
+    sysstat_info = sysstat_info.get("systemStatus", None)
+    assert sysstat_info, "System status information missing in system status telemetry"
+    assert len(sysstat_info) == math.floor(
         test_duration / telemetry_period
-    ), "Unexpected number of storage entries in storage usage telemetry"
+    ), "Unexpected number of system status entries in system status telemetry"
 
     # Now disable the telemetry and check that no new data is received after a while
-    logger.info(f"Disabling telemetry on interface {interface_storage_usage}")
+    logger.info(f"Disabling telemetry on interface {interface_sysstat}")
 
-    tel_cfg_enable_path = f"/request/{interface_storage_usage}/enable"
+    tel_cfg_enable_path = f"/request/{interface_sysstat}/enable"
     http_post_server_data(e2e_cfg, interface_tel_cfg, tel_cfg_enable_path, False)
 
     start_time = datetime.datetime.now(datetime.timezone.utc)
@@ -113,8 +111,8 @@ def validate_telemetry_frequency(e2e_cfg):
     )
     time.sleep(telemetry_period * 3)
 
-    storage_info = http_get_server_data(e2e_cfg, interface_storage_usage, since_after=start_time)
-    assert storage_info == {}, "Failed to retrieve storage usage telemetry"
+    sysstat_info = http_get_server_data(e2e_cfg, interface_sysstat, since_after=start_time)
+    assert sysstat_info == {}, "Failed to retrieve system status telemetry"
 
     logger.info("Telemetry frequency validation successful")
 

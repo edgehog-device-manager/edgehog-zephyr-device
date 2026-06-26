@@ -12,6 +12,7 @@
 
 #include <edgehog_device/device.h>
 #include <edgehog_device/file_transfer.h>
+#include <edgehog_device/storage.h>
 
 #include "utilities.h"
 
@@ -187,13 +188,19 @@ static void device_thread_entry_point(void *unused1, void *unused2, void *unused
     edgehog_ft_filesystem_partition_t ft_partitions[]
         = { { .mount_point = "/lfs1", .permissions = EDGEHOG_FT_FILESYSTEM_PERM_RW } };
 
+    // Register /lfs1 as a user storage partition for storage-usage telemetry
+    edgehog_storage_partition_t storage_partitions[]
+        = { { .type = EDGEHOG_STORAGE_PARTITION_TYPE_FS, .path = "/lfs1" } };
+
     edgehog_device_config_t edgehog_conf = { .astarte_device_config = astarte_device_config,
         .telemetry_config = NULL,
         .telemetry_config_len = 0,
         .file_transfer_cbks = { .on_stream_transfer_start = on_stream_transfer_start,
             .on_filesystem_transfer_done = on_filesystem_transfer_done },
         .file_transfer_partitions = ft_partitions,
-        .file_transfer_partitions_len = ARRAY_SIZE(ft_partitions) };
+        .file_transfer_partitions_len = ARRAY_SIZE(ft_partitions),
+        .storage_partitions = storage_partitions,
+        .storage_partitions_len = ARRAY_SIZE(storage_partitions) };
     eres = edgehog_device_new(&edgehog_conf, &device_handle);
     if (eres != EDGEHOG_RESULT_OK) {
         LOG_ERR("Unable to create edgehog device handle");
