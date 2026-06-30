@@ -110,6 +110,10 @@ typedef enum
     EDGEHOG_RESULT_PARSE_URL_ERROR = 40,
     /** @brief An HTTP request has invalid headers. */
     EDGEHOG_RESULT_HTTP_REQUEST_INVALID_HEADERS = 41,
+    /** @brief A generic error occurred when dealing with FLASH. */
+    EDGEHOG_RESULT_FLASH_ERROR = 42,
+    /** @brief A generic error occurred when dealing with ZMS. */
+    EDGEHOG_RESULT_ZMS_ERROR = 43,
 } edgehog_result_t;
 
 /**

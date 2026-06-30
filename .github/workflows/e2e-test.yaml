@@ -110,6 +110,12 @@ jobs:
       - name: Build and run e2e file transfer [qemu_x86]
         run: west twister -v --log-level debug --force-color -p qemu_x86 --inline-logs -T ./edgehog-zephyr-device/e2e --test edgehog_device.e2e.file_transfer
 
+      - name: Build and run e2e storage usage [native_sim]
+        run: west twister -v --log-level debug --force-color --integration --inline-logs -T ./edgehog-zephyr-device/e2e --test edgehog_device.e2e.storage_usage
+
+      - name: Build and run e2e storage usage [qemu_x86]
+        run: west twister -v --log-level debug --force-color -p qemu_x86 --inline-logs -T ./edgehog-zephyr-device/e2e --test edgehog_device.e2e.storage_usage
+
       - name: Stop net-setup nat configuration
         working-directory: tools/net-tools
         run: |

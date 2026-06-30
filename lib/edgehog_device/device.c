@@ -341,6 +341,8 @@ edgehog_result_t edgehog_device_new(
 #ifdef CONFIG_EDGEHOG_DEVICE_FILE_TRANSFER
         .file_transfer = file_transfer,
 #endif
+        .storage_partitions = config->storage_partitions,
+        .storage_partitions_len = config->storage_partitions_len,
     };
 
     k_sem_init(&edgehog_device->sync_ota_ft_sem, 1, 1);

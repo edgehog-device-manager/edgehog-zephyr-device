@@ -14,6 +14,7 @@ config EDGEHOG_DEVICE
 	depends on REBOOT
 	depends on ENTROPY_GENERATOR
 	depends on UUID
+	depends on SETTINGS
 	help
 	  This option enables the Edgehog device library
 
@@ -36,15 +37,6 @@ config EDGEHOG_DEVICE_OTA_HTTPS_CA_CERT_TAG
 	help
 	  The CA certificate should be added by the user with the tls_credential_add function.
 	  This configuration option should be set to the tag used when adding the CA certificate.
-
-config EDGEHOG_DEVICE_USE_EDGEHOG_PARTITION
-	bool "Enable edgehog_partition NVS partition label for edgehog storage"
-	depends on EDGEHOG_DEVICE
-	default false
-	help
-		Use this option to use edgehog_partition NVS partition for storing the edgehog data.
-		In order to use it, the board.dts must cointain the `edgehog_partion` node,
-		or it must be provided by dts overlay.
 
 config EDGEHOG_DEVICE_ZBUS_OTA_EVENT
 	bool "Enable ZBus OTA channel for receiving OTA event"

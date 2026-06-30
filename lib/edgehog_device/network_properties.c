@@ -11,7 +11,6 @@
 #include "network_properties.h"
 
 #include "edgehog_private.h"
-#include "nvs.h"
 #include "system_time.h"
 
 #include <astarte_device_sdk/device.h>

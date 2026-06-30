@@ -21,6 +21,12 @@ from file_transfer import (
     validate_file_transfer_filesystem_tar_nested,
     validate_file_transfer_filesystem_tar_empty,
 )
+from storage_usage import (
+    validate_storage_usage_published,
+    validate_storage_usage_values,
+    validate_storage_usage_telemetry_frequency,
+    validate_storage_usage_multiple_labels,
+)
 
 logger = logging.getLogger(__name__)
 logging.getLogger("urllib3").setLevel(logging.INFO)
@@ -89,5 +95,17 @@ def test_file_transfer(e2e_device_env):
     validate_file_transfer_filesystem_tar(cfg)
     validate_file_transfer_filesystem_tar_nested(cfg)
     validate_file_transfer_filesystem_tar_empty(cfg)
+
+    time.sleep(1)
+
+
+@pytest.mark.storage_usage
+def test_storage_usage(e2e_device_env):
+    cfg, initial_time = e2e_device_env
+
+    validate_storage_usage_published(cfg, initial_time)
+    validate_storage_usage_values(cfg, initial_time)
+    validate_storage_usage_multiple_labels(cfg, initial_time)
+    validate_storage_usage_telemetry_frequency(cfg)
 
     time.sleep(1)

@@ -36,3 +36,17 @@ tests:
       - CONFIG_EDGEHOG_DEVICE_FILE_TRANSFER_HTTPS_CA_CERT_TAG=4
       - CONFIG_EDGEHOG_DEVICE_FILE_TRANSFER_COMPRESSION=y
       - CONFIG_EDGEHOG_DEVICE_FILE_TRANSFER_TAR=y
+
+  edgehog_device.e2e.storage_usage:
+    filter: CONFIG_SERIAL and dt_chosen_enabled("zephyr,shell-uart")
+    harness: pytest
+    harness_config:
+      pytest_dut_scope: "session"
+      # only run tests marked with 'storage_usage'
+      pytest_args: ["-m", "storage_usage"]
+    timeout: 300
+    platform_allow: [qemu_x86, native_sim]
+    integration_platforms: [native_sim]
+    tags:
+      - e2e
+      - pytest
