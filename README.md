@@ -48,7 +48,7 @@ projects:
     remote: edgehog-device-manager
     repo-path: edgehog-zephyr-device.git
     path: edgehog-zephyr-device
-    revision: v0.9.0
+    revision: v0.10.0
     import: true
 ```
 
@@ -70,7 +70,7 @@ pip install west
 **2. Initialize the workspace**
 
 ```shell
-west init -m git@github.com:edgehog-device-manager/edgehog-zephyr-device --mr v0.9.0
+west init -m git@github.com:edgehog-device-manager/edgehog-zephyr-device --mr v0.10.0
 west update
 ```
 
