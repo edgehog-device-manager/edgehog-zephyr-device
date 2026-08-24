@@ -42,7 +42,7 @@ jobs:
         working-directory: ${{ env.PROJECT_MANIFEST_FOLDER }}
         run: mv west-ci-${{ matrix.sample-variant.zephyr-version }}.yml west.yml
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: 3.12
       - name: Setup Zephyr project
