@@ -51,8 +51,7 @@ static struct k_thread upload_thread_data;
  ***********************************************/
 
 static void device_thread_entry_point(void *unused1, void *unused2, void *unused3);
-static void connection_callback(astarte_device_connection_event_t event);
-static void disconnection_callback(astarte_device_disconnection_event_t event);
+static void edgehog_event_callback(astarte_device_event_t event, void *user_data);
 static void download_thread_entry_point(void *stream_pipe, void *stream_event, void *unused3);
 static void upload_thread_entry_point(void *stream_pipe, void *stream_event, void *unused3);
 
@@ -109,6 +108,23 @@ static void on_filesystem_transfer_done(edgehog_ft_type_t type, const char *file
             "Filesystem transfer complete [device-to-server]: file uploaded from '%s'", file_path);
     } else {
         LOG_WRN("Filesystem transfer complete: unknown transfer type for '%s'", file_path);
+    }
+}
+
+static void edgehog_event_callback(astarte_device_event_t event, void *user_data)
+{
+    ARG_UNUSED(user_data);
+    switch (event.type) {
+        case ASTARTE_DEVICE_EVENT_CONNECTED:
+            LOG_INF("Device connected");
+            atomic_set_bit(&device_thread_flags, DEVICE_THREAD_CONNECTED_FLAG);
+            break;
+        case ASTARTE_DEVICE_EVENT_DISCONNECTED:
+            LOG_INF("Device disconnected");
+            atomic_clear_bit(&device_thread_flags, DEVICE_THREAD_CONNECTED_FLAG);
+            break;
+        default:
+            break;
     }
 }
 
@@ -179,8 +195,6 @@ static void device_thread_entry_point(void *unused1, void *unused2, void *unused
     astarte_device_config.http_timeout_ms = CONFIG_E2E_HTTP_TIMEOUT_MS;
     astarte_device_config.mqtt_connection_timeout_ms = CONFIG_E2E_MQTT_CONNECTION_TIMEOUT_MS;
     astarte_device_config.mqtt_poll_timeout_ms = CONFIG_E2E_MQTT_POLL_TIMEOUT_MS;
-    astarte_device_config.connection_cbk = connection_callback;
-    astarte_device_config.disconnection_cbk = disconnection_callback;
     memcpy(astarte_device_config.cred_secr, cred_secr, sizeof(cred_secr));
     memcpy(astarte_device_config.device_id, device_id, sizeof(device_id));
 
@@ -193,6 +207,8 @@ static void device_thread_entry_point(void *unused1, void *unused2, void *unused
         = { { .type = EDGEHOG_STORAGE_PARTITION_TYPE_FS, .path = "/lfs1" } };
 
     edgehog_device_config_t edgehog_conf = { .astarte_device_config = astarte_device_config,
+        .event_cbk = edgehog_event_callback,
+        .cbk_user_data = NULL,
         .telemetry_config = NULL,
         .telemetry_config_len = 0,
         .file_transfer_cbks = { .on_stream_transfer_start = on_stream_transfer_start,
@@ -201,6 +217,7 @@ static void device_thread_entry_point(void *unused1, void *unused2, void *unused
         .file_transfer_partitions_len = ARRAY_SIZE(ft_partitions),
         .storage_partitions = storage_partitions,
         .storage_partitions_len = ARRAY_SIZE(storage_partitions) };
+
     eres = edgehog_device_new(&edgehog_conf, &device_handle);
     if (eres != EDGEHOG_RESULT_OK) {
         LOG_ERR("Unable to create edgehog device handle");
@@ -215,15 +232,7 @@ static void device_thread_entry_point(void *unused1, void *unused2, void *unused
     }
 
     while (!atomic_test_bit(&device_thread_flags, DEVICE_THREAD_TERMINATION_FLAG)) {
-        k_timepoint_t timepoint = sys_timepoint_calc(K_MSEC(CONFIG_E2E_DEVICE_POLL_PERIOD_MS));
-
-        eres = edgehog_device_poll(device_handle);
-        if (eres != EDGEHOG_RESULT_OK) {
-            LOG_ERR("Edgehog device poll failure.");
-            goto exit;
-        }
-
-        k_sleep(sys_timepoint_timeout(timepoint));
+        k_msleep(GENERIC_WAIT_SLEEP_500_MS);
     }
 
     LOG_INF("Stopping Edgehog.");
@@ -239,20 +248,6 @@ exit:
     edgehog_device_destroy(device_handle);
 
     LOG_INF("Exiting from the polling thread.");
-}
-
-static void connection_callback(astarte_device_connection_event_t event)
-{
-    (void) event;
-    LOG_INF("Device connected");
-    atomic_set_bit(&device_thread_flags, DEVICE_THREAD_CONNECTED_FLAG);
-}
-
-static void disconnection_callback(astarte_device_disconnection_event_t event)
-{
-    (void) event;
-    LOG_INF("Device disconnected");
-    atomic_clear_bit(&device_thread_flags, DEVICE_THREAD_CONNECTED_FLAG);
 }
 
 static void download_thread_entry_point(void *stream_pipe, void *stream_event, void *unused3)
