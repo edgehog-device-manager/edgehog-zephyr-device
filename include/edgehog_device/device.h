@@ -18,7 +18,7 @@
  * @{
  */
 
-#include <zephyr/sys_clock.h>
+#include <zephyr/sys/clock.h>
 
 #include "edgehog_device/file_transfer.h"
 #include "edgehog_device/result.h"

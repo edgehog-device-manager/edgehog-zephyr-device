@@ -23,6 +23,10 @@
 
 &flash_sim0 {
 	partitions {
+        compatible = "fixed-partitions";
+        #address-cells = <1>;
+        #size-cells = <1>;
+
 		astarte_partition: partition@41000 {
 			label = "astarte";
 			reg = <0x00041000 0x00010000>;
