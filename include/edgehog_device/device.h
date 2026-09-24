@@ -43,6 +43,14 @@
 typedef struct edgehog_device *edgehog_device_handle_t;
 
 /**
+ * @brief Function pointer callback for receiving filtered Astarte events.
+ *
+ * @param[in] event The Astarte event received for user-defined interfaces.
+ * @param[in] user_data Optional context pointer provided in configuration.
+ */
+typedef void (*edgehog_device_event_cbk_t)(astarte_device_event_t event, void *user_data);
+
+/**
  * @brief Edgehog device configuration struct.
  *
  * @details This struct is used to collect all the data needed by the #edgehog_device_new function.
@@ -59,6 +67,10 @@ typedef struct
      * freeing its resources.
      */
     astarte_device_config_t astarte_device_config;
+    /** @brief Optional callback to receive non-Edgehog Astarte events. */
+    edgehog_device_event_cbk_t event_cbk;
+    /** @brief User data context pointer passed to event_cbk. */
+    void *cbk_user_data;
     /**
      * @brief The telemetries configured by the user.
      * @details See #edgehog_telemetry_config_t for more information.
@@ -92,16 +104,6 @@ extern "C" {
  * @details This function creates an Edgehog device instance. It must be called before any other
  * function.
  *
- * Usage example:
- *  ```C
- *  edgehog_device_config_t edgehog_conf = {
- *      .astarte_device_config = astarte_conf,
- *  };
- *
- *  edgehog_device_handle_t edgehog_device = NULL;
- *  edgehog_result_t edgehog_result = edgehog_device_new(&edgehog_conf, &edgehog_device);
- *  ```
- *
  * @param[in] config The configuration for the Edgehog instance to create.
  * @param[out] edgehog_handle Handle to the created device instance. If the function returns an
  * error this parameter is left unchanges, a call to #edgehog_device_destroy is not required.
@@ -130,16 +132,6 @@ void edgehog_device_destroy(edgehog_device_handle_t edgehog_device);
  * @return #EDGEHOG_RESULT_OK if successful, otherwise an error code.
  */
 edgehog_result_t edgehog_device_start(edgehog_device_handle_t edgehog_device);
-
-/**
- * @brief Poll the Edgehog device.
- *
- * @details This function should be periodically called to poll the Edgehog device.
- *
- * @param[inout] edgehog_device A valid Edgehog device handle.
- * @return #EDGEHOG_RESULT_OK on success, an error code otherwise.
- */
-edgehog_result_t edgehog_device_poll(edgehog_device_handle_t edgehog_device);
 
 /**
  * @brief Stop the Edgehog device.

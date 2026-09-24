@@ -28,5 +28,5 @@ manifest:
           - mcuboot
     - name: astarte-device-sdk-zephyr
       remote: astarte-platform
-      revision: release-0.10
+      revision: v0.11.0
       import: true

@@ -23,6 +23,7 @@
 
 #include <astarte_device_sdk/device.h>
 
+#include <zephyr/kernel.h>
 #include <zephyr/sys/uuid.h>
 
 /** @brief Possible states for the Edgehog device. */
@@ -51,20 +52,16 @@ struct edgehog_device
     astarte_device_handle_t astarte_device;
     /** @brief The last returned error from Astarte. */
     astarte_result_t astarte_error;
-    /** @brief Original connection callback provided by the user, might be NULL. */
-    astarte_device_connection_cbk_t user_connection_cbk;
-    /** @brief Original disconnection callback provided by the user, might be NULL. */
-    astarte_device_disconnection_cbk_t user_disconnection_cbk;
-    /** @brief Original datastream individual callback provided by the user, might be NULL. */
-    astarte_device_datastream_individual_cbk_t user_datastream_individual_cbk;
-    /** @brief Original datastream object callback provided by the user, might be NULL. */
-    astarte_device_datastream_object_cbk_t user_datastream_object_cbk;
-    /** @brief Original property set callback provided by the user, might be NULL. */
-    astarte_device_property_set_cbk_t user_property_set_cbk;
-    /** @brief Original property unset callback provided by the user, might be NULL. */
-    astarte_device_property_unset_cbk_t user_property_unset_cbk;
-    /** @brief Original user data for the callbacks provided by the user, might be NULL. */
+    /** @brief User event callback for custom Astarte interfaces. */
+    edgehog_device_event_cbk_t user_event_cbk;
+    /** @brief User data context pointer for user_event_cbk. */
     void *user_cbk_user_data;
+    /** @brief Zephyr thread for the Edgehog worker. */
+    struct k_thread worker_thread;
+    /** @brief Stack for the Edgehog worker thread. */
+    K_KERNEL_STACK_MEMBER(worker_thread_stack, CONFIG_EDGEHOG_DEVICE_WORKER_THREAD_STACK_SIZE);
+    /** @brief Zephyr event group for thread synchronization and signaling. */
+    struct k_event events;
     /** @brief UUID representing the Boot Id. */
     char boot_id[UUID_STR_LEN];
     /** @brief OTA thread data used during the OTA Update operation. */

@@ -85,12 +85,6 @@ config E2E_DEVICE_THREAD_PRIORITY
     help
         Use this setting to change the priority of the thread running the Astarte device.
 
-config E2E_DEVICE_POLL_PERIOD_MS
-    int "Device thread polling period (ms)"
-    default 100
-    help
-        Use this setting to change the polling period for the Astarte device.
-
 config E2E_ETH_POLL_PERIOD_MS
     int "Device thread polling period (ms)"
     default 100

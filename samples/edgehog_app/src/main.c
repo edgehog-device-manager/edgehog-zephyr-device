@@ -43,7 +43,7 @@ LOG_MODULE_REGISTER(edgehog_app, CONFIG_APP_LOG_LEVEL); // NOLINT
  ***********************************************/
 
 #define MAIN_THREAD_PERIOD_MS 500
-#define EDGEHOG_DEVICE_PERIOD_MS 100
+#define EDGEHOG_DEVICE_PERIOD_MS 500
 #ifdef CONFIG_EDGEHOG_DEVICE_ZBUS_OTA_EVENT
 #define ZBUS_PERIOD_MS 500
 #endif
@@ -61,7 +61,6 @@ enum device_tread_flags
     DEVICE_THREADS_FLAGS_TERMINATION = 1U,
     DEVICE_THREADS_FLAGS_CONNECT_ASTARTE,
     DEVICE_THREADS_FLAGS_START_EDGEHOG,
-
 };
 static atomic_t device_threads_flags;
 
@@ -90,7 +89,7 @@ ZBUS_CHAN_ADD_OBS(edgehog_ota_chan, edgehog_ota_subscriber, EDGEHOG_OTA_OBSERVER
  */
 static void system_time_init(void);
 /**
- * @brief Entry point for the Astarte device thread.
+ * @brief Entry point for the Edgehog device thread.
  *
  * @param arg1 Unused argument.
  * @param arg2 Unused argument.
@@ -106,8 +105,6 @@ static void edgehog_device_thread_entry_point(void *arg1, void *arg2, void *arg3
  * @param arg3 Unused argument.
  */
 static void zbus_thread_entry_point(void *arg1, void *arg2, void *arg3);
-#endif
-#ifdef CONFIG_EDGEHOG_DEVICE_ZBUS_OTA_EVENT
 /**
  * @brief Listen on the Edgehog zbus channel for events.
  *
@@ -152,6 +149,7 @@ int main(void)
     tls_credential_add(CONFIG_ASTARTE_DEVICE_SDK_HTTPS_CA_CERT_TAG, TLS_CREDENTIAL_CA_CERTIFICATE,
         astarte_ca_certificate_root, sizeof(astarte_ca_certificate_root));
 #endif
+
     // Add TLS certificate for Edgehog if required
 #ifndef CONFIG_EDGEHOG_DEVICE_DEVELOP_USE_NON_TLS_HTTP
     tls_credential_add(CONFIG_EDGEHOG_DEVICE_OTA_HTTPS_CA_CERT_TAG, TLS_CREDENTIAL_CA_CERTIFICATE,
@@ -163,7 +161,7 @@ int main(void)
 #endif
 #endif
 
-    // Initalize the system time
+    // Initialize system time
     system_time_init();
 
     // Spawn a new thread for the Edgehog device
@@ -209,7 +207,7 @@ int main(void)
  * Static functions definitions
  ***********************************************/
 
-static void system_time_init()
+static void system_time_init(void)
 {
 #ifdef CONFIG_SNTP
     int ret = 0;
@@ -282,6 +280,7 @@ static void edgehog_device_thread_entry_point(void *arg1, void *arg2, void *arg3
         .storage_partitions_len = ARRAY_SIZE(storage_partitions)
 #endif
     };
+
     eres = edgehog_device_new(&edgehog_conf, &edgehog_device);
     if (eres != EDGEHOG_RESULT_OK) {
         LOG_ERR("Unable to create edgehog device handle"); // NOLINT
@@ -308,16 +307,10 @@ static void edgehog_device_thread_entry_point(void *arg1, void *arg2, void *arg3
 #endif
 #endif
 
+    // Device management and communication are handled asynchronously by internal threads.
+    // Loop until a termination signal is set.
     while (!atomic_test_bit(&device_threads_flags, DEVICE_THREADS_FLAGS_TERMINATION)) {
-        k_timepoint_t timepoint = sys_timepoint_calc(K_MSEC(EDGEHOG_DEVICE_PERIOD_MS));
-
-        eres = edgehog_device_poll(edgehog_device);
-        if (eres != EDGEHOG_RESULT_OK) {
-            LOG_ERR("Edgehog device poll failure."); // NOLINT
-            goto exit;
-        }
-
-        k_sleep(sys_timepoint_timeout(timepoint));
+        k_msleep(EDGEHOG_DEVICE_PERIOD_MS);
     }
 
     LOG_INF("End of sample, stopping Edgehog."); // NOLINT
@@ -353,9 +346,7 @@ static void zbus_thread_entry_point(void *arg1, void *arg2, void *arg3)
         edgehog_listen_zbus_channel(K_MSEC(ZBUS_PERIOD_MS));
     }
 }
-#endif
 
-#ifdef CONFIG_EDGEHOG_DEVICE_ZBUS_OTA_EVENT
 static void edgehog_listen_zbus_channel(k_timeout_t timeout)
 {
     const struct zbus_channel *chan = NULL;

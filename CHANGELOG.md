@@ -19,7 +19,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Changed
 - Replaced the custom UUID implementation with Zephyr's built-in UUID library.
-- Updated the Astarte device SDK for Zephyr to version 0.10 (see the [Astarte device SDK changelog](https://github.com/astarte-platform/astarte-device-sdk-zephyr/blob/release-0.10/CHANGELOG.md) for detailed changes).
+- Updated the Astarte device SDK for Zephyr to version 0.11 (see the [Astarte device SDK changelog](https://github.com/astarte-platform/astarte-device-sdk-zephyr/blob/release-0.11/CHANGELOG.md) for detailed changes).
 - Reworked storage usage telemetry: maintains default reporting for the Edgehog settings partition, while allowing users to specify a list of additional partitions to monitor.
 
 ### Removed

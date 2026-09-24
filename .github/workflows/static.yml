@@ -44,6 +44,9 @@ jobs:
       - name: Install Python dependencies
         working-directory: ${{ env.PROJECT_MANIFEST_FOLDER }}
         run: pip install -r $PWD/scripts/requirements.txt
+      - name: Check clang-format version
+        working-directory: ${{ env.PROJECT_MANIFEST_FOLDER }}
+        run: clang-format --version
       - name: Check format
         working-directory: ${{ env.PROJECT_MANIFEST_FOLDER }}
         run: west astarte-format --dry-run

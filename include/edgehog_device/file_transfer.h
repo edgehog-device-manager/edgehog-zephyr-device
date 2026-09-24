@@ -58,8 +58,8 @@ typedef enum
     /** @brief Allow writing files to this partition. */
     EDGEHOG_FT_FILESYSTEM_PERM_WRITE = (1U << 1U),
     /** @brief Allow both reading and writing. */
-    EDGEHOG_FT_FILESYSTEM_PERM_RW
-    = (EDGEHOG_FT_FILESYSTEM_PERM_READ | EDGEHOG_FT_FILESYSTEM_PERM_WRITE)
+    EDGEHOG_FT_FILESYSTEM_PERM_RW = (
+        EDGEHOG_FT_FILESYSTEM_PERM_READ | EDGEHOG_FT_FILESYSTEM_PERM_WRITE)
 } edgehog_ft_filesystem_permission_t;
 
 /** @brief Configuration for an allowed filesystem partition. */
