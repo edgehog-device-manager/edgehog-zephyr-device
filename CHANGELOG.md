@@ -9,6 +9,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.1.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [unreleased] - 2026-09-25
+### Added
+- An internal worker thread for the Edgehog device, this thread will manage the lifetime of the Edgehog device asynchronously from the user threads.
+- `CONFIG_EDGEHOG_DEVICE_WORKER_THREAD_PRIORITY` and `CONFIG_EDGEHOG_DEVICE_WORKER_THREAD_STACK_SIZE` options to configure the new worker thread.
+- A `edgehog_device_event_cbk_t` callback type that should be used, if needed, by the user to receive Astarte device SDK events.
+
+### Changed
+- Updated the Astarte device SDK for Zephyr to version 0.11 (see the [Astarte device SDK changelog](https://github.com/astarte-platform/astarte-device-sdk-zephyr/blob/release-0.11/CHANGELOG.md) for detailed changes).
+
+### Removed
+- The edgehog device polling function, superflous as the polling is performed in the new worker thread.
+
 ## [0.10.0-rc.0] - 2026-07-01
 ### Added
 - File transfer functionality (refer to `doc/features/File Transfer.md` for detailed usage).

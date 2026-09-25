@@ -24,31 +24,35 @@
 };
 
 &w25q512jvfiq {
-	partitions {
+    partitions {
+        compatible = "fixed-partitions";
+        #address-cells = <1>;
+        #size-cells = <1>;
+
         storage_partition: partition@620000 {
             label = "storage";
             reg = <0x00620000 (DT_SIZE_M(55) - DT_SIZE_K(128))>;
         };
 
-		astarte_partition: partition@3D00000 {
-			label = "astarte";
-			reg = <0x03D00000 DT_SIZE_M(1)>;
-		};
+        astarte_partition: partition@3D00000 {
+            label = "astarte";
+            reg = <0x03D00000 DT_SIZE_M(1)>;
+        };
 
-		edgehog_partition: partition@3E00000 {
-			label = "edgehog";
-			reg = <0x03E00000 DT_SIZE_M(1)>;
-		};
+        edgehog_partition: partition@3E00000 {
+            label = "edgehog";
+            reg = <0x03E00000 DT_SIZE_M(1)>;
+        };
 
-		file_transfer_partition: partition@3F00000 {
-			label = "file_transfer";
-			reg = <0x03F00000 DT_SIZE_M(1)>;
-		};
-	};
+        file_transfer_partition: partition@3F00000 {
+            label = "file_transfer";
+            reg = <0x03F00000 DT_SIZE_M(1)>;
+        };
+    };
 };
 
 / {
-	chosen {
-		zephyr,settings-partition = &edgehog_partition;
-	};
+    chosen {
+        zephyr,settings-partition = &edgehog_partition;
+    };
 };
