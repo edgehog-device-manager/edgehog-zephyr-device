@@ -33,7 +33,7 @@ jobs:
         working-directory: ${{ env.PROJECT_MANIFEST_FOLDER }}
         run: mv west-ci-reference.yml west.yml
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: 3.12
       - name: Setup Zephyr project
@@ -44,6 +44,9 @@ jobs:
       - name: Install Python dependencies
         working-directory: ${{ env.PROJECT_MANIFEST_FOLDER }}
         run: pip install -r $PWD/scripts/requirements.txt
+      - name: Check clang-format version
+        working-directory: ${{ env.PROJECT_MANIFEST_FOLDER }}
+        run: clang-format --version
       - name: Check format
         working-directory: ${{ env.PROJECT_MANIFEST_FOLDER }}
         run: west astarte-format --dry-run
@@ -61,7 +64,7 @@ jobs:
         working-directory: ${{ env.PROJECT_MANIFEST_FOLDER }}
         run: mv west-ci-reference.yml west.yml
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: 3.12
       - name: Setup Zephyr project
@@ -92,7 +95,7 @@ jobs:
         with:
           path: ${{ env.PROJECT_MANIFEST_FOLDER }}
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: 3.12
       - name: Install Python dependencies

@@ -11,7 +11,7 @@
 #include "generated_interfaces.h"
 #include "log.h"
 
-#include <app_version.h>
+#include <zephyr/app_version.h>
 
 #include <astarte_device_sdk/device.h>
 #include <astarte_device_sdk/interface.h>

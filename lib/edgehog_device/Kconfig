@@ -18,6 +18,20 @@ config EDGEHOG_DEVICE
 	help
 	  This option enables the Edgehog device library
 
+config EDGEHOG_DEVICE_WORKER_THREAD_PRIORITY
+	int "Thread priority for the Edgehog device worker thread"
+	depends on EDGEHOG_DEVICE
+	default 5
+	help
+	  This options sets the priority for the internal Edgehog device worker thread.
+
+config EDGEHOG_DEVICE_WORKER_THREAD_STACK_SIZE
+	int "Stack size for the Edgehog device worker thread"
+	depends on EDGEHOG_DEVICE
+	default 4096
+	help
+	  This option to set the stack size for the Edgehog device worker thread.
+
 config EDGEHOG_DEVICE_SERIAL_NUMBER
 	string "Serial number that will identify this device"
 	depends on EDGEHOG_DEVICE

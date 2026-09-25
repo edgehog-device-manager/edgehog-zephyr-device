@@ -5,20 +5,24 @@
  */
 
 &flash0 {
-	partitions {
-		astarte_partition: partition@100000 {
-			label = "astarte";
-			reg = <0x00100000 DT_SIZE_K(128)>;
-		};
-		edgehog_partition: partition@120000 {
-			label = "edgehog";
-			reg = <0x00120000 DT_SIZE_K(128)>;
-		};
-	};
+    partitions {
+        compatible = "fixed-partitions";
+        #address-cells = <1>;
+        #size-cells = <1>;
+
+        astarte_partition: partition@100000 {
+            label = "astarte";
+            reg = <0x00100000 DT_SIZE_K(128)>;
+        };
+        edgehog_partition: partition@120000 {
+            label = "edgehog";
+            reg = <0x00120000 DT_SIZE_K(128)>;
+        };
+    };
 };
 
 / {
-	chosen {
-		zephyr,settings-partition = &edgehog_partition;
-	};
+    chosen {
+        zephyr,settings-partition = &edgehog_partition;
+    };
 };

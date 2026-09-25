@@ -15,10 +15,12 @@ manifest:
   projects:
     - name: zephyr
       remote: zephyrproject-rtos
-      revision: v4.4.0
+      revision: v4.4.2
       import:
         name-allowlist:
+          - cmsis
           - cmsis_6
+          - hal_cmsis
           - hal_nxp
           - hal_espressif
           - hal_stm32
@@ -29,11 +31,11 @@ manifest:
           - littlefs
     - name: astarte-device-sdk-zephyr
       remote: astarte-platform
-      revision: release-0.10
+      revision: v0.11.1
       import: true
     - name: edgehog-astarte-interfaces
       remote: edgehog-device-manager
-      revision: c327c82289d3e28b0d99360fe0d9456367fa8bf7
+      revision: v0.11.0
     - name: lz4
       url: https://github.com/zephyrproject-rtos/lz4
       revision: zephyr
