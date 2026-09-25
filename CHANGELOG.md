@@ -9,7 +9,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.1.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [unreleased] - 2026-09-25
+## [0.10.0] - 2026-09-25
 ### Added
 - An internal worker thread for the Edgehog device, this thread will manage the lifetime of the Edgehog device asynchronously from the user threads.
 - `CONFIG_EDGEHOG_DEVICE_WORKER_THREAD_PRIORITY` and `CONFIG_EDGEHOG_DEVICE_WORKER_THREAD_STACK_SIZE` options to configure the new worker thread.
