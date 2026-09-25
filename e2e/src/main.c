@@ -8,8 +8,8 @@
 #include <zephyr/logging/log.h>
 #include <zephyr/net/sntp.h>
 #include <zephyr/sys/atomic.h>
+#include <zephyr/sys/clock.h>
 #include <zephyr/sys/util.h>
-#include <zephyr/sys_clock.h>
 
 #if defined(CONFIG_ARCH_POSIX)
 #include <nsi_main.h>
